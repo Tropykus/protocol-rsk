@@ -5,7 +5,7 @@ Prerequisites 📋
 ------------
 Operating system: macOS, debian 10 (buster), ubuntu LTS.
 
-[Node.js](https://nodejs.org/en/download/)(LTS 12), [npm](https://docs.npmjs.com/cli/install) (optional), [yarn](https://yarnpkg.com/lang/en/docs/install/), [make](#make), [g++](#g++), [ganache-cli](#ganache-cli)/[ganache], [solc](https://solidity.readthedocs.io/en/v0.4.24/installing-solidity.html#binary-packages), (https://www.trufflesuite.com/ganache), [node-gyp](https://github.com/nodejs/node-gyp#installation)(optional)
+[Node.js](https://nodejs.org/en/download/)(LTS 12), [npm](https://docs.npmjs.com/cli/install) (optional), [yarn](https://yarnpkg.com/lang/en/docs/install/), [make](#make), [g++](#g++), [ganache-cli](#ganache-cli)/[ganache](https://www.trufflesuite.com/ganache), [solc](https://solidity.readthedocs.io/en/v0.4.24/installing-solidity.html#binary-packages), [node-gyp](https://github.com/nodejs/node-gyp#installation)(optional)
  
  #### ganache-cli
 
@@ -59,7 +59,7 @@ and install its dependencies with npm or yarn.
 
 Testing 🔧
 -------
-Jest contract tests are defined under the [tests directory](https://github.com/compound-finance/compound-protocol/tree/master/tests). To run the tests run:
+Contract tests are defined under the [tests directory](https://github.com/compound-finance/compound-protocol/tree/master/tests). To run the tests run:
 
     yarn test
 
