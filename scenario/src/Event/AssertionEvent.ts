@@ -136,8 +136,8 @@ async function assertError(world: World, message: string): Promise<World> {
   if (!world.lastInvokation.error) {
     throw new Error(`Invokation requires success, failure or error, got: ${world.lastInvokation.toString()}`);
   }
-
-  if (!world.lastInvokation.error.message.startsWith(message)) {
+  
+  if (world.lastInvokation.error.message.indexOf(message) === -1) {
     throw new Error(`Invokation error mismatch, expected: "${message}", got: "${world.lastInvokation.error.message}"`);
   }
 
