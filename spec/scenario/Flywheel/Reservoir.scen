@@ -68,7 +68,7 @@ Test "Reservoir handles not having enough to drip"
 
 Test "Revert on dripTotal overflow"
     RLEN Deploy Admin
-    Block 100 (Reservoir Deploy 10e77 RLEN Bank)
+    Block 100 (Reservoir Deploy UInt256Max RLEN Bank)
     AllowFailures
     Block 200 (Reservoir Drip)
     Assert Revert "revert dripTotal overflow"

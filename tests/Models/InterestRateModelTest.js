@@ -3,6 +3,7 @@ const {
   getBorrowRate,
   getSupplyRate
 } = require('../Utils/Compound');
+const { UInt256Max } = require('../Utils/Ethereum');
 
 const {
   etherMantissa,
@@ -113,11 +114,11 @@ describe('InterestRateModel', () => {
         // Only need to do these for the WhitePaper
 
         it('handles overflowed cash + borrows', async () => {
-          await expect(getBorrowRate(model, -1, -1, 0)).rejects.toRevert("revert SafeMath: addition overflow");
+          await expect(getBorrowRate(model, UInt256Max(), UInt256Max(), 0)).rejects.toRevert("revert SafeMath: addition overflow");
         });
 
         it('handles failing to get exp of borrows / cash + borrows', async () => {
-          await expect(getBorrowRate(model, 0, -1, 0)).rejects.toRevert("revert SafeMath: multiplication overflow");
+          await expect(getBorrowRate(model, 0, UInt256Max(), 0)).rejects.toRevert("revert SafeMath: multiplication overflow");
         });
 
         it('handles overflow utilization rate times slope', async () => {
