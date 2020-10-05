@@ -59,10 +59,40 @@ and install its dependencies with npm or yarn.
 
 Testing 🔧
 -------
-Contract tests are defined under the [tests directory](https://github.com/compound-finance/compound-protocol/tree/master/tests). To run the tests run:
+Contract tests are defined under the [tests directory](https://github.com/riflending/riflending-protocol/tree/master/tests). To run the tests run:
 
     yarn test
 
+------------
+
+Debugging 🔩
+-------
+Debug in local ganache with VS Code
+    
+    #run ganache-cli in a terminal
+    ganache-cli --gasLimit 20000000 --gasPrice 20000 --defaultBalanceEther 1000000000 --allowUnlimitedContractSize true -v -k "istanbul"
+
+Configure launch.json (VS Code).
+
+In .buil/launch.json (create if is necesary) add the follow:
+
+    {
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "dev",
+            "request": "launch",
+            "type": "node",
+            "runtimeExecutable": "/usr/bin/npx",   
+            "program": "saddle",
+            "args": [
+              "test",
+            ],
+        },
+    ]
+    }
+
+-------
 To be continue (TODO) ..
 
 ------------
