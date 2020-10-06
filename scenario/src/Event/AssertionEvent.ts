@@ -113,7 +113,7 @@ async function assertRevertFailure(world: World, err: string, message: string): 
 
   const expectedMessage = `VM Exception while processing transaction: ${coverageSafeRevertMessage(world, message)}`;
 
-  if (world.lastInvokation.error.error !== err || world.lastInvokation.error.errMessage !== expectedMessage) {
+  if (world.lastInvokation.error.error !== err || world.lastInvokation.error.errMessage.indexOf(expectedMessage) === -1) {
     throw new Error(`Invokation error mismatch, expected revert failure: err=${err}, message="${expectedMessage}", got: "${world.lastInvokation.error.toString()}"`);
   }
 
@@ -136,7 +136,7 @@ async function assertError(world: World, message: string): Promise<World> {
   if (!world.lastInvokation.error) {
     throw new Error(`Invokation requires success, failure or error, got: ${world.lastInvokation.toString()}`);
   }
-  
+
   if (world.lastInvokation.error.message.indexOf(message) === -1) {
     throw new Error(`Invokation error mismatch, expected: "${message}", got: "${world.lastInvokation.error.message}"`);
   }
@@ -169,6 +169,7 @@ async function assertReadError(world: World, event: Event, message: string, isRe
     let expectedMessage;
     if (isRevert) {
       expectedMessage = buildRevertMessage(world, message);
+      expectedMessage = (err.message.indexOf(expectedMessage >= 0)) ? err.message : expectedMessage;
     } else {
       expectedMessage = message;
     }

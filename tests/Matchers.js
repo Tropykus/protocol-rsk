@@ -258,7 +258,7 @@ function hasErrorTuple(result, tuple, reporter, cmp=undefined) {
 // TODO: Improve
 function revert(actual, msg) {
   return {
-    pass: !!actual['message'] && actual.message === `VM Exception while processing transaction: ${msg}`,
+    pass: !!actual['message'] && (actual.message.indexOf(`VM Exception while processing transaction: ${msg}`) >= 0),
     message: () => {
       if (actual["message"]) {
         return `expected VM Exception while processing transaction: ${msg}, got ${actual["message"]}`
