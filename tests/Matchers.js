@@ -255,10 +255,10 @@ function hasErrorTuple(result, tuple, reporter, cmp=undefined) {
   return match.call(this, result, tuple, true, opts('hasErrorTuple'));
 }
 
-// TODO: Improve
+// TODO: Improve, just checks if transaction was reverted. Should check why
 function revert(actual, msg) {
   return {
-    pass: !!actual['message'] && (actual.message.indexOf(`VM Exception while processing transaction: ${msg}`) >= 0),
+    pass: !!actual['message'] && (actual.message.indexOf(`VM execution error: transaction reverted`) >= 0),
     message: () => {
       if (actual["message"]) {
         return `expected VM Exception while processing transaction: ${msg}, got ${actual["message"]}`

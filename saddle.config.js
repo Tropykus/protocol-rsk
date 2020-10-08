@@ -64,7 +64,7 @@ module.exports = {
         // UNCOMMENT BELOW TO POINT TO LOCALHOST(i.e. `ganache-cli --gasLimit 200000000 --gasPrice 20000 --defaultBalanceEther 1000000000 --allowUnlimitedContractSize true -k "istanbul" -v`)
               {env: "PROVIDER"},                                      // Checks env $PROVIDER (i.e. `export PROVIDER="http://localhost:8545"`)
               {file: "~/.ethereum/ganache-local"},                    // Load from given file with contents as the URL (e.g. https://infura.io/api-key)
-              {http: "http://localhost:8545"}                         // 
+              {http: "http://localhost:4444"}                         // 
             ],
         /////////////////////////////////////////
       web3: {
