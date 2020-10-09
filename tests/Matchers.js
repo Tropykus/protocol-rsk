@@ -2,6 +2,7 @@ const { last } = require('./Utils/JS');
 const { address, etherUnsigned } = require('./Utils/Ethereum');
 const diff = require('jest-diff');
 const { ComptrollerErr, TokenErr, IRErr, MathErr } = require('./Errors');
+const networkEnv = process.env['network'];
 
 function opts(comment) {
   return {
@@ -11,7 +12,7 @@ function opts(comment) {
   };
 }
 
-function fail(msg, received=undefined) {
+function fail(msg, received = undefined) {
   return {
     pass: false,
     message: () => {
@@ -24,47 +25,47 @@ function logReporterFormatter(reporter) {
   return (log) => logFormatter(log, reporter);
 }
 
-function logFormatter(log, reporter=undefined) {
+function logFormatter(log, reporter = undefined) {
   return "Log {\n" + Object.entries(log).map(([key, values]) => {
-    let valuesFormatted = typeof(values) === 'object'
+    let valuesFormatted = typeof (values) === 'object'
       ?
-        '\n' + Object.entries(values).map(([k, v]) => {
-          let vShow = v;
-          vShow = reporter && k === 'error' ? reporter.ErrorInv[v] : vShow;
-          vShow = reporter && k === 'info' ? reporter.FailureInfoInv[v] : vShow;
-          vShow = reporter && k === 'detail' && reporter.ErrorInv[values['error']] === 'MATH_ERROR' ? MathErr.ErrorInv[v] : vShow;
+      '\n' + Object.entries(values).map(([k, v]) => {
+        let vShow = v;
+        vShow = reporter && k === 'error' ? reporter.ErrorInv[v] : vShow;
+        vShow = reporter && k === 'info' ? reporter.FailureInfoInv[v] : vShow;
+        vShow = reporter && k === 'detail' && reporter.ErrorInv[values['error']] === 'MATH_ERROR' ? MathErr.ErrorInv[v] : vShow;
 
-          return `\t  ${k}: ${vShow}`;
-        }).join("\n")
+        return `\t  ${k}: ${vShow}`;
+      }).join("\n")
       :
-        values;
+      values;
 
     return `\t${key}: ${valuesFormatted}`;
   }).join("\n") + "\n}";
 }
 
-function match(received, expected, pass, opts, receivedFormatter=undefined) {
+function match(received, expected, pass, opts, receivedFormatter = undefined) {
   receivedFormatter = receivedFormatter || this.utils.printReceived;
 
   const message = pass
     ? () =>
+      this.utils.matcherHint(opts.comment, undefined, undefined, opts) +
+      '\n\n' +
+      `Expected: ${this.utils.printExpected(expected)}\n` +
+      `Received: ${receivedFormatter(received)}`
+    : () => {
+      const diffString = diff(expected, received, {
+        expand: this.expand,
+      });
+      return (
         this.utils.matcherHint(opts.comment, undefined, undefined, opts) +
         '\n\n' +
-        `Expected: ${this.utils.printExpected(expected)}\n` +
-        `Received: ${receivedFormatter(received)}`
-    : () => {
-        const diffString = diff(expected, received, {
-          expand: this.expand,
-        });
-        return (
-          this.utils.matcherHint(opts.comment, undefined, undefined, opts) +
-          '\n\n' +
-          (diffString && diffString.includes('- Expect')
-            ? `Difference:\n\n${diffString}`
-            : `Expected: ${this.utils.printExpected(expected)}\n` +
-              `Received: ${receivedFormatter(received)}`)
-        );
-      };
+        (diffString && diffString.includes('- Expect')
+          ? `Difference:\n\n${diffString}`
+          : `Expected: ${this.utils.printExpected(expected)}\n` +
+          `Received: ${receivedFormatter(received)}`)
+      );
+    };
 
   return {
     pass: pass,
@@ -72,23 +73,23 @@ function match(received, expected, pass, opts, receivedFormatter=undefined) {
   }
 }
 
-function solo(received, expectedThing, pass, opts, receivedFormatter=undefined) {
+function solo(received, expectedThing, pass, opts, receivedFormatter = undefined) {
   receivedFormatter = receivedFormatter || this.utils.printReceived;
 
   const message = pass
     ? () =>
+      this.utils.matcherHint(opts.comment, undefined, undefined, opts) +
+      '\n\n' +
+      `Expected: ${expectedThing}\n` +
+      `Received: ${receivedFormatter(received)}`
+    : () => {
+      return (
         this.utils.matcherHint(opts.comment, undefined, undefined, opts) +
         '\n\n' +
         `Expected: ${expectedThing}\n` +
         `Received: ${receivedFormatter(received)}`
-    : () => {
-        return (
-          this.utils.matcherHint(opts.comment, undefined, undefined, opts) +
-          '\n\n' +
-              `Expected: ${expectedThing}\n` +
-              `Received: ${receivedFormatter(received)}`
-        );
-      };
+      );
+    };
 
   return {
     pass: pass,
@@ -97,7 +98,7 @@ function solo(received, expectedThing, pass, opts, receivedFormatter=undefined) 
 }
 
 function hasError(actual, expectedErrorName, reporter) {
-  let actualErrorCode = typeof(actual) === 'object' ? actual[0] : actual;
+  let actualErrorCode = typeof (actual) === 'object' ? actual[0] : actual;
   let expectedErrorCode = reporter.Error[expectedErrorName];
   let pass = actualErrorCode == expectedErrorCode;
 
@@ -118,12 +119,12 @@ function arrayEqual(a, b) {
   return true;
 }
 
-function objectEqual(a, b, partial=false, map=undefined) {
+function objectEqual(a, b, partial = false, map = undefined) {
   return doObjectEqual(a, b, partial, map || ((x) => x));
 }
 
 function doObjectEqual(a, b, partial, map) {
-  if (typeof(a) !== 'object' || typeof(b) !== 'object') {
+  if (typeof (a) !== 'object' || typeof (b) !== 'object') {
     return a === b;
   }
 
@@ -170,12 +171,12 @@ function doGetLog(result, logType, comment) {
 
 let mapValues = (l, f) => {
   return Object.entries(l).reduce((acc, [key, value]) => {
-    return {...acc, [key]: f(value)}
-   }, {});
-  }
+    return { ...acc, [key]: f(value) }
+  }, {});
+}
 
 function hasLog(result, logType, params) {
-  let {failure, log} = doGetLog.call(this, result, logType, "hasLog");
+  let { failure, log } = doGetLog.call(this, result, logType, "hasLog");
   if (failure) {
     return failure;
   }
@@ -195,7 +196,7 @@ function hasLog(result, logType, params) {
 }
 
 function hasFailure(result, expectedError, expectedInfo, expectedDetail, reporter, comment) {
-  let {failure, log} = doGetLog.call(this, result, 'Failure', comment);
+  let { failure, log } = doGetLog.call(this, result, 'Failure', comment);
   if (failure) {
     return failure;
   }
@@ -232,7 +233,7 @@ function success(result, comment, reporter) {
   return solo.call(this, log, "a result with no `Failure` event", !log, opts(comment), logReporterFormatter(reporter));
 }
 
-function hasErrorTuple(result, tuple, reporter, cmp=undefined) {
+function hasErrorTuple(result, tuple, reporter, cmp = undefined) {
   cmp = cmp || ((x, y) => x.toString() === y.toString());
 
   const hasErrorResult = hasError.call(this, result[0], tuple[0], reporter);
@@ -258,7 +259,7 @@ function hasErrorTuple(result, tuple, reporter, cmp=undefined) {
 // TODO: Improve, just checks if transaction was reverted. Should check why
 function revert(actual, msg) {
   return {
-    pass: !!actual['message'] && (actual.message.indexOf(`VM execution error: transaction reverted`) >= 0),
+    pass: (!!actual['message']) ? false : (networkEnv !== "test") ? ((actual.message.indexOf(`VM execution error: transaction reverted`) >= 0)) : ((actual.message.indexOf(`VM Exception while processing transaction: ${msg}`) >= 0)),
     message: () => {
       if (actual["message"]) {
         return `expected VM Exception while processing transaction: ${msg}, got ${actual["message"]}`
@@ -314,11 +315,11 @@ expect.extend({
     return hasLog.call(this, result, event, params);
   },
 
-  toHaveTrollFailure(result, err, info, detail=undefined) {
+  toHaveTrollFailure(result, err, info, detail = undefined) {
     return hasFailure.call(this, result, err, info, detail, ComptrollerErr, 'toHaveTrollFailure');
   },
 
-  toHaveTokenFailure(result, err, info, detail=undefined) {
+  toHaveTokenFailure(result, err, info, detail = undefined) {
     return hasFailure.call(this, result, err, info, detail, TokenErr, 'toHaveTokenFailure');
   },
 
@@ -330,7 +331,7 @@ expect.extend({
     return hasFailure.call(this, result, 'COMPTROLLER_REJECTION', info, detail && ComptrollerErr.Error[detail], TokenErr, 'toHaveTrollReject');
   },
 
-  toHaveTrollErrorTuple(result, tuple, cmp=undefined) {
+  toHaveTrollErrorTuple(result, tuple, cmp = undefined) {
     return hasErrorTuple.call(this, result, tuple, ComptrollerErr, cmp);
   },
 
@@ -350,11 +351,11 @@ expect.extend({
     return success.call(this, actual, 'success', TokenErr);
   },
 
-  toRevert(actual, msg='revert') {
+  toRevert(actual, msg = 'revert') {
     return revert.call(this, actual, msg);
   },
 
-  toRevertWithError(trx, expectedErrorName, reason='revert', reporter=TokenErr) {
+  toRevertWithError(trx, expectedErrorName, reason = 'revert', reporter = TokenErr) {
     return revert.call(this, trx, `${reason} (${reporter.Error[expectedErrorName].padStart(2, '0')})`);
   },
 

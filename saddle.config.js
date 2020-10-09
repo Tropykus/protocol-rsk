@@ -86,6 +86,32 @@ module.exports = {
         {unlocked: 0}
       ]
     },
+    rsk: {
+      providers: [
+              {env: "PROVIDER"},                                      // Checks env $PROVIDER (i.e. `export PROVIDER="http://localhost:8545"`)
+              {file: "~/.ethereum/goerli-url"},                    // Load from given file with contents as the URL (e.g. https://infura.io/api-key)
+              // {http: "http://localhost:8545"}                         // 
+              {http: "http://localhost:4444"}                         // 
+            ],
+      web3: {
+        gas: [
+          {env: "GAS"},
+          {default: "20000000"}
+        ],
+        gas_price: [
+          {env: "GAS_PRICE"},
+          {default: "12000000002"}
+        ],
+        options: {
+          transactionConfirmationBlocks: 1,
+          transactionBlockTimeout: 5
+        }
+      },
+      accounts: [
+        {env: "ACCOUNT"},
+        {unlocked: 0}
+      ]
+    },
     goerli: {
       providers: [
         {env: "PROVIDER"},

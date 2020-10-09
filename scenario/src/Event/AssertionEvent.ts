@@ -137,10 +137,12 @@ async function assertError(world: World, message: string): Promise<World> {
     throw new Error(`Invokation requires success, failure or error, got: ${world.lastInvokation.toString()}`);
   }
 
-  if (world.lastInvokation.error.message.indexOf("revert") === -1) {
-    if (world.lastInvokation.error.message.indexOf(message) === -1) {
+  if (world.network !== 'test') {
+    if ((world.lastInvokation.error.message.indexOf('revert') === -1) && ((world.lastInvokation.error.message.indexOf(message) === -1))) {
       throw new Error(`Invokation error mismatch, expected: "${message}", got: "${world.lastInvokation.error.message}"`);
     }
+  } else if (world.lastInvokation.error.message.indexOf(message) === -1) {
+    throw new Error(`Invokation error mismatch, expected: "${message}", got: "${world.lastInvokation.error.message}"`);
   }
 
   return world;
