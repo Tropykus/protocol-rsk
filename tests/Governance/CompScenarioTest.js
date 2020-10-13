@@ -29,21 +29,24 @@ describe('CompScenario', () => {
 
         let result = await comp.methods.getPriorVotes(root, 1).send();
 
-        await saddle.trace(result, {
-          constants: {
-            "account": root
-          },
-          preFilter: ({op}) => op === 'SLOAD',
-          postFilter: ({source}) => !source || !source.includes('mockBlockNumber'),
-          execLog: (log) => {
-            if (process.env['VERBOSE']) {
-              log.show();
+        let networkId = await saddle.web3.eth.net.getId();
+        if (networkId < 30 && networkId > 33) {
+          await saddle.trace(result, {
+            constants: {
+              "account": root
+            },
+            preFilter: ({op}) => op === 'SLOAD',
+            postFilter: ({source}) => !source || !source.includes('mockBlockNumber'),
+            execLog: (log) => {
+              if (process.env['VERBOSE']) {
+                log.show();
+              }
+            },
+            exec: (logs, info) => {
+              expect(logs.length).toEqual(expectedReads);
             }
-          },
-          exec: (logs, info) => {
-            expect(logs.length).toEqual(expectedReads);
-          }
-        });
+          });
+        }
       }, 600000);
     });
   });
