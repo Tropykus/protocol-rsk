@@ -33,6 +33,6 @@
     "**/ganache-core": "https://github.com/compound-finance/ganache-core.git#jflatow/unbreak-fork"
   },
   "engines": {
-    "node": "=12.18.4"
+    "node": "=12.19.0"
   }
 }
