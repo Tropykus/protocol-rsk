@@ -54,13 +54,13 @@ async function redeemUnderlying(cToken, redeemer, redeemTokens, redeemAmount) {
   return send(cToken, 'redeemUnderlying', [redeemAmount], {from: redeemer});
 }
 
-describe('CEther', () => {
+describe('CRBTC', () => {
   let root, minter, redeemer, accounts;
   let cToken;
 
   beforeEach(async () => {
     [root, minter, redeemer, ...accounts] = saddle.accounts;
-    cToken = await makeCToken({kind: 'cether', comptrollerOpts: {kind: 'bool'}});
+    cToken = await makeCToken({kind: 'crbtc', comptrollerOpts: {kind: 'bool'}});
     await fastForward(cToken, 1);
   });
 

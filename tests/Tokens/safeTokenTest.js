@@ -6,16 +6,16 @@ const {
 
 const exchangeRate = 5;
 
-describe('CEther', function () {
+describe('CRBTC', function () {
   let root, nonRoot, accounts;
   let cToken;
   beforeEach(async () => {
     [root, nonRoot, ...accounts] = saddle.accounts;
-    cToken = await makeCToken({kind: 'cether', comptrollerOpts: {kind: 'bool'}});
+    cToken = await makeCToken({kind: 'crbtc', comptrollerOpts: {kind: 'bool'}});
   });
 
   describe("getCashPrior", () => {
-    it("returns the amount of ether held by the cEther contract before the current message", async () => {
+    it("returns the amount of ether held by the cRBTC contract before the current message", async () => {
       expect(await call(cToken, 'harnessGetCashPrior', [], {value: 100})).toEqualNumber(0);
     });
   });

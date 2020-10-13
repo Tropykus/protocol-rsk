@@ -17,7 +17,7 @@ describe('PriceOracleProxy', () => {
 
   beforeEach(async () => {
     [root, ...accounts] = saddle.accounts;
-    cEth = await makeCToken({kind: "cether", comptrollerOpts: {kind: "v1-no-proxy"}, supportMarket: true});
+    cEth = await makeCToken({kind: "crbtc", comptrollerOpts: {kind: "v1-no-proxy"}, supportMarket: true});
     cUsdc = await makeCToken({comptroller: cEth.comptroller, supportMarket: true});
     cSai = await makeCToken({comptroller: cEth.comptroller, supportMarket: true});
     cDai = await makeCToken({comptroller: cEth.comptroller, supportMarket: true});
@@ -50,8 +50,8 @@ describe('PriceOracleProxy', () => {
     });
 
     it("sets address of cEth", async () => {
-      let configuredCEther = await call(oracle, "cEthAddress");
-      expect(configuredCEther).toEqual(cEth._address);
+      let configuredCRBTC = await call(oracle, "cEthAddress");
+      expect(configuredCRBTC).toEqual(cEth._address);
     });
 
     it("sets address of cUSDC", async () => {

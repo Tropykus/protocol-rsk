@@ -1,6 +1,6 @@
 pragma solidity ^0.5.16;
 
-import "./CEther.sol";
+import "./CRBTC.sol";
 
 /**
  * @title Compound's Maximillion Contract
@@ -8,40 +8,40 @@ import "./CEther.sol";
  */
 contract Maximillion {
     /**
-     * @notice The default cEther market to repay in
+     * @notice The default cRBTC market to repay in
      */
-    CEther public cEther;
+    CRBTC public cRBTC;
 
     /**
-     * @notice Construct a Maximillion to repay max in a CEther market
+     * @notice Construct a Maximillion to repay max in a CRBTC market
      */
-    constructor(CEther cEther_) public {
-        cEther = cEther_;
+    constructor(CRBTC cRBTC_) public {
+        cRBTC = cRBTC_;
     }
 
     /**
-     * @notice msg.sender sends Ether to repay an account's borrow in the cEther market
+     * @notice msg.sender sends Ether to repay an account's borrow in the cRBTC market
      * @dev The provided Ether is applied towards the borrow balance, any excess is refunded
      * @param borrower The address of the borrower account to repay on behalf of
      */
     function repayBehalf(address borrower) public payable {
-        repayBehalfExplicit(borrower, cEther);
+        repayBehalfExplicit(borrower, cRBTC);
     }
 
     /**
-     * @notice msg.sender sends Ether to repay an account's borrow in a cEther market
+     * @notice msg.sender sends Ether to repay an account's borrow in a cRBTC market
      * @dev The provided Ether is applied towards the borrow balance, any excess is refunded
      * @param borrower The address of the borrower account to repay on behalf of
-     * @param cEther_ The address of the cEther contract to repay in
+     * @param cRBTC_ The address of the cRBTC contract to repay in
      */
-    function repayBehalfExplicit(address borrower, CEther cEther_) public payable {
+    function repayBehalfExplicit(address borrower, CRBTC cRBTC_) public payable {
         uint received = msg.value;
-        uint borrows = cEther_.borrowBalanceCurrent(borrower);
+        uint borrows = cRBTC_.borrowBalanceCurrent(borrower);
         if (received > borrows) {
-            cEther_.repayBorrowBehalf.value(borrows)(borrower);
+            cRBTC_.repayBorrowBehalf.value(borrows)(borrower);
             msg.sender.transfer(received - borrows);
         } else {
-            cEther_.repayBorrowBehalf.value(received)(borrower);
+            cRBTC_.repayBorrowBehalf.value(received)(borrower);
         }
     }
 }

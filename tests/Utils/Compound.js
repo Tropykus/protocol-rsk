@@ -111,7 +111,7 @@ async function makeCToken(opts = {}) {
   const interestRateModel = opts.interestRateModel || await makeInterestRateModel(opts.interestRateModelOpts);
   const exchangeRate = etherMantissa(dfn(opts.exchangeRate, 1));
   const decimals = etherUnsigned(dfn(opts.decimals, 8));
-  const symbol = opts.symbol || (kind === 'cether' ? 'cETH' : 'cOMG');
+  const symbol = opts.symbol || (kind === 'crbtc' ? 'cRBTC' : 'cOMG');
   const name = opts.name || `CToken ${symbol}`;
   const admin = opts.admin || root;
 
@@ -119,8 +119,8 @@ async function makeCToken(opts = {}) {
   let cDelegator, cDelegatee, cDaiMaker;
 
   switch (kind) {
-    case 'cether':
-      cToken = await deploy('CEtherHarness',
+    case 'crbtc':
+      cToken = await deploy('CRBTCHarness',
         [
           comptroller._address,
           interestRateModel._address,
@@ -286,11 +286,11 @@ async function setBalance(cToken, account, balance) {
   return await send(cToken, 'harnessSetBalance', [account, balance]);
 }
 
-async function setEtherBalance(cEther, balance) {
-  const current = await etherBalance(cEther._address);
+async function setEtherBalance(cRBTC, balance) {
+  const current = await etherBalance(cRBTC._address);
   const root = saddle.account;
-  expect(await send(cEther, 'harnessDoTransferOut', [root, current])).toSucceed();
-  expect(await send(cEther, 'harnessDoTransferIn', [root, balance], { value: balance })).toSucceed();
+  expect(await send(cRBTC, 'harnessDoTransferOut', [root, current])).toSucceed();
+  expect(await send(cRBTC, 'harnessDoTransferIn', [root, balance], { value: balance })).toSucceed();
 }
 
 async function getBalances(cTokens, accounts) {

@@ -18,8 +18,8 @@ contract PriceOracleProxy is PriceOracle {
     /// @notice Address of the guardian, which may set the SAI price once
     address public guardian;
 
-    /// @notice Address of the cEther contract, which has a constant price
-    address public cEthAddress;
+    /// @notice Address of the cRBTC contract, which has a constant price
+    address public cRBTCAddress;
 
     /// @notice Address of the cUSDC contract, which we hand pick a key for
     address public cUsdcAddress;
@@ -45,7 +45,7 @@ contract PriceOracleProxy is PriceOracle {
     /**
      * @param guardian_ The address of the guardian, which may set the SAI price once
      * @param v1PriceOracle_ The address of the v1 price oracle, which will continue to operate and hold prices for collateral assets
-     * @param cEthAddress_ The address of cETH, which will return a constant 1e18, since all prices relative to ether
+     * @param cRBTCAddress_ The address of cETH, which will return a constant 1e18, since all prices relative to ether
      * @param cUsdcAddress_ The address of cUSDC, which will be read from a special oracle key
      * @param cSaiAddress_ The address of cSAI, which may be read directly from storage
      * @param cDaiAddress_ The address of cDAI, which will be read from a special oracle key
@@ -53,7 +53,7 @@ contract PriceOracleProxy is PriceOracle {
      */
     constructor(address guardian_,
                 address v1PriceOracle_,
-                address cEthAddress_,
+                address cRBTCAddress_,
                 address cUsdcAddress_,
                 address cSaiAddress_,
                 address cDaiAddress_,
@@ -61,7 +61,7 @@ contract PriceOracleProxy is PriceOracle {
         guardian = guardian_;
         v1PriceOracle = V1PriceOracleInterface(v1PriceOracle_);
 
-        cEthAddress = cEthAddress_;
+        cRBTCAddress = cRBTCAddress_;
         cUsdcAddress = cUsdcAddress_;
         cSaiAddress = cSaiAddress_;
         cDaiAddress = cDaiAddress_;
@@ -76,7 +76,7 @@ contract PriceOracleProxy is PriceOracle {
     function getUnderlyingPrice(CToken cToken) public view returns (uint) {
         address cTokenAddress = address(cToken);
 
-        if (cTokenAddress == cEthAddress) {
+        if (cTokenAddress == cRBTCAddress) {
             // ether always worth 1
             return 1e18;
         }
