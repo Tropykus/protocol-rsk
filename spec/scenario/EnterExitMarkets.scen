@@ -100,14 +100,14 @@ Test "Realistic Market Scenario"
 	PricedComptroller
 	ListedCToken ZRX cZRX
 	SetPriceCF cZRX 0.002 0.4
-	ListedEtherToken cETH
-	Comptroller SetCollateralFactor cEth 0.8
+	ListedEtherToken cRBTC
+	Comptroller SetCollateralFactor cRBTC 0.8
 	ListedCToken BAT cBAT
 	SetPriceCF cBAT 0.0015 0.3
-	-- Mint some cZRX and cETH
+	-- Mint some cZRX and cRBTC
 	Prep Geoff 1250e18 ZRX cZRX
 	Mint Geoff 1250e18 cZRX -- Liquidity -> 0.4 * 0.002 * 1250e18 = 1.0e18
-	SendMintEth Geoff 2.5e18 cETH -- Liqiuidity -> 0.8 * 1.0 * 2.5e18 = 2.0e18
+	SendMintEth Geoff 2.5e18 cRBTC -- Liqiuidity -> 0.8 * 1.0 * 2.5e18 = 2.0e18
 	-- Check liquidity is zero when not in any markets
 	Assert Equal (Comptroller Liquidity Geoff) Zero
 	-- Enter ZRX and check liquidity
@@ -119,22 +119,22 @@ Test "Realistic Market Scenario"
 	Borrow Geoff 1000e18 cBAT -- 1000e18 * 0.0015 = 1.5e18 required liquidity
 							  -- But since we're only in ZRX, we only have 1.0e18 liquidity
 	Assert Failure COMPTROLLER_REJECTION BORROW_COMPTROLLER_REJECTION INSUFFICIENT_LIQUIDITY
-	-- Enter cETH and check liquidity
-	EnterMarkets Geoff cETH
-	Assert Equal (Comptroller Liquidity Geoff) 3.0e18 -- Sum of cETH and cZRX liquidity from above
+	-- Enter cRBTC and check liquidity
+	EnterMarkets Geoff cRBTC
+	Assert Equal (Comptroller Liquidity Geoff) 3.0e18 -- Sum of cRBTC and cZRX liquidity from above
 	-- Borrow previous BAT amount given liquidity
 	Borrow Geoff 1000e18 cBAT
 	Assert Equal (Comptroller Liquidity Geoff) 1.5e18 -- Less the borrow amount's toll
 	-- Try to exit a eth market but fail due to given borrow requiring eth as collateral
 	HoldInvariants
-	ExitMarket Geoff cETH
+	ExitMarket Geoff cRBTC
 	Assert Failure REJECTION EXIT_MARKET_REJECTION INSUFFICIENT_LIQUIDITY -- Liquidity check fails
-	Assert Equal (Comptroller AssetsIn Geoff) [(Address cZRX) (Address cBAT) (Address cETH)]
+	Assert Equal (Comptroller AssetsIn Geoff) [(Address cZRX) (Address cBAT) (Address cRBTC)]
 	-- Repay some borrow and exit market OMG
 	Allow Geoff cBAT
 	RepayBorrow Geoff 500e18 cBAT
 	Assert Equal (Comptroller Liquidity Geoff) 2.25e18 -- With 0.75e18 repaid
-	ExitMarket Geoff cETH
+	ExitMarket Geoff cRBTC
 	Assert Equal (Comptroller AssetsIn Geoff) [(Address cZRX) (Address cBAT)]
 	Assert Equal (Comptroller Liquidity Geoff) 0.25e18 -- Less Eth's 2.0e18 collateral weight
 	-- Try and exit cBAT (firist without, then after, repaying)

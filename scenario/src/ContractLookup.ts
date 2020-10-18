@@ -16,6 +16,7 @@ import { Erc20 } from './Contract/Erc20';
 import { InterestRateModel } from './Contract/InterestRateModel';
 import { PriceOracle } from './Contract/PriceOracle';
 import { Timelock } from './Contract/Timelock';
+import { toEncodableNum } from './Encoding';
 
 type ContractDataEl = string | Map<string, object> | undefined;
 
