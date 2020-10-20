@@ -17,6 +17,7 @@ import { InterestRateModel } from './Contract/InterestRateModel';
 import { PriceOracle } from './Contract/PriceOracle';
 import { Timelock } from './Contract/Timelock';
 
+
 type ContractDataEl = string | Map<string, object> | undefined;
 
 function getContractData(world: World, indices: string[][]): ContractDataEl {

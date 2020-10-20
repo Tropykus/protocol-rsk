@@ -142,12 +142,12 @@ Test "Reduce reserves for CErc20 from Timelock and send reserves to external add
 
 Test "Reduce reserves for CEther from Timelock and send reserves to external address"
     NewComptroller
-    ListedEtherToken cETH initialExchangeRate:1e9
-    CallMintEth Geoff 50e18 cETH
-    Assert Equal (Erc20 cETH TokenBalance Geoff) (Exactly 500e8)
-    Assert Equal (CToken cETH UnderlyingBalance Geoff) (Exactly 50e18)
-    Assert Equal (CToken cETH ExchangeRate) (Exactly 1e9)
-    BorrowAndRepayEthWithInterest cETH 10e18 5e18 interestRate:0.000001 blocks:500000 reserveRate:0.2
+    ListedEtherToken cRBTC initialExchangeRate:1e9
+    CallMintEth Geoff 50e18 cRBTC
+    Assert Equal (Erc20 cRBTC TokenBalance Geoff) (Exactly 500e8)
+    Assert Equal (CToken cRBTC UnderlyingBalance Geoff) (Exactly 50e18)
+    Assert Equal (CToken cRBTC ExchangeRate) (Exactly 1e9)
+    BorrowAndRepayEthWithInterest cRBTC 10e18 5e18 interestRate:0.000001 blocks:500000 reserveRate:0.2
     -- We've accrued 10% interest for 5 blocks, or 50% of the amount,
     --   thus, we should have accrued 5e18 of interest for the protocol
     --   The reserves should get 20% of this, or 1e18, and the rest
@@ -155,30 +155,30 @@ Test "Reduce reserves for CEther from Timelock and send reserves to external add
     --   let's check that account is given correct new balance.
     FreezeTime 90
     Timelock Deploy Jared 604800
-    Assert Equal (EtherBalance cETH) (Exactly 55e18)
+    Assert Equal (EtherBalance cRBTC) (Exactly 55e18)
     Assert Equal (EtherBalance (Timelock Address)) (Exactly 0e18)
-    Assert Equal (Erc20 cETH TokenBalance Geoff) (Exactly 500e8)
-    Assert Equal (CToken cETH Reserves) (Exactly 1e18)
-    Assert Equal (CToken cETH UnderlyingBalance Geoff) (Exactly 54e18)
+    Assert Equal (Erc20 cRBTC TokenBalance Geoff) (Exactly 500e8)
+    Assert Equal (CToken cRBTC Reserves) (Exactly 1e18)
+    Assert Equal (CToken cRBTC UnderlyingBalance Geoff) (Exactly 54e18)
     -- (55.0e18+0.0e18-1.0e18)/500.0e8
-    Assert Equal (CToken cETH ExchangeRate) (Exactly 1.08e9)
+    Assert Equal (CToken cRBTC ExchangeRate) (Exactly 1.08e9)
     -- Set Timelock as admin
-    From Root (CToken cETH SetPendingAdmin (Timelock Address))
+    From Root (CToken cRBTC SetPendingAdmin (Timelock Address))
     -- Queue Transactions
-    From Jared (Timelock QueueTransaction (CToken cETH Address) 0 604900 "_acceptAdmin()" "")
-    From Jared (Timelock QueueTransaction (CToken cETH Address) 0 604900 "_reduceReserves(uint256)" "1000000000000000000")
+    From Jared (Timelock QueueTransaction (CToken cRBTC Address) 0 604900 "_acceptAdmin()" "")
+    From Jared (Timelock QueueTransaction (CToken cRBTC Address) 0 604900 "_reduceReserves(uint256)" "1000000000000000000")
     From Jared (Timelock QueueTransaction Jared 1000000000000000000 604900 "" "")
     FreezeTime 604900
-    From Jared (Timelock ExecuteTransaction (CToken cETH Address) 0 604900 "_acceptAdmin()" "")
+    From Jared (Timelock ExecuteTransaction (CToken cRBTC Address) 0 604900 "_acceptAdmin()" "")
     -- Now, let's pull out all of our reserves (1e18)
-    From Jared (Timelock ExecuteTransaction (CToken cETH Address) 0 604900 "_reduceReserves(uint256)" "1000000000000000000")
+    From Jared (Timelock ExecuteTransaction (CToken cRBTC Address) 0 604900 "_reduceReserves(uint256)" "1000000000000000000")
     Assert Equal (EtherBalance (Timelock Address)) 1e18
-    Assert Equal (EtherBalance cETH) (Exactly 54e18)
-    Assert Equal (Erc20 cETH TokenBalance Geoff) (Exactly 500e8)
-    Assert Equal (CToken cETH Reserves) (Exactly 0e18)
-    Assert Equal (CToken cETH UnderlyingBalance Geoff) (Exactly 54e18)
+    Assert Equal (EtherBalance cRBTC) (Exactly 54e18)
+    Assert Equal (Erc20 cRBTC TokenBalance Geoff) (Exactly 500e8)
+    Assert Equal (CToken cRBTC Reserves) (Exactly 0e18)
+    Assert Equal (CToken cRBTC UnderlyingBalance Geoff) (Exactly 54e18)
     -- (54.0e18+0.0e18-0.0e18)/500.0e8
-    Assert Equal (CToken cETH ExchangeRate) (Exactly 1.08e9)
+    Assert Equal (CToken cRBTC ExchangeRate) (Exactly 1.08e9)
     Expect Changes (EtherBalance Jared) 1e18
     Trx GasPrice 0 (From Jared (Timelock ExecuteTransaction Jared 1000000000000000000 604900 "" ""))
     Assert Equal (EtherBalance (Timelock Address)) (Exactly 0e18)

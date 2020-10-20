@@ -57,7 +57,7 @@ Macro NewCTokenImmutable erc20 cToken borrowRate=0.000005 initialExchangeRate=2e
 
 Macro NewEtherToken cToken borrowRate=0.000005 initialExchangeRate=2e9 decimals=8 admin=Admin
     InterestRateModel Deploy Fixed StdInterest borrowRate -- Note: interest rate model probably shouldn't be global
-    CToken Deploy CEtherScenario cToken cToken (Comptroller Address) (InterestRateModel StdInterest Address) initialExchangeRate decimals admin
+    CToken Deploy CRBTCScenario cToken cToken (Comptroller Address) (InterestRateModel StdInterest Address) initialExchangeRate decimals admin
 
 Macro ListedCToken erc20 cToken borrowRate=0.000005 initialExchangeRate=2e9 decimals=8 tokenType=Standard delegatorType=CErc20DelegatorScenario cTokenType=CErc20DelegateScenario admin=Admin
     NewCToken erc20 cToken borrowRate initialExchangeRate decimals tokenType delegatorType cTokenType admin
@@ -70,7 +70,7 @@ Macro ListedCTokenImmutable erc20 cToken borrowRate=0.000005 initialExchangeRate
 Macro ListedEtherToken cToken borrowRate=0.000005 initialExchangeRate=2e9 decimals=8 admin=Admin
     NewEtherToken cToken borrowRate initialExchangeRate decimals admin
     Comptroller SupportMarket cToken
-    PriceOracleProxy Deploy Admin (PriceOracle Address) (Address cETH) (Address Zero) (Address Zero) (Address Zero) (Address Zero)
+    PriceOracleProxy Deploy Admin (PriceOracle Address) (Address cRBTC) (Address Zero) (Address Zero) (Address Zero) (Address Zero)
     Comptroller SetPriceOracle (PriceOracleProxy Address)
 
 Macro ListedEtherTokenMinted cToken borrowRate=0.000005 initialExchangeRate=2e9 decimals=8 admin=Admin
@@ -221,23 +221,23 @@ Macro BorrowAndRepayWithInterest erc20 cToken amount interestAmount interestRate
 
 -- Macro for performing a borrow with the sole
 -- purpose of adding interest to the ether market
-Macro BorrowAndRepayEthWithInterest cEther amount interestAmount interestRate blocks reserveRate=0
+Macro BorrowAndRepayEthWithInterest cRBTC amount interestAmount interestRate blocks reserveRate=0
     -- TODO: Make invariant success for these?
     -- TODO: Named args as macros
     InterestRateModel Deploy Fixed Std interestRate
-    CToken cEther SetInterestRateModel (InterestRateModel Std Address)
-    CToken cEther SetReserveFactor reserveRate
+    CToken cRBTC SetInterestRateModel (InterestRateModel Std Address)
+    CToken cRBTC SetReserveFactor reserveRate
     ListedCToken COLLAT cCOLLAT
     Comptroller SetCollateralFactor cCOLLAT 0.9
     Prep Torrey 1e30 COLLAT cCOLLAT
     Mint Torrey 1e30 cCOLLAT
-    EnterMarkets Torrey cCOLLAT cEther
+    EnterMarkets Torrey cCOLLAT cRBTC
     Assert True (Comptroller CheckMembership Torrey cCOLLAT)
-    Assert True (Comptroller CheckMembership Torrey cEther)
-    Borrow Torrey amount cEther
+    Assert True (Comptroller CheckMembership Torrey cRBTC)
+    Borrow Torrey amount cRBTC
     -- Cool, we've borrowed, now let's accrue interest then repay all
     FastForward blocks Blocks
-    -- RepayBorrow Torrey (CToken BorrowBalance Torrey) cEther
-    RepayBorrowEth Torrey amount cEther
-    RepayBorrowEth Torrey interestAmount cEther
-    Assert Equal (CToken cEther BorrowBalance Torrey) Zero
+    -- RepayBorrow Torrey (CToken BorrowBalance Torrey) cRBTC
+    RepayBorrowEth Torrey amount cRBTC
+    RepayBorrowEth Torrey interestAmount cRBTC
+    Assert Equal (CToken cRBTC BorrowBalance Torrey) Zero
