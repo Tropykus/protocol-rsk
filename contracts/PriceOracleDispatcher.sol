@@ -16,7 +16,12 @@ contract PriceOracleDispatcher is PriceOracle {
 
     CtokenDetail[] public cTokensArray;
 
-    function cTokenArrayCount() public view returns (uint256) {return cTokensArray.length;}
+    /// @notice Frozen SAI price (or 0 if not set yet)
+    uint256 public saiPrice;
+
+    function cTokenArrayCount() public view returns (uint256) {
+        return cTokensArray.length;
+    }
 
     /// @param guardian_ The address of the guardian, which may set the
     constructor(address guardian_) public {
@@ -35,7 +40,7 @@ contract PriceOracleDispatcher is PriceOracle {
         if (oracleAdapter == address(0)) {
             return 0;
         }
-        return PriceOracleAdapter(oracleAdapter).getPrice();
+        return PriceOracleAdapter(oracleAdapter).assetPrices(address(cToken));
     }
 
     /**
@@ -51,18 +56,36 @@ contract PriceOracleDispatcher is PriceOracle {
             msg.sender == guardian,
             "PriceOracleDispatcher: only guardian may set the address"
         );
-        require(addressToken != address(0), "PriceOracleDispatcher: ");
-        require(addressAdapter != address(0), "PriceOracleDispatcher: ");
-        //validate exist addressToken in cTokensArray
-        if (tokenAdapter[addressToken] != address(0)) {
-            cTokensArray.push(
-                CtokenDetail({
-                    cToken: addressToken,
-                    cTokenName: CToken(addressAdapter).symbol()
-                })
-            );
+        require(
+            addressToken != address(0),
+            "PriceOracleDispatcher: address token can not be 0"
+        );
+        require(
+            addressAdapter != address(0),
+            "PriceOracleDispatcher: address adapter can not be 0"
+        );
+        //validate and set new cToken in CtokenDetail
+        if (tokenAdapter[addressToken] == address(0)) {
+            CtokenDetail memory _cTokenD = CtokenDetail({
+                cToken: addressToken,
+                //TODO cToken.symbol()
+                cTokenName: "symbol"
+            });
+
+            cTokensArray.push(_cTokenD);
         }
         //set token => adapter
         tokenAdapter[addressToken] = addressAdapter;
+    }
+
+    /**
+     * @notice Set the price of SAI, permanently
+     * @param price The price for SAI
+     */
+    function setSaiPrice(uint256 price) public {
+        require(msg.sender == guardian, "only guardian may set the SAI price");
+        require(saiPrice == 0, "SAI price may only be set once");
+        require(price < 0.1e18, "SAI price must be < 0.1 ETH");
+        saiPrice = price;
     }
 }
