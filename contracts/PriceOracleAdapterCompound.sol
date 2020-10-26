@@ -8,45 +8,54 @@ interface V1PriceOracleInterface {
 }
 
 contract PriceOracleAdapterCompound is PriceOracleAdapter {
-    event PriceOracleAdapterUpdated(address oldAddress, address newAddress);
+    /// @notice Address of the guardian
+    address public guardian;
+    /// @notice Event oracle key updateed
     event PriceOracleKeyUpdated(
         address oldAddress,
         address newAddress,
         address cTokenAddress
     );
-    /// @notice The price oracle, which will continue to serve prices for MoC
+    /// @notice The price oracle, which will continue to serve prices of compound
     V1PriceOracleInterface internal priceProviderInterface;
 
-    // mapping(addressCtoken => addressKeyOracle) public keyAddreses;
+    // mapping(addressCtoken => addressKeyOracle);
     mapping(address => address) public keyAddresses;
 
-    constructor() public {
+    /// @notice Frozen SAI price (or 0 if not set yet)
+    uint256 public saiPrice;
+
+    constructor(address guardian_) public {
+        guardian = guardian_;
         priceProviderInterface = V1PriceOracleInterface(address(0));
     }
 
     /**
-     * @notice Get the price of MoC
+     * @notice Get the price
+     * @param cTokenAddress address of cToken
      * @return The price
      */
     function assetPrices(address cTokenAddress) public view returns (uint256) {
         //get keyAddress or undlerlyingAddress
+        //TODO sDai freeze price => deploy particualr v1Price(?)
         address asset = (keyAddresses[cTokenAddress] != address(0))
             ? address(keyAddresses[cTokenAddress])
             : address(CErc20(cTokenAddress).underlying());
-        
-        uint256 price = priceProviderInterface.assetPrices(asset);
-        return price;
+        return priceProviderInterface.assetPrices(asset);
     }
 
+    /**
+     * @notice Set the address of price provider
+     * @param priceProviderAddress address of price provider
+     */
     function setPriceProvider(address priceProviderAddress) public {
-        //TODO and guardian is gone(?)
-        // require(
-        //     msg.sender == guardian,
-        //     "PriceOracleDispatcher: only guardian may set the address"
-        // );
+        require(
+            msg.sender == guardian,
+            "PriceOracleAdapterCompound: only guardian may set the address"
+        );
         require(
             priceProviderAddress != address(0),
-            "PriceOracleAdapterMoc: address could not be 0"
+            "PriceOracleAdapterCompound: address could not be 0"
         );
         //set old address
         address oldBtcPriceProviderAddress = address(priceProviderInterface);
@@ -59,19 +68,23 @@ contract PriceOracleAdapterCompound is PriceOracleAdapter {
         );
     }
 
+    /**
+     * @notice Set the key oracle address of cToken address
+     * @param cTokenAddress address of key ctoken
+     * @param keyOracle address of key oracle 
+     */
     function setKeyOracle(address cTokenAddress, address keyOracle) public {
-        //TODO and guardian is gone(?)
-        // require(
-        //     msg.sender == guardian,
-        //     "PriceOracleDispatcher: only guardian may set the address"
-        // );
+        require(
+            msg.sender == guardian,
+            "PriceOracleAdapterCompound: only guardian may set the address"
+        );
         require(
             cTokenAddress != address(0),
-            "PriceOracleAdapterMoc: cTokenAddress could not be 0"
+            "PriceOracleAdapterCompound: cTokenAddress could not be 0"
         );
         require(
             keyOracle != address(0),
-            "PriceOracleAdapterMoc: keyOracle could not be 0"
+            "PriceOracleAdapterCompound: keyOracle could not be 0"
         );
         //set old address
         address oldBtcPriceProviderAddress = address(
@@ -85,5 +98,16 @@ contract PriceOracleAdapterCompound is PriceOracleAdapter {
             address(keyAddresses[cTokenAddress]),
             cTokenAddress
         );
+    }
+
+    /**
+     * @notice Set the price of SAI, permanently
+     * @param price The price for SAI
+     */
+    function setSaiPrice(uint256 price) public {
+        require(msg.sender == guardian, "only guardian may set the SAI price");
+        require(saiPrice == 0, "SAI price may only be set once");
+        require(price < 0.1e18, "SAI price must be < 0.1 ETH");
+        saiPrice = price;
     }
 }

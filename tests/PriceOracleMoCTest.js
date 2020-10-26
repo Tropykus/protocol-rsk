@@ -19,8 +19,8 @@ describe('PriceOracleDispatcher', () => {
     const comptroller = await deploy('ComptrollerHarness');
     //set PriceProviderMoC
     const priceOracleMoC = await deploy('MockPriceProviderMoC', [new BigNumber('1e+18')]);
-    const priceAdapterMoc = await deploy('PriceOracleAdapterMoc');
-    const priceAdapterCompound = await deploy('PriceOracleAdapterCompound');
+    const priceAdapterMoc = await deploy('PriceOracleAdapterMoc', [root]);
+    const priceAdapterCompound = await deploy('PriceOracleAdapterCompound', [root]);
     //set Simple PriceProvider
     const simplePriceOracle = await deploy('SimplePriceOracle');
     //set token
@@ -44,16 +44,22 @@ describe('PriceOracleDispatcher', () => {
       expect(configuredGuardian).toEqual(root);
     });
 
-    it("sets address of oracle MoC", async () => {
+    it("sets address of CRBTC", async () => {
+      await send(oracleDispatcher, "setCRBTCAddress", [address(0)]);
+      let CRBTCAddresss = await call(oracleDispatcher, "cRBTCAddress");
+      expect(CRBTCAddresss).toEqual(address(0));
+    });
+
+    it("sets address of oracle MoC to adapter", async () => {
       const result = await send(adapterMoc, "setPriceProvider", [backingOracleMoC._address]);
       //capture and validate event
-      expect(result).toHaveLog('PriceOracleAdapterMocUpdated', {
+      expect(result).toHaveLog('PriceOracleAdapterUpdated', {
         oldAddress: address(0),
         newAddress: backingOracleMoC._address,
       });
     });
 
-    it("sets address of oracle Compound", async () => {
+    it("sets address of oracle Compound to adapter", async () => {
       const result = await send(adapterCompound, "setPriceProvider", [backingOracle._address]);
       //capture and validate event
       expect(result).toHaveLog('PriceOracleAdapterUpdated', {
@@ -109,11 +115,12 @@ describe('PriceOracleDispatcher', () => {
 
     let setMockToAdapter = async (adapter, mockAddress) => {
       const result = await send(adapter, "setPriceProvider", [mockAddress]);
+      //TODO evaluate event
     }
 
     it("always returns 1e18 for cRBTC", async () => {
-      //set mock to adapter
-      setMockToAdapter(adapterMoc, backingOracleMoC._address);
+      //set crbtc address to dispatcher
+      await send(oracleDispatcher, "setCRBTCAddress", [cRBTC._address]);
       //validate value
       await readAndVerifyOraclePrice(cRBTC, 1, adapterMoc);
     });
@@ -165,21 +172,21 @@ describe('PriceOracleDispatcher', () => {
       await readAndVerifyOraclePrice(cDai, 0.01, adapterCompound);
       await readAndVerifyOraclePrice(cSai, 0.01, adapterCompound);
 
-      await send(oracleDispatcher, "setSaiPrice", [etherMantissa(0.05)]);
+      await send(adapterCompound, "setSaiPrice", [etherMantissa(0.05)]);
 
       await readAndVerifyOraclePrice(cDai, 0.01, adapterCompound);
       // TODO dispatcher no verify Sai than proxy
       // await readAndVerifyOraclePrice(cSai, 0.05, backingOracleAux);
 
-      await expect(send(oracleDispatcher, "setSaiPrice", [1])).rejects.toRevert("revert SAI price may only be set once");
+      await expect(send(adapterCompound, "setSaiPrice", [1])).rejects.toRevert("revert SAI price may only be set once");
     });
 
     it("only guardian may set the sai price", async () => {
-      await expect(send(oracleDispatcher, "setSaiPrice", [1], { from: accounts[0] })).rejects.toRevert("revert only guardian may set the SAI price");
+      await expect(send(adapterCompound, "setSaiPrice", [1], { from: accounts[0] })).rejects.toRevert("revert only guardian may set the SAI price");
     });
 
     it("sai price must be bounded", async () => {
-      await expect(send(oracleDispatcher, "setSaiPrice", [etherMantissa(10)])).rejects.toRevert("revert SAI price must be < 0.1 ETH");
+      await expect(send(adapterCompound, "setSaiPrice", [etherMantissa(10)])).rejects.toRevert("revert SAI price must be < 0.1 ETH");
     });
   });
 });

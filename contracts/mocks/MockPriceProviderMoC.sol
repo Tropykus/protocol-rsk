@@ -1,6 +1,5 @@
 pragma solidity ^0.5.16;
 
-import "../PriceOracleAdapter.sol";
 import "../CErc20.sol";
 
 /**

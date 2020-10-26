@@ -7,14 +7,16 @@ interface PriceProviderMoC {
 }
 
 contract PriceOracleAdapterMoc is PriceOracleAdapter {
-    event PriceOracleAdapterMocUpdated(address oldAddress, address newAddress);
+    /// @notice Address of the guardian
+    address public guardian;
     /// @notice The price oracle, which will continue to serve prices for MoC
     PriceProviderMoC internal priceProviderMoC;
 
     /**
      * @notice Construct empty
      */
-    constructor() public {
+    constructor(address guardian_) public {
+        guardian = guardian_;
         // priceProviderMoC = PriceProviderMoC(address(0));
     }
 
@@ -30,12 +32,15 @@ contract PriceOracleAdapterMoc is PriceOracleAdapter {
         return uint256(price);
     }
 
+    /**
+     * @notice Set the address of price provider
+     * @param priceProviderAddress address of price provider
+     */
     function setPriceProvider(address priceProviderAddress) public {
-        //TODO and guardian is gone(?)
-        // require(
-        //     msg.sender == guardian,
-        //     "PriceOracleDispatcher: only guardian may set the address"
-        // );
+        require(
+            msg.sender == guardian,
+            "PriceOracleAdapterMoc: only guardian may set the address"
+        );
         require(
             priceProviderAddress != address(0),
             "PriceOracleAdapterMoc: address could not be 0"
@@ -45,7 +50,7 @@ contract PriceOracleAdapterMoc is PriceOracleAdapter {
         //update interface address
         priceProviderMoC = PriceProviderMoC(priceProviderAddress);
         //emit event
-        emit PriceOracleAdapterMocUpdated(
+        emit PriceOracleAdapterUpdated(
             oldPriceProviderAddress,
             address(priceProviderAddress)
         );

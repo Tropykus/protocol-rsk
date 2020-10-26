@@ -4,16 +4,20 @@ import "./PriceOracle.sol";
 import "./PriceOracleAdapter.sol";
 
 contract PriceOracleDispatcher is PriceOracle {
-    /// @notice Address of the guardian, which may set the SAI price once
+    /// @notice Address of the guardian
     address public guardian;
+    /// @notice Address of the guardian
+    address public cRBTCAddress;
     /// @notice Mapping of the cTokenAddress => adapterAddress
     mapping(address => address) public tokenAdapter;
 
+    /// @notice Struct of the cTokensDetail
     struct CtokenDetail {
         address cToken;
         string cTokenName;
     }
 
+    /// @notice Array of cTokensDetail
     CtokenDetail[] public cTokensArray;
 
     /// @notice Frozen SAI price (or 0 if not set yet)
@@ -34,7 +38,10 @@ contract PriceOracleDispatcher is PriceOracle {
      * @return The underlying asset price mantissa (scaled by 1e18)
      */
     function getUnderlyingPrice(CToken cToken) public view returns (uint256) {
-        //get adapter
+        //validate crtbc address
+        if (address(cToken) == cRBTCAddress) {
+            return 1e18;
+        }
         address oracleAdapter = tokenAdapter[address(cToken)];
         //validate mapping
         if (oracleAdapter == address(0)) {
@@ -68,8 +75,7 @@ contract PriceOracleDispatcher is PriceOracle {
         if (tokenAdapter[addressToken] == address(0)) {
             CtokenDetail memory _cTokenD = CtokenDetail({
                 cToken: addressToken,
-                //TODO cToken.symbol()
-                cTokenName: "symbol"
+                cTokenName: CToken(addressToken).symbol()
             });
 
             cTokensArray.push(_cTokenD);
@@ -79,13 +85,15 @@ contract PriceOracleDispatcher is PriceOracle {
     }
 
     /**
-     * @notice Set the price of SAI, permanently
-     * @param price The price for SAI
+     * @notice Set the underlying price of a listed cToken asset
+     * @param addressCRBTC Address of CRBTC
      */
-    function setSaiPrice(uint256 price) public {
-        require(msg.sender == guardian, "only guardian may set the SAI price");
-        require(saiPrice == 0, "SAI price may only be set once");
-        require(price < 0.1e18, "SAI price must be < 0.1 ETH");
-        saiPrice = price;
+    function setCRBTCAddress(address addressCRBTC) public {
+        //validate only guardian can set
+        require(
+            msg.sender == guardian,
+            "PriceOracleDispatcher: only guardian may set the address"
+        );
+        cRBTCAddress = addressCRBTC;
     }
 }
