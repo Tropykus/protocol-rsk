@@ -32,7 +32,7 @@ describe('PriceOracleProxy', () => {
         cEth._address,
         //cUsdc._address,
         //cSai._address,
-        cDai._address,
+        //cDai._address,
         //cUsdt._address
       ]
      );
@@ -64,10 +64,10 @@ describe('PriceOracleProxy', () => {
       expect(configuredCSAI).toEqual(cSai._address);
     });*/
 
-    it("sets address of cDAI", async () => {
+    /*it("sets address of cDAI", async () => {
       let configuredCDAI = await call(oracle, "cDaiAddress");
       expect(configuredCDAI).toEqual(cDai._address);
-    });
+    });*/
 
     /*it("sets address of cUSDT", async () => {
       let configuredCUSDT = await call(oracle, "cUsdtAddress");

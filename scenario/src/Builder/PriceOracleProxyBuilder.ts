@@ -40,7 +40,7 @@ export async function buildPriceOracleProxy(world: World, from: string, event: E
       ],
       async (world, {guardian, priceOracle, cRBTC, cUSDC, cSAI, cDAI, cUSDT}) => {
         return {
-          invokation: await PriceOracleProxyContract.deploy<PriceOracleProxy>(world, from, [guardian.val, priceOracle.val, cRBTC.val, cDAI.val]),
+          invokation: await PriceOracleProxyContract.deploy<PriceOracleProxy>(world, from, [guardian.val, priceOracle.val, cRBTC.val/*, cDAI.val*/]),
           description: "Price Oracle Proxy",
           cRBTC: cRBTC.val,
           cUSDC: cUSDC.val,
