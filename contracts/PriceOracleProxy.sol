@@ -21,15 +21,6 @@ contract PriceOracleProxy is PriceOracle {
     /// @notice Address of the cRBTC contract, which has a constant price
     address public cRBTCAddress;
 
-    /// @notice Address of the cUSDC contract, which we hand pick a key for
-    address public cUsdcAddress;
-
-    /// @notice Address of the cUSDT contract, which uses the cUSDC price
-    address public cUsdtAddress;
-
-    /// @notice Address of the cSAI contract, which may have its price set
-    address public cSaiAddress;
-
     /// @notice Address of the cDAI contract, which we hand pick a key for
     address public cDaiAddress;
 
@@ -46,26 +37,17 @@ contract PriceOracleProxy is PriceOracle {
      * @param guardian_ The address of the guardian, which may set the SAI price once
      * @param v1PriceOracle_ The address of the v1 price oracle, which will continue to operate and hold prices for collateral assets
      * @param cRBTCAddress_ The address of cETH, which will return a constant 1e18, since all prices relative to ether
-     * @param cUsdcAddress_ The address of cUSDC, which will be read from a special oracle key
-     * @param cSaiAddress_ The address of cSAI, which may be read directly from storage
      * @param cDaiAddress_ The address of cDAI, which will be read from a special oracle key
-     * @param cUsdtAddress_ The address of cUSDT, which uses the cUSDC price
      */
     constructor(address guardian_,
                 address v1PriceOracle_,
                 address cRBTCAddress_,
-                address cUsdcAddress_,
-                address cSaiAddress_,
-                address cDaiAddress_,
-                address cUsdtAddress_) public {
+                address cDaiAddress_) public {
         guardian = guardian_;
         v1PriceOracle = V1PriceOracleInterface(v1PriceOracle_);
 
         cRBTCAddress = cRBTCAddress_;
-        cUsdcAddress = cUsdcAddress_;
-        cSaiAddress = cSaiAddress_;
         cDaiAddress = cDaiAddress_;
-        cUsdtAddress = cUsdtAddress_;
     }
 
     /**
@@ -81,17 +63,8 @@ contract PriceOracleProxy is PriceOracle {
             return 1e18;
         }
 
-        if (cTokenAddress == cUsdcAddress || cTokenAddress == cUsdtAddress) {
-            return v1PriceOracle.assetPrices(usdcOracleKey);
-        }
-
         if (cTokenAddress == cDaiAddress) {
             return v1PriceOracle.assetPrices(daiOracleKey);
-        }
-
-        if (cTokenAddress == cSaiAddress) {
-            // use the frozen SAI price if set, otherwise use the DAI price
-            return saiPrice > 0 ? saiPrice : v1PriceOracle.assetPrices(daiOracleKey);
         }
 
         // otherwise just read from v1 oracle
