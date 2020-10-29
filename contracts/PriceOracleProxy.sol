@@ -21,9 +21,6 @@ contract PriceOracleProxy is PriceOracle {
     /// @notice Address of the cRBTC contract, which has a constant price
     address public cRBTCAddress;
 
-    /// //LALALAnotice Address of the cDAI contract, which we hand pick a key for
-    //LALALAaddress public cDaiAddress;
-
     /// @notice Handpicked key for USDC
     address public constant usdcOracleKey = address(1);
 
@@ -37,17 +34,13 @@ contract PriceOracleProxy is PriceOracle {
      * @param guardian_ The address of the guardian, which may set the SAI price once
      * @param v1PriceOracle_ The address of the v1 price oracle, which will continue to operate and hold prices for collateral assets
      * @param cRBTCAddress_ The address of cETH, which will return a constant 1e18, since all prices relative to ether
-     * //LALALAparam cDaiAddress_ The address of cDAI, which will be read from a special oracle key
      */
     constructor(address guardian_,
                 address v1PriceOracle_,
-                address cRBTCAddress_/*,
-                //LALALAaddress cDaiAddress_*/) public {
+                address cRBTCAddress_) public {
         guardian = guardian_;
         v1PriceOracle = V1PriceOracleInterface(v1PriceOracle_);
-
         cRBTCAddress = cRBTCAddress_;
-        //LALALAcDaiAddress = cDaiAddress_;
     }
 
     /**
@@ -62,10 +55,6 @@ contract PriceOracleProxy is PriceOracle {
             // ether always worth 1
             return 1e18;
         }
-
-        /*//LALALAif (cTokenAddress == cDaiAddress) {
-            return v1PriceOracle.assetPrices(daiOracleKey);
-        }*/
 
         // otherwise just read from v1 oracle
         address underlying = CErc20(cTokenAddress).underlying();
