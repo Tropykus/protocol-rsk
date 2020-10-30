@@ -50,7 +50,7 @@ contract PriceOracleAdapterMoc is PriceOracleAdapter {
         //emit event
         emit PriceOracleAdapterUpdated(
             oldPriceProviderAddress,
-            address(priceProviderAddress)
+           priceProviderAddress
         );
     }
 }
