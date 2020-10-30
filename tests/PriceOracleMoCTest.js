@@ -67,6 +67,18 @@ describe('PriceOracleDispatcher', () => {
         newAddress: backingOracle._address,
       });
     });
+
+    it("revert when not account guardian try to set cRBTCAddress to proxy", async () => {
+      await expect(send(oracleDispatcher, "setCRBTCAddress", [address(0)], { from: accounts[0] })).rejects.toRevert("revert PriceOracleDispatcher: only guardian may set the address");
+    });
+
+    it("revert when not account guardian try to set provider to adapter MoC ", async () => {
+      await expect(send(adapterMoc, "setPriceProvider", [backingOracleMoC._address], { from: accounts[0] })).rejects.toRevert("revert PriceOracleAdapterMoc: only guardian may set the address");
+    });
+
+    it("revert when not account guardian try to set provider to adapter compund ", async () => {
+      await expect(send(adapterCompound, "setPriceProvider", [backingOracle._address], { from: accounts[0] })).rejects.toRevert("revert PriceOracleAdapterCompound: only guardian may set the address");
+    });
   });
 
   describe("mappingAdapterCtoken", () => {
@@ -84,6 +96,17 @@ describe('PriceOracleDispatcher', () => {
       expect(oracleAdapterAddress).toEqual(otherbackingOracleMoC);
     });
 
+    it("revert when sets oracle address(0) to cToken", async () => {
+      await expect(send(oracleDispatcher, "setAdapterToToken", [cRBTC._address, address(0)])).rejects.toRevert("revert PriceOracleDispatcher: address adapter can not be 0");
+    });
+
+    it("revert when sets oracle address to cToken address(0)", async () => {
+      await expect(send(oracleDispatcher, "setAdapterToToken", [address(0), backingOracleMoC._address])).rejects.toRevert("revert PriceOracleDispatcher: address token can not be 0");
+    });
+
+    it("revert when not account guardian try to sets oracle address to cToken", async () => {
+      await expect(send(oracleDispatcher, "setAdapterToToken", [cRBTC._address, backingOracleMoC._address], { from: accounts[0] })).rejects.toRevert("revert PriceOracleDispatcher: only guardian may set the address");
+    });
   });
 
   describe("getUnderlyingPrice", () => {
