@@ -24,9 +24,7 @@ contract PriceOracleAdapterMoc is PriceOracleAdapter {
      * @notice Get the price of MoC
      * @return The price
      */
-    function assetPrices(address cTokenAddress) public view returns (uint256) {
-        //TODO
-        cTokenAddress;
+    function assetPrices(address) public view returns (uint256) {
         (bytes32 price, bool has) = priceProviderMoC.peek();
         require(has, "PriceOracleAdapterMoc: Oracle have no Price");
         return uint256(price);
