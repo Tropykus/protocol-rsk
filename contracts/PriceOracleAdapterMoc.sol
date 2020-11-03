@@ -10,14 +10,13 @@ contract PriceOracleAdapterMoc is PriceOracleAdapter {
     /// @notice Address of the guardian
     address public guardian;
     /// @notice The price oracle, which will continue to serve prices for MoC
-    PriceProviderMoC internal priceProviderMoC;
+    PriceProviderMoC public priceProviderMoC;
 
     /**
      * @notice Construct empty
      */
     constructor(address guardian_) public {
         guardian = guardian_;
-        // priceProviderMoC = PriceProviderMoC(address(0));
     }
 
     /**

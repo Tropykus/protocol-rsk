@@ -17,7 +17,7 @@ contract PriceOracleAdapterCompound is PriceOracleAdapter {
         address cTokenAddress
     );
     /// @notice The price oracle, which will continue to serve prices of compound
-    V1PriceOracleInterface internal priceProviderInterface;
+    V1PriceOracleInterface public priceProviderInterface;
 
     // mapping(addressCtoken => addressKeyOracle);
     mapping(address => address) public oracleKeyAddress;
@@ -27,7 +27,6 @@ contract PriceOracleAdapterCompound is PriceOracleAdapter {
 
     constructor(address guardian_) public {
         guardian = guardian_;
-        priceProviderInterface = V1PriceOracleInterface(address(0));
     }
 
     /**
@@ -37,7 +36,6 @@ contract PriceOracleAdapterCompound is PriceOracleAdapter {
      */
     function assetPrices(address cTokenAddress) public view returns (uint256) {
         //get keyAddress or undlerlyingAddress
-        //TODO sDai freeze price => deploy particualr v1Price(?)
         address asset = (oracleKeyAddress[cTokenAddress] != address(0))
             ? address(oracleKeyAddress[cTokenAddress])
             : address(CErc20(cTokenAddress).underlying());
