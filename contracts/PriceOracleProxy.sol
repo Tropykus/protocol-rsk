@@ -20,9 +20,6 @@ contract PriceOracleProxy is PriceOracle {
     /// @notice Array of cTokensDetail
     CtokenDetail[] public cTokensArray;
 
-    /// @notice Frozen SAI price (or 0 if not set yet)
-    uint256 public saiPrice;
-
     /**
      * @notice Get the length of cTokensArray
      * @return The length of cTokensArray
@@ -49,8 +46,6 @@ contract PriceOracleProxy is PriceOracle {
         address oracleAdapter = tokenAdapter[address(cToken)];
         //validate mapping
         if (oracleAdapter == address(0)) {
-            //TODO remove this
-            // return PriceOracleAdapter(adapterMockAddress).assetPrices(address(cToken));
             return 0;
         }
         return PriceOracleAdapter(oracleAdapter).assetPrices(address(cToken));
