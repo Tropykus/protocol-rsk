@@ -1,11 +1,14 @@
-import {Contract} from '../Contract';
-import {Callable, Sendable} from '../Invokation';
-import {encodedNumber} from '../Encoding';
+import { Contract } from '../Contract';
+import { Callable, Sendable } from '../Invokation';
+import { encodedNumber } from '../Encoding';
 
 interface PriceOracleProxyMethods {
   getUnderlyingPrice(asset: string): Callable<number>
   v1PriceOracle(): Callable<string>;
   setSaiPrice(amount: encodedNumber): Sendable<number>
+  setAdapterToToken(cTokenAddress: string, adapterAddress: string): Sendable<number>
+  setCRBTCAddress(setCRBTCAddress: string): Sendable<number>
+  setMockAdapter(addressAdapter: string): Sendable<number>
 }
 
 export interface PriceOracleProxy extends Contract {
