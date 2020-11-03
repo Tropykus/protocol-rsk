@@ -132,27 +132,6 @@ async function makeCToken(opts = {}) {
         ])
       break;
 
-    case 'cdai':
-      cDaiMaker  = await deploy('CDaiDelegateMakerHarness');
-      underlying = cDaiMaker;
-      cDelegatee = await deploy('CDaiDelegateHarness');
-      cDelegator = await deploy('CErc20Delegator',
-        [
-          underlying._address,
-          comptroller._address,
-          interestRateModel._address,
-          exchangeRate,
-          name,
-          symbol,
-          decimals,
-          admin,
-          cDelegatee._address,
-          encodeParameters(['address', 'address'], [cDaiMaker._address, cDaiMaker._address])
-        ]
-      );
-      cToken = await saddle.getContractAt('CDaiDelegateHarness', cDelegator._address); // XXXS at
-      break;
-
     case 'cerc20':
     default:
       underlying = opts.underlying || await makeToken(opts.underlyingOpts);
