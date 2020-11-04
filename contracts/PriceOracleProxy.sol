@@ -1,71 +1,36 @@
 pragma solidity ^0.5.16;
 
-import "./CErc20.sol";
-import "./CToken.sol";
 import "./PriceOracle.sol";
-
-interface V1PriceOracleInterface {
-    function assetPrices(address asset) external view returns (uint);
-}
+import "./PriceOracleAdapter.sol";
 
 contract PriceOracleProxy is PriceOracle {
-    /// @notice Indicator that this is a PriceOracle contract (for inspection)
-    bool public constant isPriceOracle = true;
-
-    /// @notice The v1 price oracle, which will continue to serve prices for v1 assets
-    V1PriceOracleInterface public v1PriceOracle;
-
-    /// @notice Address of the guardian, which may set the SAI price once
+    /// @notice Address of the guardian
     address public guardian;
-
-    /// @notice Address of the cRBTC contract, which has a constant price
+    /// @notice Address of the guardian
     address public cRBTCAddress;
+    /// @notice Mapping of the cTokenAddress => adapterAddress
+    mapping(address => address) public tokenAdapter;
 
-    /// @notice Address of the cUSDC contract, which we hand pick a key for
-    address public cUsdcAddress;
+    /// @notice Struct of the cTokensDetail
+    struct CtokenDetail {
+        address cToken;
+        string cTokenName;
+    }
 
-    /// @notice Address of the cUSDT contract, which uses the cUSDC price
-    address public cUsdtAddress;
-
-    /// @notice Address of the cSAI contract, which may have its price set
-    address public cSaiAddress;
-
-    /// @notice Address of the cDAI contract, which we hand pick a key for
-    address public cDaiAddress;
-
-    /// @notice Handpicked key for USDC
-    address public constant usdcOracleKey = address(1);
-
-    /// @notice Handpicked key for DAI
-    address public constant daiOracleKey = address(2);
-
-    /// @notice Frozen SAI price (or 0 if not set yet)
-    uint public saiPrice;
+    /// @notice Array of cTokensDetail
+    CtokenDetail[] public cTokensArray;
 
     /**
-     * @param guardian_ The address of the guardian, which may set the SAI price once
-     * @param v1PriceOracle_ The address of the v1 price oracle, which will continue to operate and hold prices for collateral assets
-     * @param cRBTCAddress_ The address of cETH, which will return a constant 1e18, since all prices relative to ether
-     * @param cUsdcAddress_ The address of cUSDC, which will be read from a special oracle key
-     * @param cSaiAddress_ The address of cSAI, which may be read directly from storage
-     * @param cDaiAddress_ The address of cDAI, which will be read from a special oracle key
-     * @param cUsdtAddress_ The address of cUSDT, which uses the cUSDC price
+     * @notice Get the length of cTokensArray
+     * @return The length of cTokensArray
      */
-    constructor(address guardian_,
-                address v1PriceOracle_,
-                address cRBTCAddress_,
-                address cUsdcAddress_,
-                address cSaiAddress_,
-                address cDaiAddress_,
-                address cUsdtAddress_) public {
-        guardian = guardian_;
-        v1PriceOracle = V1PriceOracleInterface(v1PriceOracle_);
+    function cTokenArrayCount() public view returns (uint256) {
+        return cTokensArray.length;
+    }
 
-        cRBTCAddress = cRBTCAddress_;
-        cUsdcAddress = cUsdcAddress_;
-        cSaiAddress = cSaiAddress_;
-        cDaiAddress = cDaiAddress_;
-        cUsdtAddress = cUsdtAddress_;
+    /// @param guardian_ The address of the guardian, which may set the
+    constructor(address guardian_) public {
+        guardian = guardian_;
     }
 
     /**
@@ -73,40 +38,63 @@ contract PriceOracleProxy is PriceOracle {
      * @param cToken The cToken to get the underlying price of
      * @return The underlying asset price mantissa (scaled by 1e18)
      */
-    function getUnderlyingPrice(CToken cToken) public view returns (uint) {
-        address cTokenAddress = address(cToken);
-
-        if (cTokenAddress == cRBTCAddress) {
-            // ether always worth 1
+    function getUnderlyingPrice(CToken cToken) public view returns (uint256) {
+        //validate crtbc address
+        if (address(cToken) == cRBTCAddress) {
             return 1e18;
         }
-
-        if (cTokenAddress == cUsdcAddress || cTokenAddress == cUsdtAddress) {
-            return v1PriceOracle.assetPrices(usdcOracleKey);
+        address oracleAdapter = tokenAdapter[address(cToken)];
+        //validate mapping
+        if (oracleAdapter == address(0)) {
+            return 0;
         }
-
-        if (cTokenAddress == cDaiAddress) {
-            return v1PriceOracle.assetPrices(daiOracleKey);
-        }
-
-        if (cTokenAddress == cSaiAddress) {
-            // use the frozen SAI price if set, otherwise use the DAI price
-            return saiPrice > 0 ? saiPrice : v1PriceOracle.assetPrices(daiOracleKey);
-        }
-
-        // otherwise just read from v1 oracle
-        address underlying = CErc20(cTokenAddress).underlying();
-        return v1PriceOracle.assetPrices(underlying);
+        return PriceOracleAdapter(oracleAdapter).assetPrices(address(cToken));
     }
 
     /**
-     * @notice Set the price of SAI, permanently
-     * @param price The price for SAI
+     * @notice Set the underlying price of a listed cToken asset
+     * @param addressToken Address of the cToken
+     * @param addressAdapter Address of the OracleAdapter
      */
-    function setSaiPrice(uint price) public {
-        require(msg.sender == guardian, "only guardian may set the SAI price");
-        require(saiPrice == 0, "SAI price may only be set once");
-        require(price < 0.1e18, "SAI price must be < 0.1 ETH");
-        saiPrice = price;
+    function setAdapterToToken(address addressToken, address addressAdapter)
+        public
+    {
+        //validate only guardian can set
+        require(
+            msg.sender == guardian,
+            "PriceOracleProxy: only guardian may set the address"
+        );
+        require(
+            addressToken != address(0),
+            "PriceOracleProxy: address token can not be 0"
+        );
+        require(
+            addressAdapter != address(0),
+            "PriceOracleProxy: address adapter can not be 0"
+        );
+        //validate and set new cToken in CtokenDetail
+        if (tokenAdapter[addressToken] == address(0)) {
+            CtokenDetail memory _cTokenD = CtokenDetail({
+                cToken: addressToken,
+                cTokenName: CToken(addressToken).symbol()
+            });
+
+            cTokensArray.push(_cTokenD);
+        }
+        //set token => adapter
+        tokenAdapter[addressToken] = addressAdapter;
     }
+
+    /**
+     * @notice Set the underlying price of a listed cToken asset
+     * @param addressCRBTC Address of CRBTC
+     */
+    function setCRBTCAddress(address addressCRBTC) public {
+        //validate only guardian can set
+        require(
+            msg.sender == guardian,
+            "PriceOracleProxy: only guardian may set the address"
+        );
+        cRBTCAddress = addressCRBTC;
+     }
 }
