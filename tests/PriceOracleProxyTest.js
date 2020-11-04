@@ -9,7 +9,7 @@ const {
   makeCToken,
 } = require('./Utils/Compound');
 
-describe('PriceOracleDispatcher', () => {
+describe('PriceOracleProxy', () => {
   let root, accounts;
   let backingOracleMoC, backingOracle, cRBTC, cUsdc, cUsdt, cDai, cOther;
 
@@ -35,7 +35,7 @@ describe('PriceOracleDispatcher', () => {
     adapterCompound = priceAdapterCompound;
     adapterMoc = priceAdapterMoc;
     //set Dispatcher
-    oracleDispatcher = await deploy('PriceOracleDispatcher', [root]);
+    oracleDispatcher = await deploy('PriceOracleProxy', [root]);
   });
 
   describe("constructor", () => {
@@ -69,7 +69,7 @@ describe('PriceOracleDispatcher', () => {
     });
 
     it("revert when not account guardian try to set cRBTCAddress to proxy", async () => {
-      await expect(send(oracleDispatcher, "setCRBTCAddress", [address(0)], { from: accounts[0] })).rejects.toRevert("revert PriceOracleDispatcher: only guardian may set the address");
+      await expect(send(oracleDispatcher, "setCRBTCAddress", [address(0)], { from: accounts[0] })).rejects.toRevert("revert PriceOracleProxy: only guardian may set the address");
     });
 
     it("revert when not account guardian try to set provider to adapter MoC ", async () => {
@@ -97,15 +97,15 @@ describe('PriceOracleDispatcher', () => {
     });
 
     it("revert when sets oracle address(0) to cToken", async () => {
-      await expect(send(oracleDispatcher, "setAdapterToToken", [cRBTC._address, address(0)])).rejects.toRevert("revert PriceOracleDispatcher: address adapter can not be 0");
+      await expect(send(oracleDispatcher, "setAdapterToToken", [cRBTC._address, address(0)])).rejects.toRevert("revert PriceOracleProxy: address adapter can not be 0");
     });
 
     it("revert when sets oracle address to cToken address(0)", async () => {
-      await expect(send(oracleDispatcher, "setAdapterToToken", [address(0), backingOracleMoC._address])).rejects.toRevert("revert PriceOracleDispatcher: address token can not be 0");
+      await expect(send(oracleDispatcher, "setAdapterToToken", [address(0), backingOracleMoC._address])).rejects.toRevert("revert PriceOracleProxy: address token can not be 0");
     });
 
     it("revert when not account guardian try to sets oracle address to cToken", async () => {
-      await expect(send(oracleDispatcher, "setAdapterToToken", [cRBTC._address, backingOracleMoC._address], { from: accounts[0] })).rejects.toRevert("revert PriceOracleDispatcher: only guardian may set the address");
+      await expect(send(oracleDispatcher, "setAdapterToToken", [cRBTC._address, backingOracleMoC._address], { from: accounts[0] })).rejects.toRevert("revert PriceOracleProxy: only guardian may set the address");
     });
   });
 
