@@ -62,15 +62,15 @@ contract PriceOracleProxy is PriceOracle {
         //validate only guardian can set
         require(
             msg.sender == guardian,
-            "PriceOracleDispatcher: only guardian may set the address"
+            "PriceOracleProxy: only guardian may set the address"
         );
         require(
             addressToken != address(0),
-            "PriceOracleDispatcher: address token can not be 0"
+            "PriceOracleProxy: address token can not be 0"
         );
         require(
             addressAdapter != address(0),
-            "PriceOracleDispatcher: address adapter can not be 0"
+            "PriceOracleProxy: address adapter can not be 0"
         );
         //validate and set new cToken in CtokenDetail
         if (tokenAdapter[addressToken] == address(0)) {
@@ -93,7 +93,7 @@ contract PriceOracleProxy is PriceOracle {
         //validate only guardian can set
         require(
             msg.sender == guardian,
-            "PriceOracleDispatcher: only guardian may set the address"
+            "PriceOracleProxy: only guardian may set the address"
         );
         cRBTCAddress = addressCRBTC;
      }
