@@ -1,6 +1,6 @@
 import { Event } from '../Event';
 import { World, addAction } from '../World';
-import { Comp, CompScenario } from '../Contract/Comp';
+import { RLEN, CompScenario } from '../Contract/RLEN';
 import { Invokation } from '../Invokation';
 import { getAddressV } from '../CoreValue';
 import { StringV, AddressV } from '../Value';
@@ -8,11 +8,11 @@ import { Arg, Fetcher, getFetcherValue } from '../Command';
 import { storeAndSaveContract } from '../Networks';
 import { getContract } from '../Contract';
 
-const CompContract = getContract('Comp');
+const CompContract = getContract('RLEN');
 const CompScenarioContract = getContract('CompScenario');
 
 export interface TokenData {
-  invokation: Invokation<Comp>;
+  invokation: Invokation<RLEN>;
   contract: string;
   address?: string;
   symbol: string;
@@ -24,7 +24,7 @@ export async function buildComp(
   world: World,
   from: string,
   params: Event
-): Promise<{ world: World; comp: Comp; tokenData: TokenData }> {
+): Promise<{ world: World; comp: RLEN; tokenData: TokenData }> {
   const fetchers = [
     new Fetcher<{ account: AddressV }, TokenData>(
       `
@@ -55,7 +55,7 @@ export async function buildComp(
       * "Comp Deploy account:<Address>" - Deploys Comp Token
         * E.g. "Comp Deploy Geoff"
     `,
-      'Comp',
+      'RLEN',
       [
         new Arg("account", getAddressV),
       ],
@@ -70,8 +70,8 @@ export async function buildComp(
           };
         } else {
           return {
-            invokation: await CompContract.deploy<Comp>(world, from, [account.val]),
-            contract: 'Comp',
+            invokation: await CompContract.deploy<RLEN>(world, from, [account.val]),
+            contract: 'RLEN',
             symbol: 'rLEN',
             name: 'Compound Governance Token',
             decimals: 18
@@ -96,10 +96,10 @@ export async function buildComp(
   world = await storeAndSaveContract(
     world,
     comp,
-    'Comp',
+    'RLEN',
     invokation,
     [
-      { index: ['Comp'], data: tokenData },
+      { index: ['RLEN'], data: tokenData },
       { index: ['Tokens', tokenData.symbol], data: tokenData }
     ]
   );

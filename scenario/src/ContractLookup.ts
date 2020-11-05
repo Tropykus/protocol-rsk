@@ -7,7 +7,7 @@ import { Contract } from './Contract';
 import { mustString } from './Utils';
 
 import { CErc20Delegate } from './Contract/CErc20Delegate';
-import { Comp } from './Contract/Comp';
+import { RLEN } from './Contract/RLEN';
 import { Comptroller } from './Contract/Comptroller';
 import { ComptrollerImpl } from './Contract/ComptrollerImpl';
 import { CToken } from './Contract/CToken';
@@ -121,16 +121,16 @@ export async function getPriceOracle(world: World): Promise<PriceOracle> {
 export async function getComp(
   world: World,
   compArg: Event
-): Promise<Comp> {
-  return getWorldContract(world, [['Comp', 'address']]);
+): Promise<RLEN> {
+  return getWorldContract(world, [['RLEN', 'address']]);
 }
 
 export async function getCompData(
   world: World,
   compArg: string
-): Promise<[Comp, string, Map<string, string>]> {
+): Promise<[RLEN, string, Map<string, string>]> {
   let contract = await getComp(world, <Event>(<any>compArg));
-  let data = getContractData(world, [['Comp', compArg]]);
+  let data = getContractData(world, [['RLEN', compArg]]);
 
   return [contract, compArg, <Map<string, string>>(<any>data)];
 }
