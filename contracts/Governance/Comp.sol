@@ -3,10 +3,10 @@ pragma experimental ABIEncoderV2;
 
 contract Comp {
     /// @notice EIP-20 token name for this token
-    string public constant name = "Compound";
+    string public constant name = "rLending";
 
     /// @notice EIP-20 token symbol for this token
-    string public constant symbol = "COMP";
+    string public constant symbol = "rLEN";
 
     /// @notice EIP-20 token decimals for this token
     uint8 public constant decimals = 18;
@@ -57,7 +57,7 @@ contract Comp {
     event Approval(address indexed owner, address indexed spender, uint256 amount);
 
     /**
-     * @notice Construct a new Comp token
+     * @notice Construct a new rLEN token
      * @param account The initial account to grant all the tokens
      */
     constructor(address account) public {

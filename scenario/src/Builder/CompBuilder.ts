@@ -41,7 +41,7 @@ export async function buildComp(
         return {
           invokation: await CompScenarioContract.deploy<CompScenario>(world, from, [account.val]),
           contract: 'CompScenario',
-          symbol: 'COMP',
+          symbol: 'rLEN',
           name: 'Compound Governance Token',
           decimals: 18
         };
@@ -64,7 +64,7 @@ export async function buildComp(
           return {
             invokation: await CompScenarioContract.deploy<CompScenario>(world, from, [account.val]),
             contract: 'CompScenario',
-            symbol: 'COMP',
+            symbol: 'rLEN',
             name: 'Compound Governance Token',
             decimals: 18
           };
@@ -72,7 +72,7 @@ export async function buildComp(
           return {
             invokation: await CompContract.deploy<Comp>(world, from, [account.val]),
             contract: 'Comp',
-            symbol: 'COMP',
+            symbol: 'rLEN',
             name: 'Compound Governance Token',
             decimals: 18
           };

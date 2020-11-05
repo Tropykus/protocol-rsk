@@ -1,11 +1,11 @@
 
 Test "Check Name"
     Comp Deploy Geoff
-    Assert Equal (Comp Name) "Compound"
+    Assert Equal (Comp Name) "rLending"
 
 Test "Check Symbol"
     Comp Deploy Geoff
-    Assert Equal (Comp Symbol) "COMP"
+    Assert Equal (Comp Symbol) "rLEN"
 
 Test "Check Decimals"
     Comp Deploy Geoff
