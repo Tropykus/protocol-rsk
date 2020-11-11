@@ -7,7 +7,7 @@ import "./PriceOracle.sol";
 import "./ComptrollerInterface.sol";
 import "./ComptrollerStorage.sol";
 import "./Unitroller.sol";
-import "./Governance/Comp.sol";
+import "./Governance/RLEN.sol";
 
 /**
  * @title Compound's Comptroller Contract
@@ -1093,7 +1093,7 @@ contract Comptroller is ComptrollerV3Storage, ComptrollerInterface, ComptrollerE
         return msg.sender == admin || msg.sender == comptrollerImplementation;
     }
 
-    /*** Comp Distribution ***/
+    /*** RLEN Distribution ***/
 
     /**
      * @notice Recalculate and update COMP speeds for all COMP markets
@@ -1233,7 +1233,7 @@ contract Comptroller is ComptrollerV3Storage, ComptrollerInterface, ComptrollerE
      */
     function transferComp(address user, uint userAccrued, uint threshold) internal returns (uint) {
         if (userAccrued >= threshold && userAccrued > 0) {
-            Comp comp = Comp(getCompAddress());
+            RLEN comp = RLEN(getCompAddress());
             uint compRemaining = comp.balanceOf(address(this));
             if (userAccrued <= compRemaining) {
                 comp.transfer(user, userAccrued);
@@ -1289,7 +1289,7 @@ contract Comptroller is ComptrollerV3Storage, ComptrollerInterface, ComptrollerE
         }
     }
 
-    /*** Comp Distribution Admin ***/
+    /*** RLEN Distribution Admin ***/
 
     /**
      * @notice Set the amount of COMP distributed per block

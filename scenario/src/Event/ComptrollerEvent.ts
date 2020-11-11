@@ -253,7 +253,7 @@ async function setCompRate(world: World, from: string, comptroller: Comptroller,
 
   world = addAction(
     world,
-    `Comp rate set to ${rate.show()}`,
+    `RLEN rate set to ${rate.show()}`,
     invokation
   );
 

@@ -30,7 +30,7 @@ export interface CompScenarioMethods extends CompMethods {
   transferFromScenario(froms: string[], amount: encodedNumber): Sendable<boolean>;
 }
 
-export interface Comp extends Contract {
+export interface RLEN extends Contract {
   methods: CompMethods;
   name: string;
 }
