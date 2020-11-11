@@ -22,7 +22,6 @@ import {getContract, getTestContract} from '../Contract';
 const FixedInterestRateModel = getTestContract('InterestRateModelHarness');
 const WhitePaperInterestRateModel = getContract('WhitePaperInterestRateModel');
 const JumpRateModel = getContract('JumpRateModel');
-const DAIInterestRateModel = getContract('DAIInterestRateModelV3');
 const JumpRateModelV2 = getContract('JumpRateModelV2');
 const LegacyJumpRateModelV2 = getContract('LegacyJumpRateModelV2');
 
@@ -161,35 +160,7 @@ export async function buildInterestRateModel(world: World, from: string, event: 
          kink: kink.encode().toString(),
          owner: owner.val,
        })
-    ),
-
-    new Fetcher<{name: StringV, jump: NumberV, kink: NumberV, pot: AddressV, jug: AddressV, owner: AddressV}, InterestRateModelData>(`
-         #### DAIInterestRateModel
-
-         * "DAIInterestRateModel name:<String> jump:<Number> kink:<Number> pot:<Address> jug:<Address> owner:<Address>" - The DAI interest rate model
-           * E.g. "InterestRateModel Deploy DAIInterestRateModel MyInterestRateModel (Exp 2) (Exp 0.9) PotAddress JugAddress" Timelock - 200% multiplier at 90% utilization
-       `,
-       "DAIInterestRateModel",
-       [
-         new Arg("name", getStringV),
-         new Arg("jump", getExpNumberV),
-         new Arg("kink", getExpNumberV),
-         new Arg("pot", getAddressV),
-         new Arg("jug", getAddressV),
-         new Arg("owner", getAddressV),
-       ],
-       async (world, {name, jump, kink, pot, jug, owner}) => ({
-         invokation: await DAIInterestRateModel.deploy<InterestRateModel>(world, from, [jump.encode(), kink.encode(), pot.val, jug.val, owner.val]),
-         name: name.val,
-         contract: "DAIInterestRateModel",
-         description: `DAIInterestRateModel jump=${jump.encode().toString()} kink=${kink.encode().toString()} pot=${pot.val} jug=${jug.val} owner=${owner.val}`,
-         jump: jump.encode().toString(),
-         kink: kink.encode().toString(),
-         pot: pot.val,
-         jug: jug.val,
-         owner: owner.val
-       })
-     )
+    )
   ];
 
   let interestRateModelData = await getFetcherValue<any, InterestRateModelData>("DeployInterestRateModel", fetchers, world, event);

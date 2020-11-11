@@ -56,74 +56,74 @@ Test "Attempt to borrow below set cap ERC20"
     Assert True (Comptroller CheckMembership Geoff cZRX)
     Assert True (Comptroller CheckMembership Geoff cBAT)
 
-Test "Borrow some Eth over cap"
+Test "Borrow some RBTC over cap"
     NewComptroller price:1.0
     ListedCToken ZRX cZRX
-    ListedEtherToken cETH initialExchangeRate:0.005e9
+    ListedEtherToken cRBTC initialExchangeRate:0.005e9
     SetCollateralFactor cZRX collateralFactor:0.5
-    SetCollateralFactor cETH collateralFactor:0.5
-    Comptroller SetMarketBorrowCaps (cETH) (0.0001e18)
-    Donate cETH 0.003e18
+    SetCollateralFactor cRBTC collateralFactor:0.5
+    Comptroller SetMarketBorrowCaps (cRBTC) (0.0001e18)
+    Donate cRBTC 0.003e18
     Prep Geoff Some ZRX cZRX
     Mint Geoff 1e18 cZRX
     EnterMarkets Geoff cZRX
     AllowFailures
-    BorrowEth Geoff 0.001e18 cETH
+    BorrowEth Geoff 0.001e18 cRBTC
     Assert Revert
-    Assert Equal (EtherBalance cETH) 0.003e18
+    Assert Equal (EtherBalance cRBTC) 0.003e18
 
-Test "Borrow some Eth enters Eth and succeeds when Eth not entered. At borrow cap"
+Test "Borrow some RBTC enters RBTC and succeeds when RBTC not entered. At borrow cap"
     NewComptroller price:1.0
     ListedCToken ZRX cZRX
-    ListedEtherToken cETH initialExchangeRate:0.005e9
+    ListedEtherToken cRBTC initialExchangeRate:0.005e9
     SetCollateralFactor cZRX collateralFactor:0.5
-    SetCollateralFactor cETH collateralFactor:0.5
-    Comptroller SetMarketBorrowCaps (cETH) (1000000000000001)
-    Donate cETH 0.003e18
+    SetCollateralFactor cRBTC collateralFactor:0.5
+    Comptroller SetMarketBorrowCaps (cRBTC) (1000000000000001)
+    Donate cRBTC 0.003e18
     Prep Geoff Some ZRX cZRX
     Mint Geoff 1e18 cZRX
     EnterMarkets Geoff cZRX
     Expect Changes (EtherBalance Geoff) +0.001e18
-    BorrowEth Geoff 0.001e18 cETH
-    Assert Equal (EtherBalance cETH) 0.002e18
+    BorrowEth Geoff 0.001e18 cRBTC
+    Assert Equal (EtherBalance cRBTC) 0.002e18
     Assert Equal (Comptroller Liquidity Geoff) 4.99e17
     Assert Equal (Comptroller MembershipLength Geoff) (Exactly 2)
-    Assert True (Comptroller CheckMembership Geoff cETH)
+    Assert True (Comptroller CheckMembership Geoff cRBTC)
 
 Test "Borrow some Eth enters Eth and succeeds when Eth not entered. At under borrow cap"
     NewComptroller price:1.0
     ListedCToken ZRX cZRX
-    ListedEtherToken cETH initialExchangeRate:0.005e9
+    ListedEtherToken cRBTC initialExchangeRate:0.005e9
     SetCollateralFactor cZRX collateralFactor:0.5
-    SetCollateralFactor cETH collateralFactor:0.5
-    Comptroller SetMarketBorrowCaps (cETH) (0.01e18)
-    Donate cETH 0.003e18
+    SetCollateralFactor cRBTC collateralFactor:0.5
+    Comptroller SetMarketBorrowCaps (cRBTC) (0.01e18)
+    Donate cRBTC 0.003e18
     Prep Geoff Some ZRX cZRX
     Mint Geoff 1e18 cZRX
     EnterMarkets Geoff cZRX
     Expect Changes (EtherBalance Geoff) +0.001e18
-    BorrowEth Geoff 0.001e18 cETH
-    Assert Equal (EtherBalance cETH) 0.002e18
+    BorrowEth Geoff 0.001e18 cRBTC
+    Assert Equal (EtherBalance cRBTC) 0.002e18
     Assert Equal (Comptroller Liquidity Geoff) 4.99e17
     Assert Equal (Comptroller MembershipLength Geoff) (Exactly 2)
-    Assert True (Comptroller CheckMembership Geoff cETH)
+    Assert True (Comptroller CheckMembership Geoff cRBTC)
 
 Test "Setting borrow cap restricted to admin"
     NewComptroller price:1.0
     ListedCToken ZRX cZRX
-    ListedEtherToken cETH initialExchangeRate:0.005e9
+    ListedEtherToken cRBTC initialExchangeRate:0.005e9
     SetCollateralFactor cZRX collateralFactor:0.5
-    SetCollateralFactor cETH collateralFactor:0.5
+    SetCollateralFactor cRBTC collateralFactor:0.5
     AllowFailures
-    From Robert (Comptroller SetMarketBorrowCaps (cETH) (0.01e18))
+    From Robert (Comptroller SetMarketBorrowCaps (cRBTC) (0.01e18))
     Assert Revert
 
 Test "Borrow cap guardian can set borrow caps"
     NewComptroller price:1.0
     ListedCToken ZRX cZRX
-    ListedEtherToken cETH initialExchangeRate:0.005e9
+    ListedEtherToken cRBTC initialExchangeRate:0.005e9
     SetCollateralFactor cZRX collateralFactor:0.5
-    SetCollateralFactor cETH collateralFactor:0.5
+    SetCollateralFactor cRBTC collateralFactor:0.5
     Comptroller SetBorrowCapGuardian Geoff
     From Geoff (Comptroller SetMarketBorrowCaps (cZRX) (0.5e18))
     AllowFailures

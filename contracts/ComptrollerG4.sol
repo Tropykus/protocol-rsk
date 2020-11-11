@@ -7,7 +7,7 @@ import "./PriceOracle.sol";
 import "./ComptrollerInterface.sol";
 import "./ComptrollerStorage.sol";
 import "./Unitroller.sol";
-import "./Governance/Comp.sol";
+import "./Governance/RLEN.sol";
 
 /**
  * @title Compound's Comptroller Contract
@@ -1225,18 +1225,18 @@ contract ComptrollerG4 is ComptrollerV3Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-     * @notice Transfer COMP to the user, if they are above the threshold
-     * @dev Note: If there is not enough COMP, we do not perform the transfer all.
-     * @param user The address of the user to transfer COMP to
-     * @param userAccrued The amount of COMP to (possibly) transfer
-     * @return The amount of COMP which was NOT transferred to the user
+     * @notice Transfer RLEN to the user, if they are above the threshold
+     * @dev Note: If there is not enough RLEN, we do not perform the transfer all.
+     * @param user The address of the user to transfer RLEN to
+     * @param userAccrued The amount of RLEN to (possibly) transfer
+     * @return The amount of RLEN which was NOT transferred to the user
      */
     function transferComp(address user, uint userAccrued, uint threshold) internal returns (uint) {
         if (userAccrued >= threshold && userAccrued > 0) {
-            Comp comp = Comp(getCompAddress());
-            uint compRemaining = comp.balanceOf(address(this));
-            if (userAccrued <= compRemaining) {
-                comp.transfer(user, userAccrued);
+            RLEN rLen = RLEN(getCompAddress());
+            uint rLenRemaining = rLen.balanceOf(address(this));
+            if (userAccrued <= rLenRemaining) {
+                rLen.transfer(user, userAccrued);
                 return 0;
             }
         }
