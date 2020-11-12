@@ -6,11 +6,19 @@ import "./PriceOracleAdapter.sol";
 contract PriceOracleProxy is PriceOracle {
     /// @notice Address of the guardian
     address public guardian;
+    /// @notice Address of the pending guardian
+    address public pendingGuardian;
     /// @notice Address of the guardian
     address public cRBTCAddress;
     /// @notice Mapping of the cTokenAddress => adapterAddress
     mapping(address => address) public tokenAdapter;
-
+    ///@notice Emitted when pendingGuardian is changed
+    event NewPendingGuardian(
+        address oldPendingGuardian,
+        address newPendingGuardian
+    );
+    ///@notice Emitted when pendingGuardian is accepted, which means gaurdian is updated
+    event NewGuardian(address oldGuardian, address newGuardian);
     /// @notice Struct of the cTokensDetail
     struct CtokenDetail {
         address cToken;
@@ -96,5 +104,49 @@ contract PriceOracleProxy is PriceOracle {
             "PriceOracleProxy: only guardian may set the address"
         );
         cRBTCAddress = addressCRBTC;
-     }
+    }
+
+    /**
+     * @notice Begins transfer of gaurdian rights. The newPendingGaurdian must call `_acceptAdmin` to finalize the transfer.
+     * @param newPendingGuardian New pending gaurdian.
+     */
+    function _setPendingAdmin(address newPendingGuardian) public {
+        // Check caller = gaurdian
+        require(
+            msg.sender == guardian,
+            "PriceOracleProxy: only guardian may set the address"
+        );
+        // Save current value, if any, for inclusion in log
+        address oldPendingGuardian = guardian;
+        // Store pendingGaurdian with value newPendingGaurdian
+        pendingGuardian = newPendingGuardian;
+        // Emit NewPendingGaurdian(oldPendingGaurdian, newPendingGaurdian)
+        emit NewPendingGuardian(oldPendingGuardian, newPendingGuardian);
+    }
+
+    /// @notice Accepts transfer of gaurdian rights. msg.sender must be pendingGaurdian
+    function _acceptAdmin() public {
+        // Check caller is pendingGaurdian and pendingGaurdian ≠ address(0)
+        require(
+            msg.sender != address(0),
+            "PriceOracleProxy: sender can not be 0"
+        );
+        require(
+            msg.sender == guardian,
+            "PriceOracleProxy: only guardian may set the address"
+        );
+
+        // Save current values for inclusion in log
+        address oldGuardian = guardian;
+        address oldPendingGaurdian = pendingGuardian;
+
+        // Store gaurdian with value pendingGaurdian
+        guardian = pendingGuardian;
+
+        // Clear the pending value
+        pendingGuardian = address(0);
+
+        emit NewGuardian(oldGuardian, guardian);
+        emit NewPendingGuardian(oldPendingGaurdian, pendingGuardian);
+    }
 }
