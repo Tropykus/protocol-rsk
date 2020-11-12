@@ -1287,10 +1287,10 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
      */
     function transferComp(address user, uint userAccrued, uint threshold) internal returns (uint) {
         if (userAccrued >= threshold && userAccrued > 0) {
-            RLEN comp = RLEN(getCompAddress());
-            uint compRemaining = comp.balanceOf(address(this));
-            if (userAccrued <= compRemaining) {
-                comp.transfer(user, userAccrued);
+            RLEN rLen = RLEN(getCompAddress());
+            uint rLenRemaining = rLen.balanceOf(address(this));
+            if (userAccrued <= rLenRemaining) {
+                rLen.transfer(user, userAccrued);
                 return 0;
             }
         }
@@ -1426,10 +1426,18 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
     }
 
     /**
-     * @notice Return the address of the COMP token
-     * @return The address of COMP
+     * @notice Set the address of the RLEN token
+     */
+    function setCompAddress(address rLenAddress_) public {
+        require(msg.sender == admin, "only admin can set rLEN token");
+        rLenAddress = rLenAddress_;
+    }
+
+    /**
+     * @notice Return the address of the RLEN token
+     * @return The address of RLEN
      */
     function getCompAddress() public view returns (address) {
-        return 0xc00e94Cb662C3520282E6f5717214004A7f26888;
+        return rLenAddress;
     }
 }

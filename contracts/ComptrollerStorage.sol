@@ -134,4 +134,7 @@ contract ComptrollerV4Storage is ComptrollerV3Storage {
 
     // @notice Borrow caps enforced by borrowAllowed for each cToken address. Defaults to zero which corresponds to unlimited borrowing.
     mapping(address => uint) public borrowCaps;
+
+    // @notice address of the rLEN token
+    address public rLenAddress;
 }
