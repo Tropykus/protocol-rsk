@@ -12,6 +12,10 @@ let underlyingDai, cDai, unitroller;
 
 function getAddressContractDeploy() {
   var fs = require("fs");
+  //validate exist file
+  if (!fs.existsSync(fileContractsAddresses)) {
+    console.error("File with addresses contracts not exist. You need to run script/Deploy/deploy.js before")
+  }
   //TODO try or asyn (callback err)?
   return fs.readFileSync(fileContractsAddresses).toString();
 }
