@@ -14,7 +14,7 @@ const maxAssets = 20;
 const compRate = new BigNumber("0e18"); //0 to not drip
 const compMarkets = [];
 const otherMarkets = [];
-let unitroller, newUnitroller, oracleProxy, comptroller, interestRate, underlyingDai, underlyingRif, cDai, cRif, cRBTC, priceOracleAdapterCompound, priceOracleMoC, priceOracleAdapterMoC;
+let unitroller, newUnitroller, oracleProxy, comptroller, interestRate, underlyingDai, underlyingRif, cDai, cRif, cRBTC, priceOracleAdapterCompound, priceOracleMoC, priceOracleAdapterMoC, multiSig;
 [root, a2, ...accounts] = saddle.accounts;
 let arrayToFile = new Array();
 
@@ -49,6 +49,12 @@ function writeFileLog(data) {
         }
     });
 }
+//deploy MultiSigWallet 
+async function multiSigWallet() {
+    multiSig = await saddle.deploy('MultiSigWallet', [[root, a2], 2]);
+    generateLogAddress('MultiSigWallet', multiSig._address);
+};
+
 //deploy Unitroller 
 async function unitrollerDeploy() {
     unitroller = await saddle.deploy('Unitroller');
@@ -150,17 +156,31 @@ async function maximillion() {
     generateLogAddress('Maximillion', max._address);
 };
 
+async function setMultiSignOwnerAlpha() {
+    let arrayToMultisigOwner = [unitroller, cDai, cRif, cRBTC, oracleProxy];
+    for (let index = 0; index < arrayToMultisigOwner.length; index++) {
+        //set pending admin 
+        await send(arrayToMultisigOwner[index], "_setPendingAdmin", [multiSig._address]);
+        //generate data method accept admin 
+        const data = arrayToMultisigOwner[index].methods._acceptAdmin().encodeABI();
+        //submit transacion multisig, when accept the admin of contract
+        await send(multiSig, "submitTransaction", [arrayToMultisigOwner[index]._address, 0, data]);
+    }
+}
+
 //deploy all contracts 
 async function deployMaint() {
     //validate args
     validateEnvironment();
     //deploy contracts
+    await multiSigWallet();
     await unitrollerDeploy();
     await priceOracleProxy();
     await comptrollerDeploy();
     await interestRateModel();
     await cTokens();
     await maximillion();
+    setMultiSignOwnerAlpha();
     console.log('\x1b[32m%s\x1b[0m', "All contracts are deployed..", "🌱");
 }
 deployMaint();
