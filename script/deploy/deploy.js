@@ -55,16 +55,17 @@ async function unitrollerDeploy() {
     generateLogAddress('UnitrollerImp', unitroller._address);
 };
 
-//deploy ComptrollerG3 
-async function comptrollerG3() {
+//deploy Comptroller
+async function comptrollerDeploy() {
     //deploy comptroller
-    comptroller = await saddle.deploy('ComptrollerG3');
-    generateLogAddress('ComptrollerG3', comptroller._address);
+    comptroller = await saddle.deploy('Comptroller');
+    generateLogAddress('Comptroller', comptroller._address);
     //set new comptroller implementation
     await send(unitroller, "_setPendingImplementation", [comptroller._address]);
-    await send(comptroller, '_become', [unitroller._address, compRate, compMarkets, otherMarkets]);
-    //get unitroller then implementate ComptrollerG3
-    newUnitroller = await saddle.getContractAt("ComptrollerG3", unitroller._address);
+    // await send(comptroller, '_become', [unitroller._address, compRate, compMarkets, otherMarkets]);
+    await send(comptroller, '_become', [unitroller._address]);
+    //get unitroller then implementate Comptroller
+    newUnitroller = await saddle.getContractAt("Comptroller", unitroller._address);
     generateLogAddress('Unitroller', comptroller._address);
     //set price oracle
     await send(newUnitroller, "_setPriceOracle", [oracleProxy._address]);
@@ -81,6 +82,9 @@ async function comptrollerG3() {
     // set comp rate
     await send(newUnitroller, "_setCompRate", [compRate]);
     writeLog(`newUnitroller (${newUnitroller._address}) _setCompRate [1.1]`, true);
+    //add Comp Markets
+    await send(newUnitroller, "_addCompMarkets", [compMarkets]);
+    writeLog(`newUnitroller (${newUnitroller._address}) _addCompMarkets []`, true);
 };
 
 //deploy Price Oracle and Proxy 
@@ -104,7 +108,7 @@ async function priceOracleProxy() {
 //deploy InterestRateModel 
 async function interestRateModel() {
     // 0.05 0.2 2 0.90
-    interestRate = await saddle.deploy('JumpRateModel', [etherMantissa(0.05), etherMantissa(0.2), etherMantissa(2), etherMantissa(0.90)]);
+    interestRate = await saddle.deploy('JumpRateModelV2', [etherMantissa(0.05), etherMantissa(0.2), etherMantissa(2), etherMantissa(0.90), root]);
     generateLogAddress('JumpRateModel', interestRate._address);
 };
 
@@ -153,7 +157,7 @@ async function deployMaint() {
     //deploy contracts
     await unitrollerDeploy();
     await priceOracleProxy();
-    await comptrollerG3();
+    await comptrollerDeploy();
     await interestRateModel();
     await cTokens();
     await maximillion();

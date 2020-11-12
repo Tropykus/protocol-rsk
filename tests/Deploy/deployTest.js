@@ -37,7 +37,7 @@ async function setContractFromAddress(adresses) {
   }
   cDai = await saddle.getContractAt("CErc20Immutable", cDaiAddress);
   underlyingDai = await saddle.getContractAt("StandardToken", underlyingDaiAddress);
-  unitroller = await saddle.getContractAt("ComptrollerG3", unitrollerAddress);
+  unitroller = await saddle.getContractAt("Comptroller", unitrollerAddress);
 }
 
 describe('deployTest', () => {
