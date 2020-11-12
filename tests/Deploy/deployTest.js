@@ -16,10 +16,6 @@ function getAddressContractDeploy() {
   return fs.readFileSync(fileContractsAddresses).toString();
 }
 
-function findContract(contract) {
-  return contract
-
-}
 async function setContractFromAddress(adresses) {
   // adresses.findIndex(findContract);
   let cDaiAddress, underlyingDaiAddress, unitrollerAddress;
