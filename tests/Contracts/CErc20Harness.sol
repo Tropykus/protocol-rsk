@@ -374,7 +374,9 @@ contract CErc20DelegateHarness is CErc20Delegate {
 }
 
 contract CErc20DelegateScenario is CErc20Delegate {
-    constructor() public {}
+    constructor() public {
+        // solium-disable-previous-line no-empty-blocks
+    }
 
     function setTotalBorrows(uint totalBorrows_) public {
         totalBorrows = totalBorrows_;

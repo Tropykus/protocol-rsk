@@ -69,7 +69,7 @@ contract PriceOracleAdapterCompound is PriceOracleAdapter {
     /**
      * @notice Set the key oracle address of cToken address
      * @param cTokenAddress address of key ctoken
-     * @param keyOracle address of key oracle 
+     * @param keyOracle address of key oracle
      */
     function setKeyOracle(address cTokenAddress, address keyOracle) public {
         require(

@@ -21,7 +21,7 @@ contract LegacyJumpRateModelV2 is LegacyInterestRateModel, BaseJumpRateModelV2  
     function getBorrowRate(uint cash, uint borrows, uint reserves) external view returns (uint, uint) {
         return (0,getBorrowRateInternal(cash, borrows, reserves));
     }
-    
-    constructor(uint baseRatePerYear, uint multiplierPerYear, uint jumpMultiplierPerYear, uint kink_, address owner_) 
+
+    constructor(uint baseRatePerYear, uint multiplierPerYear, uint jumpMultiplierPerYear, uint kink_, address owner_)
     	BaseJumpRateModelV2(baseRatePerYear,multiplierPerYear,jumpMultiplierPerYear,kink_,owner_) public {}
 }
