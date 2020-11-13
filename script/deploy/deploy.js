@@ -11,10 +11,9 @@ const logPath = __dirname + '/contractAddressesDeploy.json';
 const liquidationIncentiveMantisa = new BigNumber(1.08e18);
 const closeFactorMantisa = etherMantissa(.051);
 const maxAssets = 20;
-const compRate = new BigNumber("0e18"); //0 to not drip
+const compRate = new BigNumber("0"); //0 to not drip
 const compMarkets = [];
-const otherMarkets = [];
-let unitroller, newUnitroller, oracleProxy, comptroller, interestRate, underlyingDai, underlyingRif, cDai, cRif, cRBTC, priceOracleAdapterCompound, priceOracleMoC, priceOracleAdapterMoC, multiSig;
+let unitroller, newUnitroller, oracleProxy, comptroller, interestRate, underlyingDai, underlyingRif, cDai, cRif, cRBTC, interestRateWhitePaper, priceOracleMoC, priceOracleAdapterMoC, multiSig, RLEN;
 [root, a2, ...accounts] = saddle.accounts;
 let arrayToFile = new Array();
 
@@ -51,7 +50,7 @@ function writeFileLog(data) {
 }
 //deploy MultiSigWallet 
 async function multiSigWallet() {
-    multiSig = await saddle.deploy('MultiSigWallet', [[root, a2], 2]);
+    multiSig = await saddle.deploy('MultiSigWallet', [[root, a2], 1]);
     generateLogAddress('MultiSigWallet', multiSig._address);
 };
 
@@ -116,6 +115,9 @@ async function interestRateModel() {
     // 0.05 0.2 2 0.90
     interestRate = await saddle.deploy('JumpRateModelV2', [etherMantissa(0.05), etherMantissa(0.2), etherMantissa(2), etherMantissa(0.90), root]);
     generateLogAddress('JumpRateModel', interestRate._address);
+    //deploy WhitePaperInterestRateModel [interestRate]
+    interestRateWhitePaper = await saddle.deploy('WhitePaperInterestRateModel', [etherMantissa(0.05), etherMantissa(0.2)]);
+    generateLogAddress('WhitePaperInterestRateModel', interestRateWhitePaper._address);
 };
 
 //deploy cTokens 
@@ -137,17 +139,23 @@ async function cTokens() {
     generateLogAddress('underlyingRif', underlyingRif._address);
     //deploy cRif
     writeLog("cRif => CErc20Immutable", false);
-    cRif = await saddle.deploy('CErc20Immutable', [underlyingRif._address, newUnitroller._address, interestRate._address, new BigNumber(2e18), "rLending Dai", "crDAI", 8, root]);
+    cRif = await saddle.deploy('CErc20Immutable', [underlyingRif._address, newUnitroller._address, interestRateWhitePaper._address, new BigNumber(2e18), "rLending Dai", "crDAI", 8, root]);
     generateLogAddress('cRif', cRif._address);
     //deploy cRBTC
-    cRBTC = await saddle.deploy('CRBTC', [newUnitroller._address, interestRate._address, new BigNumber(2e18), "RSK Smart Bitcoin", "cRBTC", 8, root]);
-    generateLogAddress('cRBTC', cRif._address);
+    cRBTC = await saddle.deploy('CRBTC', [newUnitroller._address, interestRateWhitePaper._address, new BigNumber(2e18), "RSK Smart Bitcoin", "cRBTC", 8, root]);
+    generateLogAddress('cRBTC', cRBTC._address);
+    //set cRBTC to oracle proxy
+    await send(oracleProxy, "setCRBTCAddress", [cRBTC._address]);
+    writeLog("set CRBTCAddress to oracle proxy", true);
     //set cDai to market
     await send(newUnitroller, "_supportMarket", [cDai._address]);
     writeLog("_supportMarket => cDai ", true);
     //set collateral
     await send(newUnitroller, "_setCollateralFactor", [cDai._address, etherMantissa(0.5)], { from: root });
     writeLog("_setCollateralFactor => cDai - 0.5 ", true);
+    //deploy RLEN
+    RLEN = await saddle.deploy('RLEN', [multiSig._address]);
+    generateLogAddress('RLEN', RLEN._address);
 };
 
 //deploy Maximillion
