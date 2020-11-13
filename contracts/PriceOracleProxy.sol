@@ -128,12 +128,12 @@ contract PriceOracleProxy is PriceOracle {
     function _acceptAdmin() public {
         // Check caller is pendingGaurdian and pendingGaurdian ≠ address(0)
         require(
-            msg.sender != address(0),
-            "PriceOracleProxy: sender can not be 0"
+            msg.sender == pendingGuardian,
+            "PriceOracleProxy: only guardian may set the address"
         );
         require(
-            msg.sender == guardian,
-            "PriceOracleProxy: only guardian may set the address"
+            msg.sender != address(0),
+            "PriceOracleProxy: sender can not be 0"
         );
 
         // Save current values for inclusion in log
