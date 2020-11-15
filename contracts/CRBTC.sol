@@ -123,7 +123,7 @@ contract CRBTC is CToken {
      */
     function getCashPrior() internal view returns (uint) {
         (MathError err, uint startingBalance) = subUInt(address(this).balance, msg.value);
-        require(err == MathError.NO_ERROR);
+        require(err == MathError.NO_ERROR,"Math error");
         return startingBalance;
     }
 

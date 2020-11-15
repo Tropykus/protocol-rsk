@@ -11,7 +11,9 @@ contract CErc20Delegate is CErc20, CDelegateInterface {
     /**
      * @notice Construct an empty delegate
      */
-    constructor() public {}
+    constructor() public {
+        // solium-disable-previous-line no-empty-blocks
+    }
 
     /**
      * @notice Called by the delegator on a delegate to initialize it for duty
