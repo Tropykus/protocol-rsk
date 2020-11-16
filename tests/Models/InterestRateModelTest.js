@@ -4,6 +4,10 @@ const {
   getSupplyRate
 } = require('../Utils/Compound');
 
+const {
+  etherMantissa,
+} = require('../Utils/Ethereum');
+
 function utilizationRate(cash, borrows, reserves) {
   return borrows ? borrows / (cash + borrows - reserves) : 0;
 }
@@ -67,7 +71,8 @@ describe('InterestRateModel', () => {
     'baseP025-slopeP20': { base: 0.025, slope: 0.20, model: 'white-paper' },
     'baseP05-slopeP45': { base: 0.05, slope: 0.45, model: 'white-paper' },
     'white-paper': { base: 0.1, slope: 0.45, model: 'white-paper' },
-    'jump-rate': { base: 0.1, slope: 0.45, model: 'jump-rate' }
+    'jump-rate': { base: 0.1, slope: 0.45, model: 'jump-rate'},
+    'jump-rateV2': { base: 0.1, slope: 0.45, model: 'jump-rateV2' }
   };
 
   Object.entries(expectedRates).forEach(async ([kind, info]) => {
@@ -123,6 +128,27 @@ describe('InterestRateModel', () => {
         it('handles overflow utilization rate times slope + base', async () => {
           const badModel = await makeInterestRateModel({ kind, baseRate: -1, multiplier: 1e48, jump: 1e48 });
           await expect(getBorrowRate(badModel, 0, 1, 0)).rejects.toRevert("revert SafeMath: multiplication overflow");
+        });
+      }
+      if (kind == 'jump-rateV2') {
+        // Only need to do these for the WhitePaper
+
+        it('handles overflowed cash + borrows', async () => {
+          await expect(getBorrowRate(model, -1, -1, 0)).rejects.toRevert("revert SafeMath: addition overflow");
+        });
+
+        it('handles failing to get exp of borrows / cash + borrows', async () => {
+          await expect(getBorrowRate(model, 0, -1, 0)).rejects.toRevert("revert SafeMath: multiplication overflow");
+        });
+
+        it('handles overflow utilization rate times slope', async () => {
+          let contr= deploy('JumpRateModelV2', [etherMantissa(0), etherMantissa(-1), etherMantissa(-1), etherMantissa(0.90), root])
+          await expect(contr).rejects.toRevert("revert SafeMath: multiplication overflow");
+        });
+
+        it('handles overflow utilization rate times slope + base', async () => {
+          let contr= deploy('JumpRateModelV2', [etherMantissa(-1), etherMantissa(1e48), etherMantissa(1e48), etherMantissa(0.90), root])
+          await expect(contr).rejects.toRevert("revert SafeMath: multiplication overflow");
         });
       }
     });

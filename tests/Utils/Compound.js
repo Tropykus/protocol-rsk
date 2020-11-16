@@ -204,6 +204,15 @@ async function makeInterestRateModel(opts = {}) {
     const kink = etherMantissa(dfn(opts.kink, 0));
     return await deploy('JumpRateModel', [baseRate, multiplier, jump, kink]);
   }
+
+  if (kind == 'jump-rateV2') {
+    const baseRate = etherMantissa(dfn(opts.baseRate, 0.05));
+    const multiplier = etherMantissa(dfn(opts.multiplier, 1e-18));
+    const jump = etherMantissa(dfn(opts.jump, 2));
+    const kink = etherMantissa(dfn(opts.kink, 0.9));
+    let contr=  await deploy('JumpRateModelV2', [baseRate, multiplier, jump, kink, root]);
+    return contr;
+  }
 }
 
 async function makePriceOracle(opts = {}) {
