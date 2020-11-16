@@ -982,10 +982,9 @@ contract ComptrollerG1 is ComptrollerV1Storage, ComptrollerInterface, Comptrolle
      */
     function adminOrInitializing() internal view returns (bool) {
         bool initializing = (
-                msg.sender == comptrollerImplementation
-                &&
-                //solium-disable-next-line security/no-tx-origin
+                msg.sender == comptrollerImplementation &&
                 tx.origin == admin
+            //solium-disable-previous-line security/no-tx-origin
         );
         bool isAdmin = msg.sender == admin;
         return isAdmin || initializing;

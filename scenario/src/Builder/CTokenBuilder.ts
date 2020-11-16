@@ -12,9 +12,9 @@ import { getContract, getTestContract } from '../Contract';
 const CErc20Contract = getContract('CErc20Immutable');
 const CErc20Delegator = getContract('CErc20Delegator');
 const CErc20DelegatorScenario = getTestContract('CErc20DelegatorScenario');
-const CEtherContract = getContract('CEther');
+const CRBTC = getContract('CRBTC');
 const CErc20ScenarioContract = getTestContract('CErc20Scenario');
-const CEtherScenarioContract = getTestContract('CEtherScenario');
+const CRBTCScenarioContract = getTestContract('CRBTCScenario');
 const CEvilContract = getTestContract('CEvil');
 
 export interface TokenData {
@@ -213,12 +213,12 @@ export async function buildCToken(
     ),
 
     new Fetcher<{symbol: StringV, name: StringV, decimals: NumberV, admin: AddressV, comptroller: AddressV, interestRateModel: AddressV, initialExchangeRate: NumberV}, TokenData>(`
-        #### CEtherScenario
+        #### CRBTCScenario
 
-        * "CEtherScenario symbol:<String> name:<String> comptroller:<Address> interestRateModel:<Address> initialExchangeRate:<Number> decimals:<Number> admin: <Address>" - A CToken Scenario for local testing
-          * E.g. "CToken Deploy CEtherScenario cETH \"Compound Ether\" (Comptroller Address) (InterestRateModel Address) 1.0 8"
+        * "CRBTCScenario symbol:<String> name:<String> comptroller:<Address> interestRateModel:<Address> initialExchangeRate:<Number> decimals:<Number> admin: <Address>" - A CToken Scenario for local testing
+          * E.g. "CToken Deploy CRBTCScenario cETH \"Compound Ether\" (Comptroller Address) (InterestRateModel Address) 1.0 8"
       `,
-      "CEtherScenario",
+      "CRBTCScenario",
       [
         new Arg("symbol", getStringV),
         new Arg("name", getStringV),
@@ -230,12 +230,12 @@ export async function buildCToken(
       ],
       async (world, {symbol, name, comptroller, interestRateModel, initialExchangeRate, decimals, admin}) => {
         return {
-          invokation: await CEtherScenarioContract.deploy<CToken>(world, from, [name.val, symbol.val, decimals.val, admin.val, comptroller.val, interestRateModel.val, initialExchangeRate.val]),
+          invokation: await CRBTCScenarioContract.deploy<CToken>(world, from, [name.val, symbol.val, decimals.val, admin.val, comptroller.val, interestRateModel.val, initialExchangeRate.val]),
           name: name.val,
           symbol: symbol.val,
           decimals: decimals.toNumber(),
           underlying: "",
-          contract: 'CEtherScenario',
+          contract: 'CRBTCScenario',
           initial_exchange_rate_mantissa: initialExchangeRate.encode().toString(),
           admin: admin.val
         };
@@ -243,12 +243,12 @@ export async function buildCToken(
     ),
 
     new Fetcher<{symbol: StringV, name: StringV, decimals: NumberV, admin: AddressV, comptroller: AddressV, interestRateModel: AddressV, initialExchangeRate: NumberV}, TokenData>(`
-        #### CEther
+        #### CRBTC
 
-        * "CEther symbol:<String> name:<String> comptroller:<Address> interestRateModel:<Address> initialExchangeRate:<Number> decimals:<Number> admin: <Address>" - A CToken Scenario for local testing
-          * E.g. "CToken Deploy CEther cETH \"Compound Ether\" (Comptroller Address) (InterestRateModel Address) 1.0 8"
+        * "CRBTC symbol:<String> name:<String> comptroller:<Address> interestRateModel:<Address> initialExchangeRate:<Number> decimals:<Number> admin: <Address>" - A CToken Scenario for local testing
+          * E.g. "CToken Deploy CRBTC cETH \"Compound Ether\" (Comptroller Address) (InterestRateModel Address) 1.0 8"
       `,
-      "CEther",
+      "CRBTC",
       [
         new Arg("symbol", getStringV),
         new Arg("name", getStringV),
@@ -260,12 +260,12 @@ export async function buildCToken(
       ],
       async (world, {symbol, name, comptroller, interestRateModel, initialExchangeRate, decimals, admin}) => {
         return {
-          invokation: await CEtherContract.deploy<CToken>(world, from, [comptroller.val, interestRateModel.val, initialExchangeRate.val, name.val, symbol.val, decimals.val, admin.val]),
+          invokation: await CRBTC.deploy<CToken>(world, from, [comptroller.val, interestRateModel.val, initialExchangeRate.val, name.val, symbol.val, decimals.val, admin.val]),
           name: name.val,
           symbol: symbol.val,
           decimals: decimals.toNumber(),
           underlying: "",
-          contract: 'CEther',
+          contract: 'CRBTC',
           initial_exchange_rate_mantissa: initialExchangeRate.encode().toString(),
           admin: admin.val
         };

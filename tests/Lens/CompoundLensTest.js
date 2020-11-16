@@ -55,7 +55,7 @@ describe('CompoundLens', () => {
     });
 
     it('is correct for cEth', async () => {
-      let cEth = await makeCToken({kind: 'cether'});
+      let cEth = await makeCToken({kind: 'crbtc'});
       expect(
         cullTuple(await call(compoundLens, 'cTokenMetadata', [cEth._address]))
       ).toEqual({
@@ -78,9 +78,9 @@ describe('CompoundLens', () => {
   });
 
   describe('cTokenMetadataAll', () => {
-    it('is correct for a cErc20 and cEther', async () => {
+    it('is correct for a cErc20 and CRBTC', async () => {
       let cErc20 = await makeCToken();
-      let cEth = await makeCToken({kind: 'cether'});
+      let cEth = await makeCToken({kind: 'crbtc'});
       expect(
         (await call(compoundLens, 'cTokenMetadataAll', [[cErc20._address, cEth._address]])).map(cullTuple)
       ).toEqual([
@@ -137,8 +137,8 @@ describe('CompoundLens', () => {
       );
     });
 
-    it('is correct for cETH', async () => {
-      let cEth = await makeCToken({kind: 'cether'});
+    it('is correct for cRBTC', async () => {
+      let cEth = await makeCToken({kind: 'crbtc'});
       let ethBalance = await web3.eth.getBalance(acct);
       expect(
         cullTuple(await call(compoundLens, 'cTokenBalances', [cEth._address, acct], {gasPrice: '0'}))
@@ -158,7 +158,7 @@ describe('CompoundLens', () => {
   describe('cTokenBalancesAll', () => {
     it('is correct for cEth and cErc20', async () => {
       let cErc20 = await makeCToken();
-      let cEth = await makeCToken({kind: 'cether'});
+      let cEth = await makeCToken({kind: 'crbtc'});
       let ethBalance = await web3.eth.getBalance(acct);
       
       expect(
@@ -198,7 +198,7 @@ describe('CompoundLens', () => {
     });
 
     it('gets correct price for cEth', async () => {
-      let cEth = await makeCToken({kind: 'cether'});
+      let cEth = await makeCToken({kind: 'crbtc'});
       expect(
         cullTuple(await call(compoundLens, 'cTokenUnderlyingPrice', [cEth._address]))
       ).toEqual(
@@ -213,7 +213,7 @@ describe('CompoundLens', () => {
   describe('cTokenUnderlyingPriceAll', () => {
     it('gets correct price for both', async () => {
       let cErc20 = await makeCToken();
-      let cEth = await makeCToken({kind: 'cether'});
+      let cEth = await makeCToken({kind: 'crbtc'});
       expect(
         (await call(compoundLens, 'cTokenUnderlyingPriceAll', [[cErc20._address, cEth._address]])).map(cullTuple)
       ).toEqual([
@@ -249,7 +249,7 @@ describe('CompoundLens', () => {
     let proposalBlock, proposalId;
 
     beforeEach(async () => {
-      comp = await deploy('Comp', [acct]);
+      comp = await deploy('RLEN', [acct]);
       gov = await deploy('GovernorAlpha', [address(0), comp._address, address(0)]);
       targets = [acct];
       values = ["0"];
@@ -305,7 +305,7 @@ describe('CompoundLens', () => {
 
     beforeEach(async () => {
       currentBlock = +(await web3.eth.getBlockNumber());
-      comp = await deploy('Comp', [acct]);
+      comp = await deploy('RLEN', [acct]);
     });
 
     describe('getCompBalanceMetadata', () => {
@@ -355,7 +355,7 @@ describe('CompoundLens', () => {
       it('reverts on future value', async () => {
         await expect(
           call(compoundLens, 'getCompVotes', [comp._address, acct, [currentBlock + 1]])
-        ).rejects.toRevert('revert Comp::getPriorVotes: not yet determined')
+        ).rejects.toRevert('revert RLEN::getPriorVotes: not yet determined')
       });
     });
   });

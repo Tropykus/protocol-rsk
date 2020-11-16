@@ -14,16 +14,16 @@ const {
 
 describe('Maximillion', () => {
   let root, borrower;
-  let maximillion, cEther;
+  let maximillion, cRBTC;
   beforeEach(async () => {
     [root, borrower] = saddle.accounts;
-    cEther = await makeCToken({kind: "cether", supportMarket: true});
-    maximillion = await deploy('Maximillion', [cEther._address]);
+    cRBTC = await makeCToken({kind: "crbtc", supportMarket: true});
+    maximillion = await deploy('Maximillion', [cRBTC._address]);
   });
 
   describe("constructor", () => {
-    it("sets address of cEther", async () => {
-      expect(await call(maximillion, "cEther")).toEqual(cEther._address);
+    it("sets address of cRBTC", async () => {
+      expect(await call(maximillion, "cRBTC")).toEqual(cRBTC._address);
     });
   });
 
@@ -38,24 +38,24 @@ describe('Maximillion', () => {
     });
 
     it("repays part of a borrow", async () => {
-      await pretendBorrow(cEther, borrower, 1, 1, 150);
+      await pretendBorrow(cRBTC, borrower, 1, 1, 150);
       const beforeBalance = await etherBalance(root);
       const result = await send(maximillion, "repayBehalf", [borrower], {value: 100});
       const gasCost = await etherGasCost(result);
       const afterBalance = await etherBalance(root);
-      const afterBorrowSnap = await borrowSnapshot(cEther, borrower);
+      const afterBorrowSnap = await borrowSnapshot(cRBTC, borrower);
       expect(result).toSucceed();
       expect(afterBalance).toEqualNumber(beforeBalance.sub(gasCost).sub(100));
       expect(afterBorrowSnap.principal).toEqualNumber(50);
     });
 
     it("repays a full borrow and refunds the rest", async () => {
-      await pretendBorrow(cEther, borrower, 1, 1, 90);
+      await pretendBorrow(cRBTC, borrower, 1, 1, 90);
       const beforeBalance = await etherBalance(root);
       const result = await send(maximillion, "repayBehalf", [borrower], {value: 100});
       const gasCost = await etherGasCost(result);
       const afterBalance = await etherBalance(root);
-      const afterBorrowSnap = await borrowSnapshot(cEther, borrower);
+      const afterBorrowSnap = await borrowSnapshot(cRBTC, borrower);
       expect(result).toSucceed();
       expect(afterBalance).toEqualNumber(beforeBalance.sub(gasCost).sub(90));
       expect(afterBorrowSnap.principal).toEqualNumber(0);

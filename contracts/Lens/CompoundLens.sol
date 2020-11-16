@@ -6,7 +6,7 @@ import "../CToken.sol";
 import "../PriceOracle.sol";
 import "../EIP20Interface.sol";
 import "../Governance/GovernorAlpha.sol";
-import "../Governance/Comp.sol";
+import "../Governance/RLEN.sol";
 
 interface ComptrollerLensInterface {
     function markets(address) external view returns (bool, uint);
@@ -42,7 +42,7 @@ contract CompoundLens {
         address underlyingAssetAddress;
         uint underlyingDecimals;
 
-        if (compareStrings(cToken.symbol(), "cETH")) {
+        if (compareStrings(cToken.symbol(), "cRBTC")) {
             underlyingAssetAddress = address(0);
             underlyingDecimals = 18;
         } else {
@@ -94,7 +94,7 @@ contract CompoundLens {
         uint tokenBalance;
         uint tokenAllowance;
 
-        if (compareStrings(cToken.symbol(), "cETH")) {
+        if (compareStrings(cToken.symbol(), "cRBTC")) {
             tokenBalance = account.balance;
             tokenAllowance = account.balance;
         } else {
@@ -155,7 +155,7 @@ contract CompoundLens {
 
     function getAccountLimits(ComptrollerLensInterface comptroller, address account) public returns (AccountLimits memory) {
         (uint errorCode, uint liquidity, uint shortfall) = comptroller.getAccountLiquidity(account);
-        require(errorCode == 0);
+        require(errorCode == 0,"liquidity error");
 
         return AccountLimits({
             markets: comptroller.getAssetsIn(account),
@@ -260,7 +260,7 @@ contract CompoundLens {
         address delegate;
     }
 
-    function getCompBalanceMetadata(Comp comp, address account) external view returns (CompBalanceMetadata memory) {
+    function getCompBalanceMetadata(RLEN comp, address account) external view returns (CompBalanceMetadata memory) {
         return CompBalanceMetadata({
             balance: comp.balanceOf(account),
             votes: uint256(comp.getCurrentVotes(account)),
@@ -275,7 +275,7 @@ contract CompoundLens {
         uint allocated;
     }
 
-    function getCompBalanceMetadataExt(Comp comp, ComptrollerLensInterface comptroller, address account) external returns (CompBalanceMetadataExt memory) {
+    function getCompBalanceMetadataExt(RLEN comp, ComptrollerLensInterface comptroller, address account) external returns (CompBalanceMetadataExt memory) {
         uint balance = comp.balanceOf(account);
         comptroller.claimComp(account);
         uint newBalance = comp.balanceOf(account);
@@ -296,7 +296,7 @@ contract CompoundLens {
         uint votes;
     }
 
-    function getCompVotes(Comp comp, address account, uint32[] calldata blockNumbers) external view returns (CompVotes[] memory) {
+    function getCompVotes(RLEN comp, address account, uint32[] calldata blockNumbers) external view returns (CompVotes[] memory) {
         CompVotes[] memory res = new CompVotes[](blockNumbers.length);
         for (uint i = 0; i < blockNumbers.length; i++) {
             res[i] = CompVotes({

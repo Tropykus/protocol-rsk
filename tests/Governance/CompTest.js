@@ -8,9 +8,9 @@ const {
 
 const EIP712 = require('../Utils/EIP712');
 
-describe('Comp', () => {
-  const name = 'Compound';
-  const symbol = 'COMP';
+describe('RLEN', () => {
+  const name = 'rLending';
+  const symbol = 'rLEN';
 
   let root, a1, a2, accounts, chainId;
   let comp;
@@ -18,7 +18,7 @@ describe('Comp', () => {
   beforeEach(async () => {
     [root, a1, a2, ...accounts] = saddle.accounts;
     chainId = 1; // await web3.eth.net.getId(); See: https://github.com/trufflesuite/ganache-core/issues/515
-    comp = await deploy('Comp', [root]);
+    comp = await deploy('RLEN', [root]);
   });
 
   describe('metadata', () => {
@@ -49,19 +49,19 @@ describe('Comp', () => {
 
     it('reverts if the signatory is invalid', async () => {
       const delegatee = root, nonce = 0, expiry = 0;
-      await expect(send(comp, 'delegateBySig', [delegatee, nonce, expiry, 0, '0xbad', '0xbad'])).rejects.toRevert("revert Comp::delegateBySig: invalid signature");
+      await expect(send(comp, 'delegateBySig', [delegatee, nonce, expiry, 0, '0xbad', '0xbad'])).rejects.toRevert("revert RLEN::delegateBySig: invalid signature");
     });
 
     it('reverts if the nonce is bad ', async () => {
       const delegatee = root, nonce = 1, expiry = 0;
       const { v, r, s } = EIP712.sign(Domain(comp), 'Delegation', { delegatee, nonce, expiry }, Types, unlockedAccount(a1).secretKey);
-      await expect(send(comp, 'delegateBySig', [delegatee, nonce, expiry, v, r, s])).rejects.toRevert("revert Comp::delegateBySig: invalid nonce");
+      await expect(send(comp, 'delegateBySig', [delegatee, nonce, expiry, v, r, s])).rejects.toRevert("revert RLEN::delegateBySig: invalid nonce");
     });
 
     it('reverts if the signature has expired', async () => {
       const delegatee = root, nonce = 0, expiry = 0;
       const { v, r, s } = EIP712.sign(Domain(comp), 'Delegation', { delegatee, nonce, expiry }, Types, unlockedAccount(a1).secretKey);
-      await expect(send(comp, 'delegateBySig', [delegatee, nonce, expiry, v, r, s])).rejects.toRevert("revert Comp::delegateBySig: signature expired");
+      await expect(send(comp, 'delegateBySig', [delegatee, nonce, expiry, v, r, s])).rejects.toRevert("revert RLEN::delegateBySig: signature expired");
     });
 
     it('delegates on behalf of the signatory', async () => {
@@ -128,7 +128,7 @@ describe('Comp', () => {
 
   describe('getPriorVotes', () => {
     it('reverts if block number >= current block', async () => {
-      await expect(call(comp, 'getPriorVotes', [a1, 5e10])).rejects.toRevert("revert Comp::getPriorVotes: not yet determined");
+      await expect(call(comp, 'getPriorVotes', [a1, 5e10])).rejects.toRevert("revert RLEN::getPriorVotes: not yet determined");
     });
 
     it('returns 0 if there are no checkpoints', async () => {

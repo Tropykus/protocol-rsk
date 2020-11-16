@@ -2,7 +2,7 @@ import {Contract} from '../Contract';
 import {Callable, Sendable} from '../Invokation';
 
 interface MaximillionMethods {
-  cEther(): Callable<string>
+  cRBTC(): Callable<string>
   repayBehalf(string): Sendable<void>
 }
 

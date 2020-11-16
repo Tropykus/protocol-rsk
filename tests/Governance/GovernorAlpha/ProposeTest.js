@@ -10,7 +10,7 @@ describe('GovernorAlpha#propose/5', () => {
 
   beforeAll(async () => {
     [root, acct, ...accounts] = accounts;
-    comp = await deploy('Comp', [root]);
+    comp = await deploy('RLEN', [root]);
     gov = await deploy('GovernorAlpha', [address(0), comp._address, address(0)]);
   });
 
@@ -104,7 +104,7 @@ describe('GovernorAlpha#propose/5', () => {
         it("reverts with pending", async () => {
           await expect(
             call(gov, 'propose', [targets, values, signatures, callDatas, "do nothing"])
-          ).rejects.toRevert("revert GovernorAlpha::propose: one live proposal per proposer, found an already pending proposal");
+          ).rejects.toRevert("revert GovernorAlpha::propose: one live proposal per proposer");
         });
 
         it("reverts with active", async () => {
@@ -113,7 +113,7 @@ describe('GovernorAlpha#propose/5', () => {
 
           await expect(
             call(gov, 'propose', [targets, values, signatures, callDatas, "do nothing"])
-          ).rejects.toRevert("revert GovernorAlpha::propose: one live proposal per proposer, found an already active proposal");
+          ).rejects.toRevert("revert GovernorAlpha::propose: one live proposal per proposer");
         });
       });
     });

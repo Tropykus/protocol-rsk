@@ -51,16 +51,48 @@ module.exports = {
     },
     test: {
       providers: [
-        {
-          ganache: {
-            gasLimit: 200000000,
-            gasPrice: 20000,
-            defaultBalanceEther: 1000000000,
-            allowUnlimitedContractSize: true,
-            hardfork: 'istanbul'
-          }
+        // UNCOMMENT BELOW TO RUN TESTS ON GANACHE-CORE
+              {
+                ganache: {
+                  gasLimit: 200000000,
+                  gasPrice: 20000,
+                  defaultBalanceEther: 1000000000,
+                  allowUnlimitedContractSize: true,
+                  hardfork: 'istanbul'
+                }
+              }
+        // UNCOMMENT BELOW TO POINT TO LOCALHOST(i.e. `ganache-cli --gasLimit 200000000 --gasPrice 20000 --defaultBalanceEther 1000000000 --allowUnlimitedContractSize true -k "istanbul" -v`)
+              //{env: "PROVIDER"},                                      // Checks env $PROVIDER (i.e. `export PROVIDER="http://localhost:8545"`)
+              //{file: "~/.ethereum/ganache-local"},                    // Load from given file with contents as the URL (e.g. https://infura.io/api-key)
+              //{http: "http://localhost:4444"}                         // FIX THIS, SHOULD BE 8545 by default
+            ],
+        /////////////////////////////////////////
+      web3: {
+        gas: [
+          {env: "GAS"},
+          {default: "20000000"}
+        ],
+        gas_price: [
+          {env: "GAS_PRICE"},
+          {default: "12000000002"}
+        ],
+        options: {
+          transactionConfirmationBlocks: 1,
+          transactionBlockTimeout: 5
         }
-      ],
+      },
+      accounts: [
+        {env: "ACCOUNT"},
+        {unlocked: 0}
+      ]
+    },
+    rsk: {
+      providers: [
+              //{env: "PROVIDER"},                                      // Checks env $PROVIDER (i.e. `export PROVIDER="http://localhost:8545"`)
+              //{file: "~/.ethereum/goerli-url"},                    // Load from given file with contents as the URL (e.g. https://infura.io/api-key)
+              // {http: "http://localhost:8545"}                         //
+              {http: "http://localhost:4444"}                         //
+            ],
       web3: {
         gas: [
           {env: "GAS"},

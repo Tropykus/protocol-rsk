@@ -64,11 +64,11 @@ async function repayBorrowBehalf(cToken, payer, borrower, repayAmount) {
   return send(cToken, 'repayBorrowBehalf', [borrower], {from: payer, value: repayAmount});
 }
 
-describe('CEther', function () {
+describe('CRBTC', function () {
   let cToken, root, borrower, benefactor, accounts;
   beforeEach(async () => {
     [root, borrower, benefactor, ...accounts] = saddle.accounts;
-    cToken = await makeCToken({kind: 'cether', comptrollerOpts: {kind: 'bool'}});
+    cToken = await makeCToken({kind: 'crbtc', comptrollerOpts: {kind: 'bool'}});
   });
 
   describe('borrowFresh', () => {

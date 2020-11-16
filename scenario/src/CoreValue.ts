@@ -949,7 +949,7 @@ const fetchers = [
 
       * "Comp ...compArgs" - Returns Comp value
     `,
-    'Comp',
+    'RLEN',
     [new Arg('res', getCompValue, { variadic: true })],
     async (world, { res }) => res,
     { subExpressions: compFetchers() }

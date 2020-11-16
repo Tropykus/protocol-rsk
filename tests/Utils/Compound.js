@@ -84,7 +84,7 @@ async function makeComptroller(opts = {}) {
     const closeFactor = etherMantissa(dfn(opts.closeFactor, .051));
     const maxAssets = etherUnsigned(dfn(opts.maxAssets, 10));
     const liquidationIncentive = etherMantissa(1);
-    const comp = opts.comp || await deploy('Comp', [opts.compOwner || root]);
+    const comp = opts.comp || await deploy('RLEN', [opts.compOwner || root]);
     const compRate = etherUnsigned(dfn(opts.compRate, 1e18));
 
     await send(unitroller, '_setPendingImplementation', [comptroller._address]);
@@ -111,7 +111,7 @@ async function makeCToken(opts = {}) {
   const interestRateModel = opts.interestRateModel || await makeInterestRateModel(opts.interestRateModelOpts);
   const exchangeRate = etherMantissa(dfn(opts.exchangeRate, 1));
   const decimals = etherUnsigned(dfn(opts.decimals, 8));
-  const symbol = opts.symbol || (kind === 'cether' ? 'cETH' : 'cOMG');
+  const symbol = opts.symbol || (kind === 'crbtc' ? 'cRBTC' : 'cOMG');
   const name = opts.name || `CToken ${symbol}`;
   const admin = opts.admin || root;
 
@@ -119,8 +119,8 @@ async function makeCToken(opts = {}) {
   let cDelegator, cDelegatee, cDaiMaker;
 
   switch (kind) {
-    case 'cether':
-      cToken = await deploy('CEtherHarness',
+    case 'crbtc':
+      cToken = await deploy('CRBTCHarness',
         [
           comptroller._address,
           interestRateModel._address,
@@ -130,27 +130,6 @@ async function makeCToken(opts = {}) {
           decimals,
           admin
         ])
-      break;
-
-    case 'cdai':
-      cDaiMaker  = await deploy('CDaiDelegateMakerHarness');
-      underlying = cDaiMaker;
-      cDelegatee = await deploy('CDaiDelegateHarness');
-      cDelegator = await deploy('CErc20Delegator',
-        [
-          underlying._address,
-          comptroller._address,
-          interestRateModel._address,
-          exchangeRate,
-          name,
-          symbol,
-          decimals,
-          admin,
-          cDelegatee._address,
-          encodeParameters(['address', 'address'], [cDaiMaker._address, cDaiMaker._address])
-        ]
-      );
-      cToken = await saddle.getContractAt('CDaiDelegateHarness', cDelegator._address); // XXXS at
       break;
 
     case 'cerc20':
@@ -225,6 +204,15 @@ async function makeInterestRateModel(opts = {}) {
     const kink = etherMantissa(dfn(opts.kink, 0));
     return await deploy('JumpRateModel', [baseRate, multiplier, jump, kink]);
   }
+
+  if (kind == 'jump-rateV2') {
+    const baseRate = etherMantissa(dfn(opts.baseRate, 0.05));
+    const multiplier = etherMantissa(dfn(opts.multiplier, 1e-18));
+    const jump = etherMantissa(dfn(opts.jump, 2));
+    const kink = etherMantissa(dfn(opts.kink, 0.9));
+    let contr=  await deploy('JumpRateModelV2', [baseRate, multiplier, jump, kink, root]);
+    return contr;
+  }
 }
 
 async function makePriceOracle(opts = {}) {
@@ -286,11 +274,11 @@ async function setBalance(cToken, account, balance) {
   return await send(cToken, 'harnessSetBalance', [account, balance]);
 }
 
-async function setEtherBalance(cEther, balance) {
-  const current = await etherBalance(cEther._address);
+async function setEtherBalance(cRBTC, balance) {
+  const current = await etherBalance(cRBTC._address);
   const root = saddle.account;
-  expect(await send(cEther, 'harnessDoTransferOut', [root, current])).toSucceed();
-  expect(await send(cEther, 'harnessDoTransferIn', [root, balance], { value: balance })).toSucceed();
+  expect(await send(cRBTC, 'harnessDoTransferOut', [root, current])).toSucceed();
+  expect(await send(cRBTC, 'harnessDoTransferIn', [root, balance], { value: balance })).toSucceed();
 }
 
 async function getBalances(cTokens, accounts) {

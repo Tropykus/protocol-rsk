@@ -1,8 +1,7 @@
+pragma solidity ^0.5.16;
 /**
  *Submitted for verification at Etherscan.io on 2018-11-24
 */
-
-pragma solidity ^0.5.16;
 
 // File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
@@ -96,8 +95,8 @@ contract BasicToken is ERC20Basic {
   * @param _value The amount to be transferred.
   */
   function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_value <= balances[msg.sender]);
-    require(_to != address(0));
+    require(_value <= balances[msg.sender],"No balance!");
+    require(_to != address(0),"Bad address");
 
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
@@ -165,9 +164,9 @@ contract StandardToken is ERC20, BasicToken {
     public
     returns (bool)
   {
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-    require(_to != address(0));
+    require(_value <= balances[_from],"No balance!");
+    require(_value <= allowed[_from][msg.sender],"No allowance!");
+    require(_to != address(0),"Bad address!");
 
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
@@ -308,7 +307,7 @@ contract Ownable {
    * @dev Throws if called by any account other than the owner.
    */
   modifier onlyOwner() {
-    require(msg.sender == owner);
+    require(msg.sender == owner,"Not owner!");
     _;
   }
 
@@ -336,7 +335,7 @@ contract Ownable {
    * @param _newOwner The address to transfer ownership to.
    */
   function _transferOwnership(address _newOwner) internal {
-    require(_newOwner != address(0));
+    require(_newOwner != address(0),"Can't transfer to yourself!");
     emit OwnershipTransferred(owner, _newOwner);
     owner = _newOwner;
   }
@@ -357,12 +356,12 @@ contract MintableToken is StandardToken, Ownable {
 
 
   modifier canMint() {
-    require(!mintingFinished);
+    require(!mintingFinished,"Minting Finished");
     _;
   }
 
   modifier hasMintPermission() {
-    require(msg.sender == owner);
+    require(msg.sender == owner,"Not owner!");
     _;
   }
 
@@ -418,7 +417,7 @@ contract BurnableToken is BasicToken {
   }
 
   function _burn(address _who, uint256 _value) internal {
-    require(_value <= balances[_who]);
+    require(_value <= balances[_who],"no balance!");
     // no need to require value <= totalSupply, since that would imply the
     // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
@@ -446,7 +445,7 @@ contract Pausable is Ownable {
    * @dev Modifier to make a function callable only when the contract is not paused.
    */
   modifier whenNotPaused() {
-    require(!paused);
+    require(!paused,"paused!");
     _;
   }
 
@@ -454,7 +453,7 @@ contract Pausable is Ownable {
    * @dev Modifier to make a function callable only when the contract is paused.
    */
   modifier whenPaused() {
-    require(paused);
+    require(paused,"not paused!");
     _;
   }
 
@@ -554,7 +553,7 @@ contract Claimable is Ownable {
    * @dev Modifier throws if called by any account other than the pendingOwner.
    */
   modifier onlyPendingOwner() {
-    require(msg.sender == pendingOwner);
+    require(msg.sender == pendingOwner,"not pending owner");
     _;
   }
 
@@ -592,7 +591,7 @@ library SafeERC20 {
   )
     internal
   {
-    require(_token.transfer(_to, _value));
+    require(_token.transfer(_to, _value),"transfer error");
   }
 
   function safeTransferFrom(
@@ -603,7 +602,7 @@ library SafeERC20 {
   )
     internal
   {
-    require(_token.transferFrom(_from, _to, _value));
+    require(_token.transferFrom(_from, _to, _value),"transfer error");
   }
 
   function safeApprove(
@@ -613,7 +612,7 @@ library SafeERC20 {
   )
     internal
   {
-    require(_token.approve(_spender, _value));
+    require(_token.approve(_spender, _value),"aprove error");
   }
 }
 
@@ -642,7 +641,9 @@ contract CanReclaimToken is Ownable {
 // File: contracts/utils/OwnableContract.sol
 
 // empty block is used as this contract just inherits others.
-contract OwnableContract is CanReclaimToken, Claimable { } /* solhint-disable-line no-empty-blocks */
+contract OwnableContract is CanReclaimToken, Claimable {
+  // solium-disable-previous-line no-empty-blocks
+}
 
 // File: contracts/token/WBTC.sol
 
