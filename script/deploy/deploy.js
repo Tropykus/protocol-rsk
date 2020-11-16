@@ -3,8 +3,7 @@ const {
     etherMantissa,
 } = require('../../tests/Utils/Ethereum');
 //enviroment
-const [environment, verb] = args;
-let eTest = false;
+const [verb] = args;
 let eVerb = false;
 //config script
 const logPath = __dirname + '/contractAddressesDeploy.json';
@@ -18,8 +17,6 @@ let unitroller, newUnitroller, oracleProxy, comptroller, interestRate, underlyin
 let arrayToFile = new Array();
 
 function validateEnvironment() {
-    if (environment == 'test')
-        eTest = true;
     if (verb == 'v')
         eVerb = true;
 }
@@ -100,13 +97,11 @@ async function priceOracleProxy() {
     priceOracleAdapterMoC = await saddle.deploy('PriceOracleAdapterMoc', [root]);
     generateLogAddress('PriceOracleAdapterMoc', priceOracleAdapterMoC._address);
     //only for test
-    if (eTest) {
-        priceOracleMoC = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('1e+18')]);
-        generateLogAddress('MockPriceProviderMoC', priceOracleMoC._address);
-        //set mock to adapter [Money on Chain]
-        let setPriceProvider = await send(priceOracleAdapterMoC, "setPriceProvider", [priceOracleMoC._address]);
-        writeLog(`priceOracleAdapterMoC (${priceOracleAdapterMoC._address}) setPriceProvider [${setPriceProvider._address}]`, true);
-    }
+    priceOracleMoC = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('1e+18')]);
+    generateLogAddress('MockPriceProviderMoC', priceOracleMoC._address);
+    //set mock to adapter [Money on Chain]
+    let setPriceProvider = await send(priceOracleAdapterMoC, "setPriceProvider", [priceOracleMoC._address]);
+    writeLog(`priceOracleAdapterMoC (${priceOracleAdapterMoC._address}) setPriceProvider [${setPriceProvider._address}]`, true);
 
 };
 
