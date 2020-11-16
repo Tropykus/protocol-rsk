@@ -14,7 +14,7 @@ describe('PriceOracleProxy', () => {
   let backingOracleMoC, backingOracle, cRBTC, cUsdc, cUsdt, cDai, cOther;
 
   beforeEach(async () => {
-    [root, ...accounts] = saddle.accounts;
+    [root, a3, ...accounts] = saddle.accounts;
     //set comptroller
     const comptroller = await deploy('ComptrollerHarness');
     //set PriceProviderMoC
@@ -78,6 +78,50 @@ describe('PriceOracleProxy', () => {
 
     it("revert when not account guardian try to set provider to adapter compund ", async () => {
       await expect(send(adapterCompound, "setPriceProvider", [backingOracle._address], { from: accounts[0] })).rejects.toRevert("revert PriceOracleAdapterCompound: only guardian may set the address");
+    });
+  });
+
+  describe("set and accept new guardian", () => {
+    it("set pending admin, fail without owner", async () => {
+      await expect(send(oracleDispatcher, "_setPendingAdmin", [a3], { from: a3 })).rejects.toRevert("revert PriceOracleProxy: only guardian may set the address");
+    });
+
+    it("set pending admin, fail with wrong owner", async () => {
+      await expect(send(oracleDispatcher, "_setPendingAdmin", [address(0)])).rejects.toRevert("revert PriceOracleProxy: address admin can not be 0");
+    });
+
+    it("set pending admin", async () => {
+      let validate = await send(oracleDispatcher, "_setPendingAdmin", [a3]);
+      expect(validate).toHaveLog('NewPendingGuardian', {
+        oldPendingGuardian: root,
+        newPendingGuardian: a3,
+      });
+    });
+
+    it("accept new admin, fail whitout set pending admin", async () => {
+      //deploy multiSig
+      let multiSig = await deploy('MultiSigWallet', [[root], 1]);
+      //construct acceptAdmin=>encodeABI
+      const data = oracleDispatcher.methods._acceptAdmin().encodeABI();
+      //submit transacion multisig, when accept the admin of contract
+      let result = await send(multiSig, "submitTransaction", [oracleDispatcher._address, 0, data]);
+      expect(result).toHaveLog('ExecutionFailure', {
+        transactionId: "0"
+      });
+    });
+
+    it("set and accept new admin", async () => {
+      //deploy multiSig
+      let multiSig = await deploy('MultiSigWallet', [[root], 1]);
+      //set pending admin
+      await send(oracleDispatcher, "_setPendingAdmin", [multiSig._address]);
+      //construct acceptAdmin=>encodeABI
+      const data = oracleDispatcher.methods._acceptAdmin().encodeABI();
+      //submit transacion multisig, when accept the admin of contract
+      let result = await send(multiSig, "submitTransaction", [oracleDispatcher._address, 0, data]);
+      expect(result).toHaveLog('Execution', {
+        transactionId: "0"
+      });
     });
   });
 

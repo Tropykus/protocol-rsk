@@ -116,6 +116,10 @@ contract PriceOracleProxy is PriceOracle {
             msg.sender == guardian,
             "PriceOracleProxy: only guardian may set the address"
         );
+        require(
+            newPendingGuardian != address(0),
+            "PriceOracleProxy: address admin can not be 0"
+        );
         // Save current value, if any, for inclusion in log
         address oldPendingGuardian = guardian;
         // Store pendingGaurdian with value newPendingGaurdian

@@ -102,8 +102,7 @@ describe('deployTest', () => {
     });
     it("Set pending admin oracle proxy with MultiSig", async () => {
       let validate = await call(oracleProxy, "_setPendingAdmin", [a3], { from: multiSig._address });
-      expect(validate).toEqual({});
-      // expect(validate).not.rejects;
+      expect(validate).resolves;
     });
 
 
