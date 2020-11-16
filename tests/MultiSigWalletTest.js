@@ -16,9 +16,7 @@ describe('MultiSigWallet', () => {
     };
 
     beforeEach(async () => {
-        // this.multiSig = await MultiSigWallet.new([multiSigOwner], 1);
         multiSig = await deploy('MultiSigWallet', [[multiSigOwner], 1]);
-        // assert.ok(this.multiSig);
     });
 
     describe('initial state', () => {
@@ -39,71 +37,46 @@ describe('MultiSigWallet', () => {
 
     describe('add owner', () => {
         it('adds a new owner successfully', async () => {
-            // let txData = this.multiSig.contract.methods.addOwner(additionalOwner).encodeABI();
             let txData = multiSig.methods.addOwner(additionalOwner).encodeABI();
 
-            // await this.multiSig.submitTransaction(this.multiSig.address, 0, txData);
             await send(multiSig, "submitTransaction", [multiSig._address, 0, txData], { from: multiSigOwner });
 
-            // let isOwner = await this.multiSig.isOwner(additionalOwner)
             let isOwner = await call(multiSig, "isOwner", [additionalOwner]);
-            // assert.equal(isOwner, true);
             expect(isOwner).toEqual(true);
 
-            // const owners = await this.multiSig.getOwners();
             const owners = await call(multiSig, "getOwners");
-            // assert.equal(owners.length, 2);
             expect(owners.length).toEqualNumber(2);
         });
 
         it('throws error with invalid parameters', async () => {
-            // await expectThrow(this.multiSig.addOwner(multiSigOwner, { from: multiSigOwner }));
             await expect(send(multiSig, "addOwner", [multiSigOwner], { from: multiSigOwner })).rejects.toRevert("revert Only wallet allowed");
-            // let txData = this.multiSig.contract.methods.addOwner(NULL_ADDRESS).encodeABI();
             let txData = multiSig.methods.addOwner(address(0)).encodeABI();
             let txId = 0;
-            // await this.multiSig.submitTransaction(this.multiSig.address, txId, txData);
             await send(multiSig, "submitTransaction", [multiSig._address, txId, txData], { from: multiSigOwner });
-            // let executionResult = await this.multiSig.transactions(txId);
             let executionResult = await call(multiSig, "transactions", [txId]);
-            // assert.equal(executionResult.executed, false);
             expect(executionResult.executed).toEqual(false);
-            // txData = this.multiSig.contract.methods.addOwner(multiSigOwner).encodeABI();
             txData = multiSig.methods.addOwner(multiSigOwner).encodeABI();
-            // await this.multiSig.submitTransaction(this.multiSig.address, txId, txData);
             await send(multiSig, "submitTransaction", [multiSig._address, txId, txData], { from: multiSigOwner });
-            // executionResult = await this.multiSig.transactions(txId);
             executionResult = await call(multiSig, "transactions", [txId]);
-            // assert.equal(executionResult.executed, false);
             expect(executionResult.executed).toEqual(false);
         });
     })
 
     describe('remove owner', () => {
         it('removes an owner successfully', async () => {
-            // let txData = this.multiSig.contract.methods.addOwner(additionalOwner).encodeABI();
             let txData = multiSig.methods.addOwner(additionalOwner).encodeABI();
-            // await this.multiSig.submitTransaction(this.multiSig.address, 0, txData);
             await send(multiSig, "submitTransaction", [multiSig._address, 0, txData], { from: multiSigOwner });
 
-            // let isOwner = await this.multiSig.isOwner(additionalOwner)
             let isOwner = await call(multiSig, "isOwner", [additionalOwner]);
-            // assert.equal(isOwner, true);
             expect(isOwner).toEqual(true);
-            // txData = this.multiSig.contract.methods.removeOwner(additionalOwner).encodeABI();
             txData = multiSig.methods.removeOwner(additionalOwner).encodeABI();
 
-            // await this.multiSig.submitTransaction(this.multiSig.address, 0, txData);
             await send(multiSig, "submitTransaction", [multiSig._address, 0, txData], { from: multiSigOwner });
 
-            // isOwner = await this.multiSig.isOwner(additionalOwner)
             isOwner = await call(multiSig, "isOwner", [additionalOwner]);
-            // assert.equal(isOwner, false);
             expect(isOwner).toEqual(false);
 
-            // const owners = await this.multiSig.getOwners();
             const owners = await call(multiSig, "getOwners");
-            // assert.equal(owners.length, 1);
             expect(owners.length).toEqualNumber(1);
         });
 
