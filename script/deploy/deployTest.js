@@ -60,7 +60,8 @@ async function setContractFromAddress(adresses) {
   oracleProxy = await saddle.getContractAt("PriceOracleProxy", oracleProxyAddress);
 }
 describe('deployTest', () => {
-  [root, a2, a3, ...accounts] = saddle.accounts;
+  [root, a3, ...accounts] = saddle.accounts;
+  a3 = "0x581c42e8634805c782f7e592304fc578c48516E0";
   let contracts = getAddressContractDeploy();
 
   describe("OwnerAlpha", () => {
@@ -68,7 +69,7 @@ describe('deployTest', () => {
     it("Set pending admin Unitroller FAIL with out owner", async () => {
       //before
       await setContractFromAddress(JSON.parse(contracts));
-      
+
       let validate = await call(unitrollerImp, "_setPendingAdmin", [a3]);
       expect(validate).toEqual("1");
     });
@@ -110,8 +111,6 @@ describe('deployTest', () => {
 
   describe("Supplying Dai", () => {
     it("Supplying DAI to rLending.", async () => {
-      //set contracts at address to vars
-      // await setContractFromAddress(JSON.parse(contracts));
       //approve mint 
       await send(underlyingDai, "approve", [cDai._address, new BigNumber(10000e18)]);
       //mint cDai
@@ -136,17 +135,19 @@ describe('deployTest', () => {
       //aprove mint
       await send(underlyingDai, "approve", [cDai._address, new BigNumber(10000e18)]);
       //mint cDai
-      await send(cDai, "mint", [new BigNumber(10000e18)]);
+      let amount = new BigNumber(10000e18);
+      await send(cDai, "mint", [amount]);
       //set market to account
       let cTokens = [];
       cTokens[0] = cDai._address;
       await send(unitroller, "enterMarkets", [cTokens]);
-      let mark = await call(unitroller, "getAccountLiquidity", [root]);
-      //valdiate mark  get empty array
-      let filtered = Object.values(mark).filter(function (i) {
-        return i != 0;
-      });
-      expect(filtered).toEqual(Array());
+      let error, liquidity, shortfall;
+      //set array response
+      ({ 0: error, 1: liquidity, 2: shortfall } = await call(unitroller, "getAccountLiquidity", [root]));
+      expect(error).toEqualNumber(0);
+      //TODO 
+      // expect(liquidity).toEqualNumber(amount * (0.5));
+      expect(shortfall).toEqualNumber(0);
     });
 
     it("Borrowing DAI from rLending.", async () => {
