@@ -14,13 +14,14 @@ const config = {
     compMarkets: [],
     collateralFactor: 0.5,
     testnet: {
-        MoC: "0x2d39cc54dc44ff27ad23a91a9b5fd750dae4b218",
-        MoCrBTC: "0x2d39cc54dc44ff27ad23a91a9b5fd750dae4b218",
+        OraculoRif: "0x2d39cc54dc44ff27ad23a91a9b5fd750dae4b218",
+        OraculoRBTC: "0x2d39cc54dc44ff27ad23a91a9b5fd750dae4b218",
         Dai: "0x5a323a9c4c0fd6a521426dd0ebced8318a9835eb",
         Rif: "0x19f64674d8a5b4e652319f5e239efd3bc969a1fe",
     },
     mainnet: {
-        MoC: "0x",
+        OraculoRif: "0x",
+        OraculoRBTC: "0x",
         Dai: "0x",
         Rif: "0x",
     }
@@ -132,15 +133,15 @@ async function setPriceProvider() {
             addressMoC = priceOracleMoC._address;
             break;
         case 'testnet':
-            addressMoC = config.testnet.MoC;
+            addressMoC = config.testnet.OraculoRif;
             break;
         case 'mainet':
-            addressMoC = config.mainnet.MoC;
+            addressMoC = config.mainnet.OraculoRif;
             break;
     }
     //set mock to adapter [Money on Chain]
     await send(priceOracleAdapterMoC, "setPriceProvider", [addressMoC]);
-    writeLog(`setPriceProvider  MoC=${addressMoC}\n`, true);
+    writeLog(`setPriceProvider  OraculoRif=${addressMoC}\n`, true);
 }
 
 //deploy InterestRateModel 
