@@ -23,6 +23,18 @@ contract PriceOracleAdapterMoc is PriceOracleAdapter {
      * @param rbtcPriceProvider address of the RBTC MoC price provider
      */
     constructor(address guardian_,address priceProvider, address rbtcPriceProvider) public {
+        require(
+            guardian_ != address(0),
+            "PriceOracleAdapterMoc: guardian could not be 0"
+        );
+        require(
+            priceProvider != address(0),
+            "PriceOracleAdapterMoc: priceProvider could not be 0"
+        );
+        require(
+            rbtcPriceProvider != address(0),
+            "PriceOracleAdapterMoc: rbtcPriceProvider could not be 0"
+        );
         guardian = guardian_;
         priceProviderMoC = PriceProviderMoC(priceProvider);
         rBTCPriceProviderMoC = PriceProviderMoC(rbtcPriceProvider);
