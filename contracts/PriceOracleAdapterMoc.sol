@@ -37,7 +37,7 @@ contract PriceOracleAdapterMoc is PriceOracleAdapter {
         (bytes32 priceRBTC, bool hasRBTC) = rBTCPriceProviderMoC.peek();
         require(has, "PriceOracleAdapterMoc: Oracle have no Price");
         require(hasRBTC, "PriceOracleAdapterMoc: Oracle have no RBTC Price");
-        return uint256(price).div(uint256(priceRBTC));
+        return uint256(price).mul(1e18).div(uint256(priceRBTC));
     }
 
     /**
