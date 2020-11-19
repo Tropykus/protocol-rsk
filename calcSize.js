@@ -20,16 +20,16 @@ async function printSize() {
     let dataTable = [['Contracts', 'Size in KB']];
     let contracts = JSON.parse(file.toString());
     for(let contract in contracts.contracts) {
-        console.log('contract', contract);
-        let content = contracts.contracts[contract].bin;
-        console.log('content', content);
-        let sizeInKB = content.toString().length / 2 / 1024;
-        if (sizeInKB > 24)
-            dataTable.push([chalk.red(contract),chalk.red(sizeInKB)]);
-        else if (sizeInKB > 20)
-            dataTable.push([chalk.yellow(contract),chalk.yellow(sizeInKB)]);
-        else
-            dataTable.push([chalk.green(contract),chalk.green(sizeInKB)]);
+        if(contract.indexOf('test') == -1) {
+            let content = contracts.contracts[contract].bin;
+            let sizeInKB = content.toString().length / 2 / 1024;
+            if (sizeInKB > 24)
+                dataTable.push([chalk.red(contract),chalk.red(sizeInKB)]);
+            else if (sizeInKB > 20)
+                dataTable.push([chalk.yellow(contract),chalk.yellow(sizeInKB)]);
+            else
+                dataTable.push([chalk.green(contract),chalk.green(sizeInKB)]);
+        }
     }
     console.log(table(dataTable));
 }
