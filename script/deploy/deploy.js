@@ -27,7 +27,7 @@ const config = {
     }
 };
 const logPath = __dirname + '/contractAddressesDeploy.json';
-let unitroller, newUnitroller, oracleProxy, comptroller, interestRate, underlyingDai, underlyingRif, cDai, cRif, cRBTC, interestRateWhitePaper, priceOracleMoC, priceOracleAdapterMoC, multiSig, RLEN, addressMoC, addressRif;
+let unitroller, newUnitroller, oracleProxy, comptroller, interestRate, underlyingDai, underlyingRif, cDai, cRif, cRBTC, interestRateWhitePaper, priceOracleMocRif, priceOracleMocRBTC, priceOracleAdapterMoC, multiSig, RLEN, addressOraculoRif, addressOraculoRBTC, addressRif;
 [root, ...accounts] = saddle.accounts;
 //set array to write to file
 let arrayToFile = new Array();
@@ -115,11 +115,11 @@ async function comptrollerDeploy() {
 async function priceOracleProxy() {
     oracleProxy = await saddle.deploy('PriceOracleProxy', [root]);
     generateLogAddress('PriceOracleProxy', oracleProxy._address);
-    //deploy adapter [Money on Chain]
-    priceOracleAdapterMoC = await saddle.deploy('PriceOracleAdapterMoc', [root]);
-    generateLogAddress('PriceOracleAdapterMoc ', priceOracleAdapterMoC._address);
-    // set price depend on net
+    // set address oracle prices depend on net
     await setPriceProvider();
+    //deploy adapter [Money on Chain]
+    priceOracleAdapterMoC = await saddle.deploy('PriceOracleAdapterMoc', [root, addressOraculoRif, addressOraculoRBTC]);
+    generateLogAddress('PriceOracleAdapterMoc ', priceOracleAdapterMoC._address);
 
 };
 
@@ -127,21 +127,24 @@ async function priceOracleProxy() {
 async function setPriceProvider() {
     switch (network) {
         case 'development':
-            //deploy mock
-            priceOracleMoC = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('1e+18')]);
-            generateLogAddress('🔸MockPriceProviderMoC ', priceOracleMoC._address);
-            addressMoC = priceOracleMoC._address;
+            //deploy Rif mock 
+            priceOracleMocRif = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('1e+18')]);
+            generateLogAddress('🔸MockPriceProviderMoC Rif', priceOracleMocRif._address);
+            addressOraculoRif = priceOracleMocRif._address;
+            //deploy rBTC mock 
+            priceOracleMocRBTC = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('1e+18')]);
+            generateLogAddress('🔸MockPriceProviderMoC rBTC', priceOracleMocRBTC._address);
+            addressOraculoRBTC = priceOracleMocRBTC._address;
             break;
         case 'testnet':
-            addressMoC = config.testnet.OraculoRif;
+            addressOraculoRif = config.testnet.OraculoRif;
+            addressOraculoRBTC = config.testnet.OraculoRBTC;
             break;
         case 'mainet':
-            addressMoC = config.mainnet.OraculoRif;
+            addressOraculoRif = config.mainnet.OraculoRif;
+            addressOraculoRBTC = config.mainnet.OraculoRBTC;
             break;
     }
-    //set mock to adapter [Money on Chain]
-    await send(priceOracleAdapterMoC, "setPriceProvider", [addressMoC]);
-    writeLog(`setPriceProvider  OraculoRif=${addressMoC}\n`, true);
 }
 
 //deploy InterestRateModel 

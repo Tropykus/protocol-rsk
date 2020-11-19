@@ -66,7 +66,7 @@ describe('deployTest', () => {
 
   describe("OwnerAlpha", () => {
 
-    it("Set pending admin Unitroller FAIL with out owner", async () => {
+    it("Set pending admin Unitroller fail with out owner", async () => {
       //before
       await setContractFromAddress(JSON.parse(contracts));
 
