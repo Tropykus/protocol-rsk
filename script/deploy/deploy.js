@@ -27,7 +27,7 @@ const config = {
     }
 };
 const logPath = __dirname + '/contractAddressesDeploy.json';
-let unitroller, newUnitroller, oracleProxy, comptroller, interestRate, underlyingDai, underlyingRif, cDai, cRif, cRBTC, interestRateWhitePaper, priceOracleMocRif, priceOracleMocRBTC, priceOracleAdapterMoC, multiSig, RLEN, addressOraculoRif, addressOraculoRBTC, addressRif;
+let unitroller, newUnitroller, oracleProxy, comptroller, interestRate, underlyingDai, underlyingRif, cDai, cRif, cRBTC, interestRateWhitePaper, priceOracleMocRif, priceOracleMocDai, priceOracleMocRBTC, priceOracleAdapterRif, multiSig, RLEN, addressOraculoRif, addressOraculoDai, addressRif;
 [root, ...accounts] = saddle.accounts;
 //set array to write to file
 let arrayToFile = new Array();
@@ -115,11 +115,13 @@ async function comptrollerDeploy() {
 async function priceOracleProxy() {
     oracleProxy = await saddle.deploy('PriceOracleProxy', [root]);
     generateLogAddress('PriceOracleProxy', oracleProxy._address);
-    // set address oracle prices depend on net
+    //set prices oracles addresses
     await setPriceProvider();
     //deploy adapter [Money on Chain]
-    priceOracleAdapterMoC = await saddle.deploy('PriceOracleAdapterMoc', [root, addressOraculoRif, addressOraculoRBTC]);
-    generateLogAddress('PriceOracleAdapterMoc ', priceOracleAdapterMoC._address);
+    priceOracleAdapterRif = await saddle.deploy('PriceOracleAdapterMoc', [root, addressOraculoRif, addressOraculoRBTC]);
+    generateLogAddress('PriceOracleAdapterMoc Rif', priceOracleAdapterRif._address);
+    priceOracleAdapterDai = await saddle.deploy('PriceOracleAdapterMoc', [root, addressOraculoDai, addressOraculoRBTC]);
+    generateLogAddress('PriceOracleAdapterMoc Dai', priceOracleAdapterDai._address);
 
 };
 
@@ -128,17 +130,25 @@ async function setPriceProvider() {
     switch (network) {
         case 'development':
             //deploy Rif mock 
-            priceOracleMocRif = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('1e+18')]);
+            priceOracleMocRif = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('9e+18')]);
             generateLogAddress('🔸MockPriceProviderMoC Rif', priceOracleMocRif._address);
             addressOraculoRif = priceOracleMocRif._address;
             //deploy rBTC mock 
-            priceOracleMocRBTC = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('1e+18')]);
+            priceOracleMocRBTC = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('115000e+18')]);
             generateLogAddress('🔸MockPriceProviderMoC rBTC', priceOracleMocRBTC._address);
             addressOraculoRBTC = priceOracleMocRBTC._address;
+            //deploy Dai mock 
+            priceOracleMocDai = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('1.08e+18')]);
+            generateLogAddress('🔸MockPriceProviderMoC Dai', priceOracleMocDai._address);
+            addressOraculoDai = priceOracleMocDai._address;
             break;
         case 'testnet':
             addressOraculoRif = config.testnet.OraculoRif;
             addressOraculoRBTC = config.testnet.OraculoRBTC;
+            //deploy Dai mock 
+            priceOracleMocDai = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('1.08e+18')]);
+            generateLogAddress('🔸MockPriceProviderMoC Dai', priceOracleMocRBTC._address);
+            addressOraculoDai = priceOracleMocDai._address;
             break;
         case 'mainet':
             addressOraculoRif = config.mainnet.OraculoRif;
@@ -192,21 +202,21 @@ async function cTokens() {
     cDai = await saddle.deploy('CErc20Immutable', [addressDai, newUnitroller._address, interestRate._address, config.initialExchangeRateMantissa, "rLending Dai", "crDAI", 8, root]);
     generateLogAddress('cDai', cDai._address);
     //set cDai to adapterMoC
-    await send(oracleProxy, "setAdapterToToken", [cDai._address, priceOracleAdapterMoC._address]);
-    writeLog(`set adapter oracle to cDai. adapter=${priceOracleAdapterMoC._address}`, true);
+    await send(oracleProxy, "setAdapterToToken", [cDai._address, priceOracleAdapterDai._address]);
+    writeLog(`set adapter oracle to cDai. adapter=${priceOracleAdapterDai._address}`, true);
     //set cDai to market
-    let a = await send(newUnitroller, "_supportMarket", [cDai._address]);
+    await send(newUnitroller, "_supportMarket", [cDai._address]);
     writeLog(`supportMarket => cDai ${cDai._address} `, true);
     //set collateral
     await send(newUnitroller, "_setCollateralFactor", [cDai._address, etherMantissa(config.collateralFactor)], { from: root });
     writeLog(`setCollateralFactor to cDai value=${etherMantissa(config.collateralFactor).toString()}\n`, true);
 
     //cRif
-    cRif = await saddle.deploy('CErc20Immutable', [addressRif, newUnitroller._address, interestRateWhitePaper._address, config.initialExchangeRateMantissa, "rLending Dai", "crDAI", 8, root]);
+    cRif = await saddle.deploy('CErc20Immutable', [addressRif, newUnitroller._address, interestRateWhitePaper._address, config.initialExchangeRateMantissa, "rLending Rif", "cRIF", 8, root]);
     generateLogAddress('cRif', cRif._address);
-    //set cDai to adapterMoC
-    await send(oracleProxy, "setAdapterToToken", [cRif._address, priceOracleAdapterMoC._address]);
-    writeLog(`set adapter oracle to cRif. adapter=${priceOracleAdapterMoC._address}`, true);
+    //set cRif to adapterMoC
+    await send(oracleProxy, "setAdapterToToken", [cRif._address, priceOracleAdapterRif._address]);
+    writeLog(`set adapter oracle to cRif. adapter=${priceOracleAdapterRif._address}`, true);
     //set cRif to market
     await send(newUnitroller, "_supportMarket", [cRif._address]);
     writeLog(`supportMarket => cRif ${cRif._address} `, true);

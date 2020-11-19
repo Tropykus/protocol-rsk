@@ -132,10 +132,10 @@ describe('deployTest', () => {
 
   describe("Borrowing Dai", () => {
     it("Account Liquidity.", async () => {
-      //aprove mint
-      await send(underlyingDai, "approve", [cDai._address, new BigNumber(10000e18)]);
-      //mint cDai
       let amount = new BigNumber(10000e18);
+      //aprove mint
+      await send(underlyingDai, "approve", [cDai._address, amount]);
+      //mint cDai
       await send(cDai, "mint", [amount]);
       //set market to account
       let cTokens = [];
@@ -145,8 +145,7 @@ describe('deployTest', () => {
       //set array response
       ({ 0: error, 1: liquidity, 2: shortfall } = await call(unitroller, "getAccountLiquidity", [root]));
       expect(error).toEqualNumber(0);
-      //TODO 
-      // expect(liquidity).toEqualNumber(amount * (0.5));
+      expect(parseInt(liquidity)).toBeGreaterThan(0);
       expect(shortfall).toEqualNumber(0);
     });
 
