@@ -8,7 +8,7 @@ const {
 } = require('../../tests/Utils/Compound');
 //TODO path
 const fileContractsAddresses = __dirname + '/contractAddressesDeploy.json';
-let underlyingDai, cDai, unitroller, unitrollerImp, multiSig, cRBTC, oracleProxy;
+let underlyingDai, underlyingRif, cDai, cRif, unitroller, unitrollerImp, multiSig, cRBTC, oracleProxy;
 
 function getAddressContractDeploy() {
   var fs = require("fs");
@@ -22,15 +22,21 @@ function getAddressContractDeploy() {
 
 async function setContractFromAddress(adresses) {
   // adresses.findIndex(findContract);
-  let cDaiAddress, underlyingDaiAddress, unitrollerAddress, unitrollerImpAddress, multiSigWalletAddress, cRBTCAddress, oracleProxyAddress;
+  let cDaiAddress, underlyingDaiAddress, unitrollerAddress, unitrollerImpAddress, multiSigWalletAddress, cRBTCAddress, oracleProxyAddress, cRifAddress, underlyingRifAddress;
   for (var i = 0; i < adresses.length; i++) {
     //todo validate not null x2
     switch (adresses[i].contract) {
       case "cDai":
         cDaiAddress = adresses[i].address;
         continue;
+      case "cRif":
+        cRifAddress = adresses[i].address;
+        continue;
       case "underlyingDai":
         underlyingDaiAddress = adresses[i].address;
+        continue;
+      case "underlyingRif":
+        underlyingRifAddress = adresses[i].address;
         continue;
       case "Unitroller":
         unitrollerAddress = adresses[i].address;
@@ -52,7 +58,9 @@ async function setContractFromAddress(adresses) {
     }
   }
   cDai = await saddle.getContractAt("CErc20Immutable", cDaiAddress);
+  cRif = await saddle.getContractAt("CErc20Immutable", cRifAddress);
   underlyingDai = await saddle.getContractAt("StandardToken", underlyingDaiAddress);
+  underlyingRif = await saddle.getContractAt("StandardToken", underlyingRifAddress);
   unitroller = await saddle.getContractAt("Comptroller", unitrollerAddress);
   unitrollerImp = await saddle.getContractAt("Unitroller", unitrollerImpAddress);
   multiSig = await saddle.getContractAt("MultiSigWallet", multiSigWalletAddress);
@@ -66,7 +74,7 @@ describe('deployTest', () => {
 
   describe("OwnerAlpha", () => {
 
-    it("Set pending admin Unitroller FAIL with out owner", async () => {
+    it("Set pending admin Unitroller fail with out owner", async () => {
       //before
       await setContractFromAddress(JSON.parse(contracts));
 
@@ -76,6 +84,11 @@ describe('deployTest', () => {
 
     it("Set pending admin cDai fail with out owner", async () => {
       let validate = await call(cDai, "_setPendingAdmin", [a3]);
+      expect(validate).toEqual("1");
+    });
+
+    it("Set pending admin cRif fail with out owner", async () => {
+      let validate = await call(cRif, "_setPendingAdmin", [a3]);
       expect(validate).toEqual("1");
     });
 
@@ -95,6 +108,10 @@ describe('deployTest', () => {
 
     it("Set pending admin cDai with MultiSig", async () => {
       let validate = await call(cDai, "_setPendingAdmin", [a3], { from: multiSig._address });
+      expect(validate).toEqual("0");
+    });
+    it("Set pending admin cRif with MultiSig", async () => {
+      let validate = await call(cRif, "_setPendingAdmin", [a3], { from: multiSig._address });
       expect(validate).toEqual("0");
     });
     it("Set pending admin cRBTC with MultiSig", async () => {
@@ -132,10 +149,10 @@ describe('deployTest', () => {
 
   describe("Borrowing Dai", () => {
     it("Account Liquidity.", async () => {
-      //aprove mint
-      await send(underlyingDai, "approve", [cDai._address, new BigNumber(10000e18)]);
-      //mint cDai
       let amount = new BigNumber(10000e18);
+      //aprove mint
+      await send(underlyingDai, "approve", [cDai._address, amount]);
+      //mint cDai
       await send(cDai, "mint", [amount]);
       //set market to account
       let cTokens = [];
@@ -145,8 +162,7 @@ describe('deployTest', () => {
       //set array response
       ({ 0: error, 1: liquidity, 2: shortfall } = await call(unitroller, "getAccountLiquidity", [root]));
       expect(error).toEqualNumber(0);
-      //TODO 
-      // expect(liquidity).toEqualNumber(amount * (0.5));
+      expect(parseInt(liquidity)).toBeGreaterThan(0);
       expect(shortfall).toEqualNumber(0);
     });
 
@@ -169,6 +185,69 @@ describe('deployTest', () => {
       let balanceThen = await call(cDai, "borrowBalanceCurrent", [root]);
       expect(parseInt(balance)).toBeLessThan(parseInt(balanceThen));
     });
-
   });
+
+  describe("Supplying Rif", () => {
+    it("Supplying RIF to rLending.", async () => {
+      let amount = new BigNumber(10000e18);
+      //approve mint 
+      await send(underlyingRif, "approve", [cRif._address, amount]);
+      //mint cRif
+      let mintCRifCall = await call(cRif, "mint", [amount]);
+      await send(cRif, "mint", [amount]);
+      expect(mintCRifCall).toEqual("0");
+    });
+
+    it("Redeem RIF.", async () => {
+      let redeemRif = await call(cRif, "redeem", [new BigNumber(100e18)])
+      expect(redeemRif).toEqual("0");
+    });
+
+    it("Redeem Underlying DAI.", async () => {
+      let redeemUnderlyingRif = await call(cRif, "redeemUnderlying", [new BigNumber(1000e18)])
+      expect(redeemUnderlyingRif).toEqual("0");
+    });
+  });
+
+  describe("Borrowing Rif", () => {
+    it("Account Liquidity.", async () => {
+      let amount = new BigNumber(10000e18);
+      //aprove mint
+      await send(underlyingRif, "approve", [cRif._address, amount]);
+      //mint cDai
+      await send(cRif, "mint", [amount]);
+      //set market to account
+      let cTokens = [];
+      cTokens[0] = cRif._address;
+      await send(unitroller, "enterMarkets", [cTokens]);
+      let error, liquidity, shortfall;
+      //set array response
+      ({ 0: error, 1: liquidity, 2: shortfall } = await call(unitroller, "getAccountLiquidity", [root]));
+      expect(error).toEqualNumber(0);
+      expect(parseInt(liquidity)).toBeGreaterThan(0);
+      expect(shortfall).toEqualNumber(0);
+    });
+
+    it("Borrowing DAI from rLending.", async () => {
+      //borrow
+      let borrow = await call(cRif, "borrow", [new BigNumber(100e18)]);
+      await send(cRif, "borrow", [new BigNumber(100e18)]);
+      expect(borrow).toEqual("0");
+    });
+
+    it("Current borrow balance", async () => {
+      //get current balance
+      let balance = await call(cRif, "borrowBalanceCurrent", [root]);
+      //mine some block
+      await mineBlock();
+      await mineBlock();
+      await mineBlock();
+      await mineBlock();
+      //now get current balance again 
+      let balanceThen = await call(cRif, "borrowBalanceCurrent", [root]);
+      expect(parseInt(balance)).toBeLessThan(parseInt(balanceThen));
+    });
+  });
+
+
 });
