@@ -14,6 +14,7 @@
     "test": "./script/test",
     "rsk": "./script/rsk",
     "calcSize": "node calcSize.js",
+    "abis": "node datagen.js",
     "test:prepare": "NO_RUN=true ./script/test"
   },
   "repository": "git@github.com:compound-finance/compound-protocol.git",

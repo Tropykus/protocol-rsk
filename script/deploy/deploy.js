@@ -17,20 +17,14 @@ const config = {
     testnet: {
         OraculoRif: "0x9d4b2c05818a0086e641437fcb64ab6098c7bbec",
         OraculoRBTC: "0x2d39cc54dc44ff27ad23a91a9b5fd750dae4b218",
-        Dai: "0x5a323a9c4c0fd6a521426dd0ebced8318a9835eb",
-        Rif: "0x19f64674d8a5b4e652319f5e239efd3bc969a1fe",
-        Unitroller: '0x3b59C73dD107B513aD022f1b2315c8de0dF3b5dE',
-        MultiSigWallet: '0xf22F61a57010e3A8F56530CF06038b66895F25dB',
-        PriceOracleProxy: '0x842884E71705600f4BC656441c05dCF79dEf599c'
+        Dai: "0x0d86fca9be034a363cf12c9834af08d54a10451c",
+        Rif: "0x19f64674d8a5b4e652319f5e239efd3bc969a1fe"
     },
     mainnet: {
         OraculoRif: "0x",
         OraculoRBTC: "0x",
         Dai: "0x",
-        Rif: "0x",
-        Unitroller: '0x',
-        MultiSigWallet: '0x',
-        PriceOracleProxy: '0x'
+        Rif: "0x"
     }
 };
 const logPath = __dirname + '/contractAddressesDeploy.json';
@@ -38,6 +32,22 @@ let unitroller, newUnitroller, oracleProxy, comptroller, interestRate, underlyin
     interestRateWhitePaper, priceOracleMocRif, priceOracleMocDai, priceOracleMocRBTC, priceOracleAdapterRif, multiSig, RLEN,
     addressOraculoRif, addressOraculoDai, addressOraculoRBTC, addressRif;
 [root, ...accounts] = saddle.accounts;
+//set already deployed contracts
+let unitrollerAddress = '';
+let multiSigAddress = '';
+let priceOracleProxyAddress = '';
+let MockPriceProviderMocDaiAddress = '';
+let priceOracleAdapterRifAddress = '';
+let priceOracleAdapterDaiAddress = '';
+let comptrollerAddress = '';
+let jumpRateModelV2Address = '';
+let whitePaperInterestRateModelAddress = '';
+let cDaiAddress = '';
+let cRifAddress = '';
+let cRBTCAddress = '';
+let RLenAddress = '';
+let maximillionAddress = '';
+
 //set array to write to file
 let arrayToFile = new Array();
 //set verbose default
@@ -79,38 +89,20 @@ function writeFileLog(data) {
 
 //deploy MultiSigWallet
 async function multiSigWallet() {
-    switch (network) {
-        case 31:
-            if(config.testnet.MultiSigWallet != '0x') {
-                multiSig = await saddle.getContractAt('MultiSigWallet', config.testnet.MultiSigWallet);
-                break;
-            }
-        case 30:
-            if(config.mainnet.MultiSigWallet != '0x') {
-                multiSig = await saddle.getContractAt('MultiSigWallet', config.mainnet.MultiSigWallet);
-                break;
-            }
-        default:
-            multiSig = await saddle.deploy('MultiSigWallet', [[root], 1]);
+    if(multiSigAddress) {
+        multiSig = await saddle.getContractAt('MultiSigWallet', multiSigAddress);
+    } else {
+        multiSig = await saddle.deploy('MultiSigWallet', [[root], 1]);
     }
     generateLogAddress('MultiSigWallet', multiSig._address);
 };
 
 //deploy Unitroller
 async function unitrollerDeploy() {
-    switch (network) {
-        case 31:
-            if(config.testnet.Unitroller != '0x') {
-                unitroller = await saddle.getContractAt('Unitroller', config.testnet.Unitroller);
-                break;
-            }
-        case 30:
-            if(config.mainnet.Unitroller != '0x') {
-                unitroller = await saddle.getContractAt('Unitroller', config.mainnet.Unitroller);
-                break;
-            }
-        default:
-            unitroller = await saddle.deploy('Unitroller');
+    if(unitrollerAddress) {
+        unitroller = await saddle.getContractAt('Unitroller', unitrollerAddress);
+    } else {
+        unitroller = await saddle.deploy('Unitroller');
     }
     generateLogAddress('UnitrollerImp', unitroller._address);
 };
@@ -118,45 +110,65 @@ async function unitrollerDeploy() {
 //deploy Comptroller
 async function comptrollerDeploy() {
     //deploy comptroller
-    comptroller = await saddle.deploy('Comptroller');
-    generateLogAddress('Comptroller', comptroller._address);
-    //set new comptroller implementation and become
-    await send(unitroller, "_setPendingImplementation", [comptroller._address]);
-    await send(comptroller, '_become', [unitroller._address]);
-    //get unitroller then implementate Comptroller
-    newUnitroller = await saddle.getContractAt("Comptroller", unitroller._address);
-    generateLogAddress('Unitroller implement comptroller', newUnitroller._address);
-    //set price oracle
-    await send(newUnitroller, "_setPriceOracle", [oracleProxy._address]);
-    writeLog(`setPriceOracle ${oracleProxy._address}`, true);
-    //set max assets
-    await send(newUnitroller, "_setMaxAssets", [config.maxAssets]);
-    writeLog(`setMaxAssets ${config.maxAssets}`, true);
-    //set max close factor
-    await send(newUnitroller, "_setCloseFactor", [config.closeFactorMantisa]);
-    writeLog(`setCloseFactor ${config.closeFactorMantisa}`, true);
-    //set max liquidation incentive
-    await send(newUnitroller, "_setLiquidationIncentive", [config.liquidationIncentiveMantisa]);
-    writeLog(`setLiquidationIncentive ${config.liquidationIncentiveMantisa}`, true);
-    //set comp rate
-    await send(newUnitroller, "_setCompRate", [config.compRate]);
-    writeLog(`setCompRate ${config.compRate}`, true);
-    //add Comp Markets
-    await send(newUnitroller, "_addCompMarkets", [config.compMarkets]);
-    writeLog(`addCompMarkets ${config.compMarkets}\n`, true);
+    if(comptrollerAddress) {
+        comptroller = await saddle.getContractAt('Comptroller', comptrollerAddress);
+        generateLogAddress('Comptroller', comptroller._address);
+        newUnitroller = await saddle.getContractAt("Comptroller", unitroller._address);
+        generateLogAddress('Unitroller implement comptroller', newUnitroller._address);
+    } else {
+        comptroller = await saddle.deploy('Comptroller');
+        generateLogAddress('Comptroller', comptroller._address);
+        //set new comptroller implementation and become
+        await send(unitroller, "_setPendingImplementation", [comptroller._address]);
+        await send(comptroller, '_become', [unitroller._address]);
+        //get unitroller then implementate Comptroller
+        newUnitroller = await saddle.getContractAt("Comptroller", unitroller._address);
+        generateLogAddress('Unitroller implement comptroller', newUnitroller._address);
+        //set price oracle
+        await send(newUnitroller, "_setPriceOracle", [oracleProxy._address]);
+        writeLog(`setPriceOracle ${oracleProxy._address}`, true);
+        //set max assets
+        await send(newUnitroller, "_setMaxAssets", [config.maxAssets]);
+        writeLog(`setMaxAssets ${config.maxAssets}`, true);
+        //set max close factor
+        await send(newUnitroller, "_setCloseFactor", [config.closeFactorMantisa]);
+        writeLog(`setCloseFactor ${config.closeFactorMantisa}`, true);
+        //set max liquidation incentive
+        await send(newUnitroller, "_setLiquidationIncentive", [config.liquidationIncentiveMantisa]);
+        writeLog(`setLiquidationIncentive ${config.liquidationIncentiveMantisa}`, true);
+        //set comp rate
+        await send(newUnitroller, "_setCompRate", [config.compRate]);
+        writeLog(`setCompRate ${config.compRate}`, true);
+        //add Comp Markets
+        await send(newUnitroller, "_addCompMarkets", [config.compMarkets]);
+        writeLog(`addCompMarkets ${config.compMarkets}\n`, true);
+    }
 };
 
 //deploy Price Oracle and Proxy
 async function priceOracleProxy() {
-    oracleProxy = await saddle.deploy('PriceOracleProxy', [root]);
+    if(priceOracleProxyAddress) {
+        oracleProxy = await saddle.getContractAt('PriceOracleProxy', priceOracleProxyAddress);
+    } else {
+        oracleProxy = await saddle.deploy('PriceOracleProxy', [root]);
+    }
     generateLogAddress('PriceOracleProxy', oracleProxy._address);
     //set prices oracles addresses
     await setPriceProvider();
+    const oracleAdapterName = (network == 31)? 'TestnetPriceOracleAdapterMoc' : 'PriceOracleAdapterMoc';
     //deploy adapter [Money on Chain]
-    priceOracleAdapterRif = await saddle.deploy('PriceOracleAdapterMoc', [root, addressOraculoRif, addressOraculoRBTC]);
-    generateLogAddress('PriceOracleAdapterMoc Rif', priceOracleAdapterRif._address);
-    priceOracleAdapterDai = await saddle.deploy('PriceOracleAdapterMoc', [root, addressOraculoDai, addressOraculoRBTC]);
-    generateLogAddress('PriceOracleAdapterMoc Dai', priceOracleAdapterDai._address);
+    if(priceOracleAdapterRifAddress) {
+        priceOracleAdapterRif = await saddle.getContractAt(oracleAdapterName, priceOracleAdapterRifAddress);
+    } else {
+        priceOracleAdapterRif = await saddle.deploy(oracleAdapterName, [root, addressOraculoRif, addressOraculoRBTC]);
+    }
+    generateLogAddress(`${oracleAdapterName} Rif`, priceOracleAdapterRif._address);
+    if(priceOracleAdapterDaiAddress) {
+        priceOracleAdapterDai = await saddle.getContractAt(oracleAdapterName, priceOracleAdapterDaiAddress);
+    } else {
+        priceOracleAdapterDai = await saddle.deploy(oracleAdapterName, [root, addressOraculoDai, addressOraculoRBTC]);
+    }
+    generateLogAddress(`${oracleAdapterName} Dai`, priceOracleAdapterDai._address);
 
 };
 
@@ -167,7 +179,11 @@ async function setPriceProvider() {
             addressOraculoRif = config.testnet.OraculoRif;
             addressOraculoRBTC = config.testnet.OraculoRBTC;
             //deploy Dai mock
-            priceOracleMocDai = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('1.08e+18')]);
+            if(MockPriceProviderMocDaiAddress) {
+                priceOracleMocDai = await saddle.getContractAt('MockPriceProviderMoC', MockPriceProviderMocDaiAddress);
+            } else {
+                priceOracleMocDai = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('1.08e+18')]);
+            }
             generateLogAddress('🔸MockPriceProviderMoC Dai', priceOracleMocDai._address);
             addressOraculoDai = priceOracleMocDai._address;
             break;
@@ -195,10 +211,18 @@ async function setPriceProvider() {
 //deploy InterestRateModel
 async function interestRateModel() {
     // 0.05 0.2 2 0.90
-    interestRate = await saddle.deploy('JumpRateModelV2', [etherMantissa(0.05), etherMantissa(0.2), etherMantissa(2), etherMantissa(0.90), root]);
+    if(jumpRateModelV2Address) {
+        interestRate = await saddle.getContractAt('JumpRateModelV2', jumpRateModelV2Address);
+    } else {
+        interestRate = await saddle.deploy('JumpRateModelV2', [etherMantissa(0.05), etherMantissa(0.2), etherMantissa(2), etherMantissa(0.90), root]);
+    }
     generateLogAddress('JumpRateModelV2', interestRate._address);
     //deploy WhitePaperInterestRateModel [interestRate]
-    interestRateWhitePaper = await saddle.deploy('WhitePaperInterestRateModel', [etherMantissa(0.05), etherMantissa(0.2)]);
+    if(whitePaperInterestRateModelAddress) {
+        interestRateWhitePaper = await saddle.getContractAt('WhitePaperInterestRateModel', whitePaperInterestRateModelAddress);
+    } else {
+        interestRateWhitePaper = await saddle.deploy('WhitePaperInterestRateModel', [etherMantissa(0.05), etherMantissa(0.2)]);
+    }
     generateLogAddress('WhitePaperInterestRateModel', interestRateWhitePaper._address);
 };
 
@@ -228,63 +252,113 @@ async function setUnderlying() {
     writeLog(`underlyingRif ${addressRif} \n`, true);
 }
 
+async function deployCDai() {
+    //cDai
+    if(cDaiAddress) {
+        cDai = await saddle.getContractAt('CErc20Immutable', cDaiAddress);
+        generateLogAddress('cDai', cDai._address);
+    } else {
+        cDai = await saddle.deploy('CErc20Immutable', [addressDai, newUnitroller._address, interestRate._address, config.initialExchangeRateMantissa, "rLending Dai", "crDAI", 8, root]);
+        generateLogAddress('cDai', cDai._address);
+        //set cDai to adapterMoC
+        await send(oracleProxy, "setAdapterToToken", [cDai._address, priceOracleAdapterDai._address]);
+        writeLog(`set adapter oracle to cDai. adapter=${priceOracleAdapterDai._address}`, true);
+        //set cDai to market
+        await send(newUnitroller, "_supportMarket", [cDai._address]);
+        writeLog(`supportMarket => cDai ${cDai._address} `, true);
+        //set collateral
+        await send(newUnitroller, "_setCollateralFactor", [cDai._address, etherMantissa(config.collateralFactor)]);
+        writeLog(`setCollateralFactor to cDai value=${etherMantissa(config.collateralFactor).toString()}\n`, true);
+    }
+}
+
+async function deployCRif() {
+    //cRif
+    if(cRifAddress) {
+        cRif = await saddle.getContractAt('CErc20Immutable', cRifAddress);
+        generateLogAddress('cRif', cRif._address);
+         //set cRif to market
+         await send(newUnitroller, "_supportMarket", [cRif._address]);
+         writeLog(`supportMarket => cRif ${cRif._address} `, true);
+         //set collateral
+         await send(newUnitroller, "_setCollateralFactor", [cRif._address, etherMantissa(config.collateralFactor)]);
+         writeLog(`setCollateralFactor to cRif value=${etherMantissa(config.collateralFactor).toString()}\n`, true);
+    } else {
+        cRif = await saddle.deploy('CErc20Immutable', [addressRif, newUnitroller._address, interestRateWhitePaper._address, config.initialExchangeRateMantissa, "rLending Rif", "cRIF", 8, root]);
+        generateLogAddress('cRif', cRif._address);
+        //set cRif to adapterMoC
+        await send(oracleProxy, "setAdapterToToken", [cRif._address, priceOracleAdapterRif._address]);
+        writeLog(`set adapter oracle to cRif. adapter=${priceOracleAdapterRif._address}`, true);
+        //set cRif to market
+        await send(newUnitroller, "_supportMarket", [cRif._address]);
+        writeLog(`supportMarket => cRif ${cRif._address} `, true);
+        //set collateral
+        await send(newUnitroller, "_setCollateralFactor", [cRif._address, etherMantissa(config.collateralFactor)]);
+        writeLog(`setCollateralFactor to cRif value=${etherMantissa(config.collateralFactor).toString()}\n`, true);
+    }
+}
+
+async function deployCRbtc() {
+    //cRBTC
+    if(cRBTCAddress) {
+        cRBTC = await saddle.getContractAt('CErc20Immutable', cRBTCAddress);
+        generateLogAddress('cRBTC', cRBTC._address);
+    } else {
+        cRBTC = await saddle.deploy('CRBTC', [newUnitroller._address, interestRateWhitePaper._address, config.initialExchangeRateMantissa, "RSK Smart Bitcoin", "cRBTC", 8, root]);
+        generateLogAddress('cRBTC', cRBTC._address);
+        //set cRBTC to oracle proxy
+        await send(oracleProxy, "setCRBTCAddress", [cRBTC._address]);
+        writeLog("set CRBTC to oracle proxy", true);
+        //set cRBTC to
+        await send(newUnitroller, "_supportMarket", [cRBTC._address]);
+        writeLog(`supportMarket => cRBTC ${cRBTC._address} `, true);
+        //set collateral
+        await send(newUnitroller, "_setCollateralFactor", [cRBTC._address, etherMantissa(config.collateralFactor)]);
+        writeLog(`setCollateralFactor to cRBTC value=${etherMantissa(config.collateralFactor).toString()}\n`, true);
+    }
+}
+
+async function deployRLEN() {
+    if(RLenAddress) {
+        RLEN = await saddle.getContractAt('RLEN', RLenAddress);
+    } else {
+        RLEN = await saddle.deploy('RLEN', [multiSig._address]);
+    }
+    generateLogAddress('RLEN', RLEN._address);
+    //set collateral
+    await send(newUnitroller, "setCompAddress", [RLEN._address]);
+    writeLog(`setCompAddress to RLEN value=${RLEN._address}\n`, true);
+}
+
 //deploy cTokens
 async function cTokens() {
     //set underlying
     await setUnderlying();
-
     //cDai
-    cDai = await saddle.deploy('CErc20Immutable', [addressDai, newUnitroller._address, interestRate._address, config.initialExchangeRateMantissa, "rLending Dai", "crDAI", 8, root]);
-    generateLogAddress('cDai', cDai._address);
-    //set cDai to adapterMoC
-    await send(oracleProxy, "setAdapterToToken", [cDai._address, priceOracleAdapterDai._address]);
-    writeLog(`set adapter oracle to cDai. adapter=${priceOracleAdapterDai._address}`, true);
-    //set cDai to market
-    await send(newUnitroller, "_supportMarket", [cDai._address]);
-    writeLog(`supportMarket => cDai ${cDai._address} `, true);
-    //set collateral
-    await send(newUnitroller, "_setCollateralFactor", [cDai._address, etherMantissa(config.collateralFactor)], { from: root });
-    writeLog(`setCollateralFactor to cDai value=${etherMantissa(config.collateralFactor).toString()}\n`, true);
+    await deployCDai();
 
     //cRif
-    cRif = await saddle.deploy('CErc20Immutable', [addressRif, newUnitroller._address, interestRateWhitePaper._address, config.initialExchangeRateMantissa, "rLending Rif", "cRIF", 8, root]);
-    generateLogAddress('cRif', cRif._address);
-    //set cRif to adapterMoC
-    await send(oracleProxy, "setAdapterToToken", [cRif._address, priceOracleAdapterRif._address]);
-    writeLog(`set adapter oracle to cRif. adapter=${priceOracleAdapterRif._address}`, true);
-    //set cRif to market
-    await send(newUnitroller, "_supportMarket", [cRif._address]);
-    writeLog(`supportMarket => cRif ${cRif._address} `, true);
-    //set collateral
-    await send(newUnitroller, "_setCollateralFactor", [cRif._address, etherMantissa(config.collateralFactor)], { from: root });
-    writeLog(`setCollateralFactor to cRif value=${etherMantissa(config.collateralFactor).toString()}\n`, true);
+    await deployCRif();
 
     //cRBTC
-    cRBTC = await saddle.deploy('CRBTC', [newUnitroller._address, interestRateWhitePaper._address, config.initialExchangeRateMantissa, "RSK Smart Bitcoin", "cRBTC", 8, root]);
-    generateLogAddress('cRBTC', cRBTC._address);
-    //set cRBTC to oracle proxy
-    await send(oracleProxy, "setCRBTCAddress", [cRBTC._address]);
-    writeLog("set CRBTC to oracle proxy", true);
-    //set cRBTC to market
-    await send(newUnitroller, "_supportMarket", [cRBTC._address]);
-    writeLog(`supportMarket => cRif ${cRBTC._address} `, true);
-    //set collateral
-    await send(newUnitroller, "_setCollateralFactor", [cRBTC._address, etherMantissa(config.collateralFactor)], { from: root });
-    writeLog(`setCollateralFactor to cRBTC value=${etherMantissa(config.collateralFactor).toString()}\n`, true);
+    await deployCRbtc();
 
     //RLEN
-    RLEN = await saddle.deploy('RLEN', [multiSig._address]);
-    generateLogAddress('RLEN', RLEN._address);
+    await deployRLEN();
 };
 
 //deploy Maximillion
 async function maximillion() {
-    max = await saddle.deploy('Maximillion', [cRBTC._address]);
+    if(maximillionAddress) {
+        max = await saddle.getContractAt('Maximillion', maximillionAddress);
+    } else {
+        max = await saddle.deploy('Maximillion', [cRBTC._address]);
+    }
     generateLogAddress('Maximillion', max._address);
 };
 
 async function setMultiSignOwnerAlpha() {
-    let arrayToMultisigOwner = [unitroller, cDai, cRif, cRBTC, oracleProxy];
+    let arrayToMultisigOwner = [ cDai, cRif, cRBTC, oracleProxy];
     for (let index = 0; index < arrayToMultisigOwner.length; index++) {
         //set pending admin
         await send(arrayToMultisigOwner[index], "_setPendingAdmin", [multiSig._address]);
