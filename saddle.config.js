@@ -112,6 +112,28 @@ module.exports = {
         {unlocked: 0}
       ]
     },
+    rsktestnet: {
+      providers: [
+              {http: "https://public-node.testnet.rsk.co"}  //RSK Public Node
+            ],
+      web3: {
+        gas: [
+          {env: "GAS"},
+          {default: "6800000"}
+        ],
+        gas_price: [
+          {env: "GAS_PRICE"},
+          {default: "66000000"}
+        ],
+        options: {
+          transactionConfirmationBlocks: 1,
+          transactionBlockTimeout: 5
+        }
+      },
+      accounts: [
+        {env: "ACCOUNT"}
+      ]
+    },
     goerli: {
       providers: [
         {env: "PROVIDER"},

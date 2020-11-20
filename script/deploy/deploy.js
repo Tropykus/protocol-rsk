@@ -2,9 +2,10 @@ const BigNumber = require('bignumber.js');
 const {
     etherMantissa,
 } = require('../../tests/Utils/Ethereum');
+
 //enviroment
 const [verb] = args;
-//config 
+//config
 const config = {
     initialExchangeRateMantissa: new BigNumber(2e18),
     liquidationIncentiveMantisa: new BigNumber(1.08e18),
@@ -14,31 +15,39 @@ const config = {
     compMarkets: [],
     collateralFactor: 0.5,
     testnet: {
-        OraculoRif: "0x2d39cc54dc44ff27ad23a91a9b5fd750dae4b218",
+        OraculoRif: "0x9d4b2c05818a0086e641437fcb64ab6098c7bbec",
         OraculoRBTC: "0x2d39cc54dc44ff27ad23a91a9b5fd750dae4b218",
         Dai: "0x5a323a9c4c0fd6a521426dd0ebced8318a9835eb",
         Rif: "0x19f64674d8a5b4e652319f5e239efd3bc969a1fe",
+        Unitroller: '0x3b59C73dD107B513aD022f1b2315c8de0dF3b5dE',
+        MultiSigWallet: '0xf22F61a57010e3A8F56530CF06038b66895F25dB',
+        PriceOracleProxy: '0x842884E71705600f4BC656441c05dCF79dEf599c'
     },
     mainnet: {
         OraculoRif: "0x",
         OraculoRBTC: "0x",
         Dai: "0x",
         Rif: "0x",
+        Unitroller: '0x',
+        MultiSigWallet: '0x',
+        PriceOracleProxy: '0x'
     }
 };
 const logPath = __dirname + '/contractAddressesDeploy.json';
-let unitroller, newUnitroller, oracleProxy, comptroller, interestRate, underlyingDai, underlyingRif, cDai, cRif, cRBTC, interestRateWhitePaper, priceOracleMocRif, priceOracleMocDai, priceOracleMocRBTC, priceOracleAdapterRif, multiSig, RLEN, addressOraculoRif, addressOraculoDai, addressRif;
+let unitroller, newUnitroller, oracleProxy, comptroller, interestRate, underlyingDai, underlyingRif, cDai, cRif, cRBTC,
+    interestRateWhitePaper, priceOracleMocRif, priceOracleMocDai, priceOracleMocRBTC, priceOracleAdapterRif, multiSig, RLEN,
+    addressOraculoRif, addressOraculoDai, addressOraculoRBTC, addressRif;
 [root, ...accounts] = saddle.accounts;
 //set array to write to file
 let arrayToFile = new Array();
 //set verbose default
 let eVerb = false;
 //set network
-let network = saddle.network_config.network;
+let network = 5777; // default ganache
 
 //validate enviroment
-function validateEnvironment() {
-    //todo enviroment to set network 
+async function validateEnvironment() {
+    network = await saddle.web3.eth.getChainId();
     if (verb == 'v')
         eVerb = true;
 }
@@ -68,15 +77,41 @@ function writeFileLog(data) {
     });
 }
 
-//deploy MultiSigWallet 
+//deploy MultiSigWallet
 async function multiSigWallet() {
-    multiSig = await saddle.deploy('MultiSigWallet', [[root], 1]);
+    switch (network) {
+        case 31:
+            if(config.testnet.MultiSigWallet != '0x') {
+                multiSig = await saddle.getContractAt('MultiSigWallet', config.testnet.MultiSigWallet);
+                break;
+            }
+        case 30:
+            if(config.mainnet.MultiSigWallet != '0x') {
+                multiSig = await saddle.getContractAt('MultiSigWallet', config.mainnet.MultiSigWallet);
+                break;
+            }
+        default:
+            multiSig = await saddle.deploy('MultiSigWallet', [[root], 1]);
+    }
     generateLogAddress('MultiSigWallet', multiSig._address);
 };
 
-//deploy Unitroller 
+//deploy Unitroller
 async function unitrollerDeploy() {
-    unitroller = await saddle.deploy('Unitroller');
+    switch (network) {
+        case 31:
+            if(config.testnet.Unitroller != '0x') {
+                unitroller = await saddle.getContractAt('Unitroller', config.testnet.Unitroller);
+                break;
+            }
+        case 30:
+            if(config.mainnet.Unitroller != '0x') {
+                unitroller = await saddle.getContractAt('Unitroller', config.mainnet.Unitroller);
+                break;
+            }
+        default:
+            unitroller = await saddle.deploy('Unitroller');
+    }
     generateLogAddress('UnitrollerImp', unitroller._address);
 };
 
@@ -90,7 +125,7 @@ async function comptrollerDeploy() {
     await send(comptroller, '_become', [unitroller._address]);
     //get unitroller then implementate Comptroller
     newUnitroller = await saddle.getContractAt("Comptroller", unitroller._address);
-    generateLogAddress('Unitroller', newUnitroller._address);
+    generateLogAddress('Unitroller implement comptroller', newUnitroller._address);
     //set price oracle
     await send(newUnitroller, "_setPriceOracle", [oracleProxy._address]);
     writeLog(`setPriceOracle ${oracleProxy._address}`, true);
@@ -111,7 +146,7 @@ async function comptrollerDeploy() {
     writeLog(`addCompMarkets ${config.compMarkets}\n`, true);
 };
 
-//deploy Price Oracle and Proxy 
+//deploy Price Oracle and Proxy
 async function priceOracleProxy() {
     oracleProxy = await saddle.deploy('PriceOracleProxy', [root]);
     generateLogAddress('PriceOracleProxy', oracleProxy._address);
@@ -128,36 +163,36 @@ async function priceOracleProxy() {
 //set price provider addres in oracleAdapterMoC
 async function setPriceProvider() {
     switch (network) {
-        case 'development':
-            //deploy Rif mock 
-            priceOracleMocRif = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('9e+18')]);
-            generateLogAddress('🔸MockPriceProviderMoC Rif', priceOracleMocRif._address);
-            addressOraculoRif = priceOracleMocRif._address;
-            //deploy rBTC mock 
-            priceOracleMocRBTC = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('115000e+18')]);
-            generateLogAddress('🔸MockPriceProviderMoC rBTC', priceOracleMocRBTC._address);
-            addressOraculoRBTC = priceOracleMocRBTC._address;
-            //deploy Dai mock 
+        case 31:
+            addressOraculoRif = config.testnet.OraculoRif;
+            addressOraculoRBTC = config.testnet.OraculoRBTC;
+            //deploy Dai mock
             priceOracleMocDai = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('1.08e+18')]);
             generateLogAddress('🔸MockPriceProviderMoC Dai', priceOracleMocDai._address);
             addressOraculoDai = priceOracleMocDai._address;
             break;
-        case 'testnet':
-            addressOraculoRif = config.testnet.OraculoRif;
-            addressOraculoRBTC = config.testnet.OraculoRBTC;
-            //deploy Dai mock 
-            priceOracleMocDai = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('1.08e+18')]);
-            generateLogAddress('🔸MockPriceProviderMoC Dai', priceOracleMocRBTC._address);
-            addressOraculoDai = priceOracleMocDai._address;
-            break;
-        case 'mainet':
+        case 30:
             addressOraculoRif = config.mainnet.OraculoRif;
             addressOraculoRBTC = config.mainnet.OraculoRBTC;
+            break;
+        default:
+            //deploy Rif mock
+            priceOracleMocRif = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('9e+18')]);
+            generateLogAddress('🔸MockPriceProviderMoC Rif', priceOracleMocRif._address);
+            addressOraculoRif = priceOracleMocRif._address;
+            //deploy rBTC mock
+            priceOracleMocRBTC = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('115000e+18')]);
+            generateLogAddress('🔸MockPriceProviderMoC rBTC', priceOracleMocRBTC._address);
+            addressOraculoRBTC = priceOracleMocRBTC._address;
+            //deploy Dai mock
+            priceOracleMocDai = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('1.08e+18')]);
+            generateLogAddress('🔸MockPriceProviderMoC Dai', priceOracleMocDai._address);
+            addressOraculoDai = priceOracleMocDai._address;
             break;
     }
 }
 
-//deploy InterestRateModel 
+//deploy InterestRateModel
 async function interestRateModel() {
     // 0.05 0.2 2 0.90
     interestRate = await saddle.deploy('JumpRateModelV2', [etherMantissa(0.05), etherMantissa(0.2), etherMantissa(2), etherMantissa(0.90), root]);
@@ -170,30 +205,30 @@ async function interestRateModel() {
 //set underlying token
 async function setUnderlying() {
     switch (network) {
-        case 'development':
-            //deploy underlying Day 
+        case 31:
+            addressDai = config.testnet.Dai;
+            addressRif = config.testnet.Rif;
+            break;
+        case 30:
+            addressDai = config.mainnet.Dai;
+            addressRif = config.mainnet.Rif;
+            break;
+        default:
+            //deploy underlying Day
             underlyingDai = await saddle.deploy('StandardToken', [new BigNumber(2000000e18), "dai token", 18, "rDai"]);
             generateLogAddress('underlyingDai', underlyingDai._address);
             addressDai = underlyingDai._address;
-            //deploy underlying Rif 
+            //deploy underlying Rif
             underlyingRif = await saddle.deploy('StandardToken', [new BigNumber(2000000e18), "rif token", 18, "RIF"]);
             generateLogAddress('underlyingRif', underlyingRif._address);
             addressRif = underlyingRif._address;
-            break;
-        case 'testnet':
-            addressDai = config.testnet.Dai;
-            addressRif = config.testnet.rif;
-            break;
-        case 'mainet':
-            addressDai = config.mainnet.Dai;
-            addressRif = config.mainnet.rif;
             break;
     }
     writeLog(`underlyingDai ${addressDai} `, true);
     writeLog(`underlyingRif ${addressRif} \n`, true);
 }
 
-//deploy cTokens 
+//deploy cTokens
 async function cTokens() {
     //set underlying
     await setUnderlying();
@@ -251,9 +286,9 @@ async function maximillion() {
 async function setMultiSignOwnerAlpha() {
     let arrayToMultisigOwner = [unitroller, cDai, cRif, cRBTC, oracleProxy];
     for (let index = 0; index < arrayToMultisigOwner.length; index++) {
-        //set pending admin 
+        //set pending admin
         await send(arrayToMultisigOwner[index], "_setPendingAdmin", [multiSig._address]);
-        //generate data method accept admin 
+        //generate data method accept admin
         const data = arrayToMultisigOwner[index].methods._acceptAdmin().encodeABI();
         //submit transacion multisig, when accept the admin of contract
         await send(multiSig, "submitTransaction", [arrayToMultisigOwner[index]._address, 0, data]);
@@ -273,10 +308,10 @@ function printConfigAccount() {
     }
 }
 
-//deploy all contracts 
+//deploy all contracts
 async function maint() {
     //validate args
-    validateEnvironment();
+    await validateEnvironment();
     printConfigAccount();
     //deploy contracts
     await multiSigWallet();
