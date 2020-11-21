@@ -13,6 +13,8 @@
     "profile": "yarn test tests/gasProfiler.js",
     "test": "./script/test",
     "rsk": "./script/rsk",
+    "calcSize": "node calcSize.js",
+    "abis": "node datagen.js",
     "test:prepare": "NO_RUN=true ./script/test"
   },
   "repository": "git@github.com:compound-finance/compound-protocol.git",
@@ -23,10 +25,12 @@
     "jest-diff": "^24.9.0",
     "jest-junit": "^6.4.0",
     "solium": "^1.2.5",
-    "solparse": "^2.2.8"
+    "solparse": "^2.2.8",
+    "chalk": "^4.1.0",
+    "table": "^6.0.3"
   },
   "dependencies": {
-    "eth-saddle": "^0.1.17"
+    "eth-saddle": "=0.1.17"
   },
   "resolutions": {
     "scrypt.js": "https://registry.npmjs.org/@compound-finance/ethereumjs-wallet/-/ethereumjs-wallet-0.6.3.tgz",

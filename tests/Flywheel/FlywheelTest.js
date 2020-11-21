@@ -656,7 +656,7 @@ describe('Flywheel', () => {
     it('should not be callable inside a contract', async () => {
       await pretendBorrow(cLOW, a1, 1, 1, 100);
       await pretendBorrow(cZRX, a1, 1, 1, 100);
-      await expect(deploy('RefreshSpeedsProxy', [comptroller._address])).rejects.toRevert('revert only externally owned accounts may refresh speeds');
+      await expect(deploy('RefreshSpeedsProxy', [comptroller._address])).rejects.toRevert('revert only externall refresh speeds');
     });
   });
 
@@ -676,14 +676,14 @@ describe('Flywheel', () => {
       const cBAT = await makeCToken({ comptroller, supportMarket: true });
       await expect(
         send(comptroller, '_addCompMarkets', [[cBAT._address]], {from: a1})
-      ).rejects.toRevert('revert only admin can add comp market');
+      ).rejects.toRevert('revert only admin can add compMarket');
     });
 
     it('should not add non-listed markets', async () => {
       const cBAT = await makeCToken({ comptroller, supportMarket: false });
       await expect(
         send(comptroller, '_addCompMarkets', [[cBAT._address]])
-      ).rejects.toRevert('revert comp market is not listed');
+      ).rejects.toRevert('revert compMarket is not listed');
 
       const markets = await call(comptroller, 'getCompMarkets');
       expect(markets).toEqual([cLOW, cREP, cZRX].map((c) => c._address));
@@ -695,7 +695,7 @@ describe('Flywheel', () => {
 
       await expect(
         send(comptroller, '_addCompMarkets', [[cBAT._address]])
-      ).rejects.toRevert('revert comp market already added');
+      ).rejects.toRevert('revert compMarket already added');
     });
 
     it('should not write over a markets existing state', async () => {
@@ -741,14 +741,14 @@ describe('Flywheel', () => {
     it('should not drop a comp market unless called by admin', async () => {
       await expect(
         send(comptroller, '_dropCompMarket', [cLOW._address], {from: a1})
-      ).rejects.toRevert('revert only admin can drop comp market');
+      ).rejects.toRevert('revert only admin can drop compMarket');
     });
 
     it('should not drop a comp market already dropped', async () => {
       await send(comptroller, '_dropCompMarket', [cLOW._address]);
       await expect(
         send(comptroller, '_dropCompMarket', [cLOW._address])
-      ).rejects.toRevert('revert market is not a comp market');
+      ).rejects.toRevert('revert market is not a compMarket');
     });
   });
 
@@ -768,7 +768,7 @@ describe('Flywheel', () => {
     it('should not change comp rate unless called by admin', async () => {
       await expect(
         send(comptroller, '_setCompRate', [cLOW._address], {from: a1})
-      ).rejects.toRevert('revert only admin can change comp rate');
+      ).rejects.toRevert('revert only admin can set compRate');
     });
   });
 });

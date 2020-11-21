@@ -15,9 +15,9 @@ contract Fauceteer {
       * @param token The token to drip. Note: if we have no balance in this token, function will revert.
       */
     function drip(EIP20NonStandardInterface token) public {
-        uint balance = token.balanceOf(address(this));
-        require(balance > 0, "Fauceteer is empty");
-        token.transfer(msg.sender, balance / 10000); // 0.01%
+        uint myBalance = token.balanceOf(address(this));
+        require(myBalance > 0, "Fauceteer is empty");
+        token.transfer(msg.sender, myBalance / 10000); // 0.01%
 
         bool success;
         assembly {

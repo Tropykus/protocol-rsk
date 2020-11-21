@@ -199,7 +199,7 @@ describe('assetListTest', () => {
     it("reverts when called by not a ctoken", async () => {
       await expect(
         send(comptroller, 'borrowAllowed', [BAT._address, customer, 1], {from: customer})
-      ).rejects.toRevert('revert sender must be cToken');
+      ).rejects.toRevert('revert sender not cToken');
 
       const assetsIn = await call(comptroller, 'getAssetsIn', [customer]);
 
