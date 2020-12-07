@@ -11,7 +11,7 @@ const {
 
 describe('PriceOracleProxy', () => {
   let root, accounts;
-  let backingOracleMoC, rbtcBackingOracleMoC, backingOracle, cRBTC, cRIF, cUsdc, cUsdt, cDai, cOther;
+  let backingOracleMoC, backingOracle, cRBTC, cRIF, cUsdc, cUsdt, cDai, cOther;
 
   beforeEach(async () => {
     [root, a3, ...accounts] = saddle.accounts;
@@ -20,8 +20,7 @@ describe('PriceOracleProxy', () => {
     //set PriceProviderMoC
     const priceOracleMoC = await deploy('MockPriceProviderMoC', [new BigNumber('1e+18')]);
     //set RBTCPriceProviderMoC with price=5
-    const rBTCPriceOracleMoC = await deploy('MockPriceProviderMoC', [new BigNumber('5e+18')]);
-    const priceAdapterMoc = await deploy('PriceOracleAdapterMoc', [root,priceOracleMoC._address,rBTCPriceOracleMoC._address]);
+    const priceAdapterMoc = await deploy('PriceOracleAdapterMoc', [root, priceOracleMoC._address]);
     const priceAdapterCompound = await deploy('PriceOracleAdapterCompound', [root]);
     //set Simple PriceProvider
     const simplePriceOracle = await deploy('SimplePriceOracle');
@@ -34,7 +33,6 @@ describe('PriceOracleProxy', () => {
     cSai = await makeCToken({ comptroller: cRBTC.comptroller, supportMarket: true });
     cOther = await makeCToken({ comptroller: cRBTC.comptroller, supportMarket: true });
     backingOracleMoC = priceOracleMoC;
-    rbtcBackingOracleMoC = rBTCPriceOracleMoC;
     backingOracle = simplePriceOracle;
     adapterCompound = priceAdapterCompound;
     adapterMoc = priceAdapterMoc;
@@ -55,22 +53,12 @@ describe('PriceOracleProxy', () => {
     });
 
     it("sets address of oracle MoC to adapter", async () => {
-      let old= backingOracleMoC._address;
+      let old = backingOracleMoC._address;
       const result = await send(adapterMoc, "setPriceProvider", [backingOracleMoC._address]);
       //capture and validate event
       expect(result).toHaveLog('PriceOracleAdapterUpdated', {
         oldAddress: old,
         newAddress: backingOracleMoC._address,
-      });
-    });
-
-    it("sets address of rBTC oracle MoC to adapter", async () => {
-      let old= rbtcBackingOracleMoC._address;
-      const result = await send(adapterMoc, "setRBTCPriceProvider", [rbtcBackingOracleMoC._address]);
-      //capture and validate event
-      expect(result).toHaveLog('PriceOracleAdapterUpdated', {
-        oldAddress: old,
-        newAddress: rbtcBackingOracleMoC._address,
       });
     });
 
@@ -89,10 +77,6 @@ describe('PriceOracleProxy', () => {
 
     it("revert when not account guardian try to set provider to adapter MoC ", async () => {
       await expect(send(adapterMoc, "setPriceProvider", [backingOracleMoC._address], { from: accounts[0] })).rejects.toRevert("revert PriceOracleAdapterMoc: only guardian may set the address");
-    });
-
-    it("revert when not account guardian try to set rBTC provider to adapter MoC ", async () => {
-      await expect(send(adapterMoc, "setRBTCPriceProvider", [rbtcBackingOracleMoC._address], { from: accounts[0] })).rejects.toRevert("revert PriceOracleAdapterMoc: only guardian may set the address");
     });
 
     it("revert when not account guardian try to set provider to adapter compund ", async () => {
@@ -231,17 +215,13 @@ describe('PriceOracleProxy', () => {
 
     it("oracle returns proper RIF price", async () => {
       //token price (i.e. 9e+18)
-      let tokenPrice= new BigNumber('9e+18');
-      //rbtc price (i.e. 2e+16)
-      let rbtcPrice = new BigNumber('2e+16');
+      let tokenPrice = new BigNumber('9e+18');
       //set price oracle for RIF
       let priceOracleMoC = await deploy('MockPriceProviderMoC', [tokenPrice]);
-      //set price oracle for rBTC
-      let rBTCPriceOracleMoC = await deploy('MockPriceProviderMoC', [rbtcPrice]);
       //deploy oracle adapter
-      let priceAdapterMoc = await deploy('PriceOracleAdapterMoc', [root,priceOracleMoC._address,rBTCPriceOracleMoC._address]);
+      let priceAdapterMoc = await deploy('PriceOracleAdapterMoc', [root, priceOracleMoC._address]);
       //read and verify cRIF price
-      await readAndVerifyOraclePrice(cRIF, tokenPrice / rbtcPrice , priceAdapterMoc);
+      await readAndVerifyOraclePrice(cRIF, tokenPrice / new BigNumber('1e18'), priceAdapterMoc);
     });
 
     it("proxies for whitelisted tokens", async () => {
