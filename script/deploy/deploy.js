@@ -16,7 +16,6 @@ const config = {
     collateralFactor: 0.5,
     testnet: {
         OraculoRif: "0x9d4b2c05818a0086e641437fcb64ab6098c7bbec",
-        OraculoRBTC: "0x2d39cc54dc44ff27ad23a91a9b5fd750dae4b218",
         Dai: "0x0d86fca9be034a363cf12c9834af08d54a10451c",
         Rif: "0x19f64674d8a5b4e652319f5e239efd3bc969a1fe"
     },
@@ -30,7 +29,7 @@ const config = {
 const logPath = __dirname + '/contractAddressesDeploy.json';
 let unitroller, newUnitroller, oracleProxy, comptroller, interestRate, underlyingDai, underlyingRif, cDai, cRif, cRBTC,
     interestRateWhitePaper, priceOracleMocRif, priceOracleMocDai, priceOracleMocRBTC, priceOracleAdapterRif, multiSig, RLEN,
-    addressOraculoRif, addressOraculoDai, addressOraculoRBTC, addressRif;
+    addressOraculoRif, addressOraculoDai, addressRif;
 [root, ...accounts] = saddle.accounts;
 //set already deployed contracts
 let unitrollerAddress = '';
@@ -160,13 +159,13 @@ async function priceOracleProxy() {
     if(priceOracleAdapterRifAddress) {
         priceOracleAdapterRif = await saddle.getContractAt(oracleAdapterName, priceOracleAdapterRifAddress);
     } else {
-        priceOracleAdapterRif = await saddle.deploy(oracleAdapterName, [root, addressOraculoRif, addressOraculoRBTC]);
+        priceOracleAdapterRif = await saddle.deploy(oracleAdapterName, [root, addressOraculoRif]);
     }
     generateLogAddress(`${oracleAdapterName} Rif`, priceOracleAdapterRif._address);
     if(priceOracleAdapterDaiAddress) {
         priceOracleAdapterDai = await saddle.getContractAt(oracleAdapterName, priceOracleAdapterDaiAddress);
     } else {
-        priceOracleAdapterDai = await saddle.deploy(oracleAdapterName, [root, addressOraculoDai, addressOraculoRBTC]);
+        priceOracleAdapterDai = await saddle.deploy(oracleAdapterName, [root, addressOraculoDai]);
     }
     generateLogAddress(`${oracleAdapterName} Dai`, priceOracleAdapterDai._address);
 
@@ -177,7 +176,6 @@ async function setPriceProvider() {
     switch (network) {
         case 31:
             addressOraculoRif = config.testnet.OraculoRif;
-            addressOraculoRBTC = config.testnet.OraculoRBTC;
             //deploy Dai mock
             if(MockPriceProviderMocDaiAddress) {
                 priceOracleMocDai = await saddle.getContractAt('MockPriceProviderMoC', MockPriceProviderMocDaiAddress);
@@ -189,7 +187,6 @@ async function setPriceProvider() {
             break;
         case 30:
             addressOraculoRif = config.mainnet.OraculoRif;
-            addressOraculoRBTC = config.mainnet.OraculoRBTC;
             break;
         default:
             //deploy Rif mock
@@ -199,7 +196,6 @@ async function setPriceProvider() {
             //deploy rBTC mock
             priceOracleMocRBTC = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('115000e+18')]);
             generateLogAddress('🔸MockPriceProviderMoC rBTC', priceOracleMocRBTC._address);
-            addressOraculoRBTC = priceOracleMocRBTC._address;
             //deploy Dai mock
             priceOracleMocDai = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('1.08e+18')]);
             generateLogAddress('🔸MockPriceProviderMoC Dai', priceOracleMocDai._address);
