@@ -2,6 +2,7 @@ import { Event } from '../Event';
 import { addAction, World } from '../World';
 import { PriceOracleProxy } from '../Contract/PriceOracleProxy';
 import { PriceOracleAdapterCompound } from '../Contract/PriceOracleAdapterCompound';
+import { PriceOracle } from '../Contract/PriceOracle';
 import { Invokation } from '../Invokation';
 import { Arg, Fetcher, getFetcherValue } from '../Command';
 import { storeAndSaveContract } from '../Networks';
@@ -12,8 +13,10 @@ import { invoke } from '../Invokation';
 
 const PriceOracleProxyContractExtend = getContract("PriceOracleProxyExtends");
 const PriceOracleAdapterCompoundContract = getContract("PriceOracleAdapterCompound");
+const SimplePriceOracle = getContract('SimplePriceOracle');
 const addressUsdcMock = "0x0000000000000000000000000000000000000001"
 const addressDaiMock = "0x0000000000000000000000000000000000000002";
+const priceValueCRBTC = new NumberV(1e18);
 
 
 export interface PriceOracleProxyData {
@@ -75,8 +78,12 @@ export async function buildPriceOracleProxy(world: World, from: string, event: E
         //set result
         let result = (!proxy.error) ? ((!adapter.error) ? null : adapter) : (proxy);
         if (!result) {
+          //deploy simplePriceOracle
+          let simple = await SimplePriceOracle.deploy<PriceOracle>(world, from, []);
+          //set price of cRBTC
+          await invoke(world, simple.value!.methods.setDirectPrice(cRBTC.val, priceValueCRBTC.encode()), from);
           //set adapter to to cToken
-          await setCtokens(world, from, proxy.value!, cRBTC.val, adapter.value!._address);
+          await setCtokens(world, from, proxy.value!, cRBTC.val, simple.value!._address);
           await setCtokens(world, from, proxy.value!, cUSDC.val, adapter.value!._address);
           await setCtokens(world, from, proxy.value!, cSAI.val, adapter.value!._address);
           await setCtokens(world, from, proxy.value!, cDAI.val, adapter.value!._address);
@@ -87,8 +94,6 @@ export async function buildPriceOracleProxy(world: World, from: string, event: E
           await setKeyOracle(world, from, adapter.value!, cUSDC.val, addressUsdcMock);
           await setKeyOracle(world, from, adapter.value!, cUSDT.val, addressUsdcMock);
           await setKeyOracle(world, from, adapter.value!, cDAI.val, addressDaiMock);
-          //set CRBTCAddress
-          await invoke(world, proxy.value!.methods.setCRBTCAddress(cRBTC.val), from)
           //set mock adapter
           await invoke(world, proxy.value!.methods.setMockAdapter(adapter.value!._address), from)
         } else {

@@ -8,8 +8,6 @@ contract PriceOracleProxy is PriceOracle {
     address public guardian;
     /// @notice Address of the pending guardian
     address public pendingGuardian;
-    /// @notice Address of the guardian
-    address public cRBTCAddress;
     /// @notice Mapping of the cTokenAddress => adapterAddress
     mapping(address => address) public tokenAdapter;
     ///@notice Emitted when pendingGuardian is changed
@@ -47,10 +45,6 @@ contract PriceOracleProxy is PriceOracle {
      * @return The underlying asset price mantissa (scaled by 1e18)
      */
     function getUnderlyingPrice(CToken cToken) public view returns (uint256) {
-        //validate crtbc address
-        if (address(cToken) == cRBTCAddress) {
-            return 1e18;
-        }
         address oracleAdapter = tokenAdapter[address(cToken)];
         //validate mapping
         if (oracleAdapter == address(0)) {
@@ -91,19 +85,6 @@ contract PriceOracleProxy is PriceOracle {
         }
         //set token => adapter
         tokenAdapter[addressToken] = addressAdapter;
-    }
-
-    /**
-     * @notice Set the underlying price of a listed cToken asset
-     * @param addressCRBTC Address of CRBTC
-     */
-    function setCRBTCAddress(address addressCRBTC) public {
-        //validate only guardian can set
-        require(
-            msg.sender == guardian,
-            "PriceOracleProxy: only guardian may set the address"
-        );
-        cRBTCAddress = addressCRBTC;
     }
 
     /**
