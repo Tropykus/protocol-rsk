@@ -16,10 +16,6 @@ contract PriceOracleProxyExtends is PriceOracleProxy {
      * @return The underlying asset price mantissa (scaled by 1e18)
     //  */
     function getUnderlyingPrice(CToken cToken) public view returns (uint256) {
-        //validate crtbc address
-        if (address(cToken) == cRBTCAddress) {
-            return 1e18;
-        }
         address oracleAdapter = tokenAdapter[address(cToken)];
         //validate mapping
         if (oracleAdapter == address(0)) {

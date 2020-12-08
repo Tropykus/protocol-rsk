@@ -7,7 +7,6 @@ interface PriceOracleProxyMethods {
   v1PriceOracle(): Callable<string>;
   setSaiPrice(amount: encodedNumber): Sendable<number>
   setAdapterToToken(cTokenAddress: string, adapterAddress: string): Sendable<number>
-  setCRBTCAddress(setCRBTCAddress: string): Sendable<number>
   setMockAdapter(addressAdapter: string): Sendable<number>
 }
 
