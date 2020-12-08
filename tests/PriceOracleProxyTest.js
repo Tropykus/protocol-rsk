@@ -46,12 +46,6 @@ describe('PriceOracleProxy', () => {
       expect(configuredGuardian).toEqual(root);
     });
 
-    it("sets address of CRBTC", async () => {
-      await send(oracleDispatcher, "setCRBTCAddress", [address(0)]);
-      let CRBTCAddresss = await call(oracleDispatcher, "cRBTCAddress");
-      expect(CRBTCAddresss).toEqual(address(0));
-    });
-
     it("sets address of oracle MoC to adapter", async () => {
       let old = backingOracleMoC._address;
       const result = await send(adapterMoc, "setPriceProvider", [backingOracleMoC._address]);
@@ -69,10 +63,6 @@ describe('PriceOracleProxy', () => {
         oldAddress: address(0),
         newAddress: backingOracle._address,
       });
-    });
-
-    it("revert when not account guardian try to set cRBTCAddress to proxy", async () => {
-      await expect(send(oracleDispatcher, "setCRBTCAddress", [address(0)], { from: accounts[0] })).rejects.toRevert("revert PriceOracleProxy: only guardian may set the address");
     });
 
     it("revert when not account guardian try to set provider to adapter MoC ", async () => {
@@ -189,8 +179,8 @@ describe('PriceOracleProxy', () => {
     }
 
     it("always returns 1e18 for cRBTC", async () => {
-      //set crbtc address to dispatcher
-      await send(oracleDispatcher, "setCRBTCAddress", [cRBTC._address]);
+      // //set crbtc address to adapterMoC address
+      await send(oracleDispatcher, "setAdapterToToken", [cRBTC._address, adapterMoc._address]);
       //validate value
       await readAndVerifyOraclePrice(cRBTC, 1, adapterMoc);
     });

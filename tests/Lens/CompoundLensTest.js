@@ -6,6 +6,7 @@ const {
   makeComptroller,
   makeCToken,
 } = require('../Utils/Compound');
+const { default: BigNumber } = require('bignumber.js');
 
 function cullTuple(tuple) {
   return Object.keys(tuple).reduce((acc, key) => {
@@ -45,7 +46,7 @@ describe('CompoundLens', () => {
           totalReserves: "0",
           totalSupply: "0",
           totalCash: "0",
-          isListed:false,
+          isListed: false,
           collateralFactorMantissa: "0",
           underlyingAssetAddress: await call(cErc20, 'underlying', []),
           cTokenDecimals: "8",
@@ -55,7 +56,7 @@ describe('CompoundLens', () => {
     });
 
     it('is correct for cEth', async () => {
-      let cEth = await makeCToken({kind: 'crbtc'});
+      let cEth = await makeCToken({ kind: 'crbtc' });
       expect(
         cullTuple(await call(compoundLens, 'cTokenMetadata', [cEth._address]))
       ).toEqual({
@@ -80,7 +81,7 @@ describe('CompoundLens', () => {
   describe('cTokenMetadataAll', () => {
     it('is correct for a cErc20 and CRBTC', async () => {
       let cErc20 = await makeCToken();
-      let cEth = await makeCToken({kind: 'crbtc'});
+      let cEth = await makeCToken({ kind: 'crbtc' });
       expect(
         (await call(compoundLens, 'cTokenMetadataAll', [[cErc20._address, cEth._address]])).map(cullTuple)
       ).toEqual([
@@ -94,7 +95,7 @@ describe('CompoundLens', () => {
           totalReserves: "0",
           totalSupply: "0",
           totalCash: "0",
-          isListed:false,
+          isListed: false,
           collateralFactorMantissa: "0",
           underlyingAssetAddress: await call(cErc20, 'underlying', []),
           cTokenDecimals: "8",
@@ -138,10 +139,10 @@ describe('CompoundLens', () => {
     });
 
     it('is correct for cRBTC', async () => {
-      let cEth = await makeCToken({kind: 'crbtc'});
+      let cEth = await makeCToken({ kind: 'crbtc' });
       let ethBalance = await web3.eth.getBalance(acct);
       expect(
-        cullTuple(await call(compoundLens, 'cTokenBalances', [cEth._address, acct], {gasPrice: '0'}))
+        cullTuple(await call(compoundLens, 'cTokenBalances', [cEth._address, acct], { gasPrice: '0' }))
       ).toEqual(
         {
           balanceOf: "0",
@@ -158,11 +159,11 @@ describe('CompoundLens', () => {
   describe('cTokenBalancesAll', () => {
     it('is correct for cEth and cErc20', async () => {
       let cErc20 = await makeCToken();
-      let cEth = await makeCToken({kind: 'crbtc'});
+      let cEth = await makeCToken({ kind: 'crbtc' });
       let ethBalance = await web3.eth.getBalance(acct);
-      
+
       expect(
-        (await call(compoundLens, 'cTokenBalancesAll', [[cErc20._address, cEth._address], acct], {gasPrice: '0'})).map(cullTuple)
+        (await call(compoundLens, 'cTokenBalancesAll', [[cErc20._address, cEth._address], acct], { gasPrice: '0' })).map(cullTuple)
       ).toEqual([
         {
           balanceOf: "0",
@@ -198,7 +199,9 @@ describe('CompoundLens', () => {
     });
 
     it('gets correct price for cEth', async () => {
-      let cEth = await makeCToken({kind: 'crbtc'});
+      let cEth = await makeCToken({ kind: 'crbtc' });
+      //set price of cRBTC
+      await send(cEth.comptroller.priceOracle, "setDirectPrice", [cEth._address, new BigNumber('1e18')]);
       expect(
         cullTuple(await call(compoundLens, 'cTokenUnderlyingPrice', [cEth._address]))
       ).toEqual(
@@ -213,7 +216,9 @@ describe('CompoundLens', () => {
   describe('cTokenUnderlyingPriceAll', () => {
     it('gets correct price for both', async () => {
       let cErc20 = await makeCToken();
-      let cEth = await makeCToken({kind: 'crbtc'});
+      let cEth = await makeCToken({ kind: 'crbtc' });
+      //set price of cRBTC
+      await send(cEth.comptroller.priceOracle, "setDirectPrice", [cEth._address, new BigNumber('1e18')]);
       expect(
         (await call(compoundLens, 'cTokenUnderlyingPriceAll', [[cErc20._address, cEth._address]])).map(cullTuple)
       ).toEqual([
