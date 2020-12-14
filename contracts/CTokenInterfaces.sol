@@ -58,7 +58,7 @@ contract CTokenStorage {
     /**
      * @notice Initial exchange rate used when minting the first CTokens (used when totalSupply = 0)
      */
-    uint internal initialExchangeRateMantissa;
+    uint public initialExchangeRateMantissa;
 
     /**
      * @notice Fraction of interest currently set aside for reserves

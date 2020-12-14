@@ -8,6 +8,8 @@ if (fs.existsSync("./.build/contracts.json")) {
     process.exit()
 }
 
+fs.writeFileSync('./abis/RlendingLens.json', contracts.contracts['contracts/Lens/RlendingLens.sol:RlendingLens'].abi);
+console.log('RlendingLens.json created');
 fs.writeFileSync('./abis/Comptroller.json', contracts.contracts['contracts/Comptroller.sol:Comptroller'].abi);
 console.log('Comptroller.json created');
 fs.writeFileSync('./abis/JumpRateModelV2.json', contracts.contracts['contracts/JumpRateModelV2.sol:JumpRateModelV2'].abi);

@@ -17,7 +17,7 @@ interface ComptrollerLensInterface {
     function compAccrued(address) external view returns (uint);
 }
 
-contract CompoundLens {
+contract RlendingLens {
     struct CTokenMetadata {
         address cToken;
         uint exchangeRateCurrent;
@@ -128,7 +128,7 @@ contract CompoundLens {
         uint underlyingPrice;
     }
 
-    function cTokenUnderlyingPrice(CToken cToken) public returns (CTokenUnderlyingPrice memory) {
+    function cTokenUnderlyingPrice(CToken cToken) public view returns (CTokenUnderlyingPrice memory) {
         ComptrollerLensInterface comptroller = ComptrollerLensInterface(address(cToken.comptroller()));
         PriceOracle priceOracle = comptroller.oracle();
 
@@ -138,7 +138,7 @@ contract CompoundLens {
         });
     }
 
-    function cTokenUnderlyingPriceAll(CToken[] calldata cTokens) external returns (CTokenUnderlyingPrice[] memory) {
+    function cTokenUnderlyingPriceAll(CToken[] calldata cTokens) external view returns (CTokenUnderlyingPrice[] memory) {
         uint cTokenCount = cTokens.length;
         CTokenUnderlyingPrice[] memory res = new CTokenUnderlyingPrice[](cTokenCount);
         for (uint i = 0; i < cTokenCount; i++) {
@@ -153,7 +153,7 @@ contract CompoundLens {
         uint shortfall;
     }
 
-    function getAccountLimits(ComptrollerLensInterface comptroller, address account) public returns (AccountLimits memory) {
+    function getAccountLimits(ComptrollerLensInterface comptroller, address account) public view returns (AccountLimits memory) {
         (uint errorCode, uint liquidity, uint shortfall) = comptroller.getAccountLiquidity(account);
         require(errorCode == 0,"liquidity error");
 
