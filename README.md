@@ -135,6 +135,7 @@ rLending initially developed and tested on:
 * [solc](https://solidity.readthedocs.io/en/v0.4.24/installing-solidity.html#binary-packages)
 * [sol-select](https://github.com/crytic/solc-select)(optional)
 * [node-gyp](https://github.com/nodejs/node-gyp#installation)(optional)
+* [direnv] (https://direnv.net/)
 
 #### g++
 
@@ -158,6 +159,13 @@ Also recommend seting git pull to [default rebase mode](https://coderwall.com/p/
 
     #ubuntu/debian
     git config --global pull.rebase true
+
+Deployment
+-------
+To deploy the contracts we use buidler.
+
+Copy the .envrc.example and rename it to .envrc, change the mnemonic, then use`direnv allow` on this dirally rectory.
+Finally run `yarn deploy [networkName]` to deploy to the selected network
 
 
 Debugging 🔩

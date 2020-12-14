@@ -1,0 +1,2 @@
+export HDWALLET_MNEMONIC=''
+export OPTIMIZER_DISABLED=false

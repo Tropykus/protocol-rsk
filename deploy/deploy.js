@@ -1,7 +1,145 @@
 const BigNumber = require('bignumber.js');
 const {
     etherMantissa,
-} = require('../../tests/Utils/Ethereum');
+} = require('../tests/Utils/Ethereum');
+
+const chainName = (chainId) => {
+    switch(chainId) {
+      case 30: return 'Rsk Mainnet';
+      case 31: return 'Rsk testnet';
+      case 33: return 'Rsk regtest';
+      case 5777: return 'Ganache';
+      case 31337: return 'BuidlerEVM';
+      default: return 'Unknown';
+    }
+}
+
+module.exports = async (buidler) => {
+    const { getNamedAccounts, deployments, getChainId, ethers } = buidler
+    const { deploy } = deployments
+
+    let {
+      deployer,
+      rifOracle,
+      rbtcOracle,
+      dai,
+      rif
+    } = await getNamedAccounts()
+
+    const chainId = parseInt(await getChainId(), 10)
+    debug('ChainID', chainId);
+    const isLocal = [30, 31].indexOf(chainId) == -1
+    // 31337 is unit testing, 1337 is for coverage, 33 is rsk regtest
+    const isTestEnvironment = chainId === 31337 || chainId === 1337 || chainId === 33
+    debug('isTestEnvironment', isTestEnvironment);
+    // Fix transaction format  error from etherjs getTransactionReceipt as transactionReceipt format
+    // checks root to be a 32 bytes hash when on RSK its 0x01
+    const format = ethers.provider.formatter.formats
+    if (format) format.receipt['root'] = format.receipt['logsBloom']
+    Object.assign(ethers.provider.formatter, { format: format })
+
+    const signer = await ethers.provider.getSigner(deployer)
+    Object.assign(signer.provider.formatter, { format: format })
+
+    debug("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    debug("rLending Contracts - Deploy Script")
+    debug("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
+
+    const locus = isLocal ? 'local' : 'remote'
+    debug(`  Deploying to Network: ${chainName(chainId)} (${locus})`)
+
+    if (isLocal) {
+      debug("\n  Deploying Rif Oracle...")
+      const deployRifOracle = await deploy("RifOracle", {
+        args: [
+            '10000000000000000'
+          ],
+          contract: 'MockPriceProviderMoC',
+        from: deployer,
+        skipIfAlreadyDeployed: true
+      });
+      rifOracle = deployRifOracle.address
+
+      debug("\n  Deploying Rbtc Oracle...")
+      const deployRbtcOracle = await deploy("RbtcOracle", {
+        args: [
+            '18000000000000000000000'
+          ],
+          contract: 'MockPriceProviderMoC',
+        from: deployer,
+        skipIfAlreadyDeployed: true
+      });
+      rbtcOracle = deployRbtcOracle.address
+
+      debug("\n  Deploying Dai...")
+      const daiResult = await deploy("Dai", {
+        args: [new BigNumber(2000000e18), "dai token", 18, "rDai"],
+        contract: 'StandardToken',
+        from: deployer,
+        skipIfAlreadyDeployed: true
+      })
+      dai = daiResult.address
+
+      debug("\n  Deploying Rif...")
+      const rifResult = await deploy("Rif", {
+        args: [new BigNumber(2000000e18), "rif token", 18, "Rif"],
+        contract: 'StandardToken',
+        from: deployer,
+        skipIfAlreadyDeployed: true
+      })
+      rif = rifResult.address
+
+      // Display Contract Addresses
+      debug("\n  Local Contract Deployments;\n")
+      debug("  - Rbtc Oracle:       ", deployRbtcOracle.address)
+      debug("  - Rif Oracle:       ", deployRifOracle.address)
+      debug("  - Rif Oracle:       ", deployRifOracle.address)
+      debug("  - Dai:              ", daiResult.address)
+      debug("  - Rif:              ", rifResult.address)
+    }
+
+    // TODO we should use the DAI Oracle as soon as its ready instead of the Mock
+    debug("\n  Deploying Dai Oracle...")
+    const deployDaiOracle = await deploy("DaiOracle", {
+        args: [
+            '1000000000000000000'
+        ],
+        contract: 'MockPriceProviderMoC',
+        from: deployer,
+        skipIfAlreadyDeployed: true
+    });
+    daiOracle = deployDaiOracle.address
+
+    // if not set by named config
+    if (!multiSig) {
+        const multiSigResult = await deploy("MultiSigWallet", {
+            args: [[deployer], 1],
+            contract: "MultiSigWallet",
+            from: deployer,
+            skipIfAlreadyDeployed: true
+        })
+        multiSig = multiSigResult.address
+        const multiSigContract = await buidler.ethers.getContractAt(
+            "MultiSigWallet",
+            multiSigResult.address,
+            signer
+        )
+        await multiSigContract.transferOwnership(adminAccount)
+    }
+
+    const comptrollerResult = await deploy("Comptroller", {
+        contract: "Comptroller",
+        from: deployer,
+        skipIfAlreadyDeployed: true
+    })
+    comptrollerAddress = comptrollerResult.address
+    const comptrollerContract = await buidler.ethers.getContractAt(
+        "Comptroller",
+        comptrollerResult.address,
+        signer
+    )
+    await comptrollerContract.transferOwnership(multiSig)
+
 
 //enviroment
 const [verb] = args;
