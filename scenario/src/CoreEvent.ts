@@ -40,7 +40,7 @@ import { loadContracts } from './Networks';
 import { fork } from './Hypothetical';
 import { buildContractEvent } from './EventBuilder';
 import { Counter } from './Contract/Counter';
-import { CompoundLens } from './Contract/CompoundLens';
+import { RlendingLens } from './Contract/RlendingLens';
 import { Reservoir } from './Contract/Reservoir';
 import Web3 from 'web3';
 
@@ -811,7 +811,7 @@ export const commands: (View<any> | ((world: World) => Promise<View<any>>))[] = 
   ),
 
   buildContractEvent<Counter>("Counter", false),
-  buildContractEvent<CompoundLens>("CompoundLens", false),
+  buildContractEvent<RlendingLens>("RlendingLens", false),
   buildContractEvent<Reservoir>("Reservoir", true),
 
   new View<{ event: EventV }>(

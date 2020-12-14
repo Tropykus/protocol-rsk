@@ -31,7 +31,7 @@ const config = {
 const logPath = __dirname + '/contractAddressesDeploy.json';
 let unitroller, newUnitroller, oracleProxy, comptroller, interestRate, underlyingDai, underlyingRif, cDai, cRif, cRBTC,
     interestRateWhitePaper, priceOracleMocRif, priceOracleMocDai, priceOracleMocRBTC, priceOracleAdapterRif, priceOracleAdapterDai,
-    priceOracleAdapterRbtc, multiSig, RLEN,
+    priceOracleAdapterRbtc, multiSig, RLEN, rlendingLens,
     addressOraculoRbtc, addressOraculoRif, addressOraculoDai, addressRif;
 [root, ...accounts] = saddle.accounts;
 //set already deployed contracts
@@ -50,6 +50,7 @@ let cRifAddress = '';
 let cRBTCAddress = '';
 let RLenAddress = '';
 let maximillionAddress = '';
+let rlendingLensAddress = '';
 
 //set array to write to file
 let arrayToFile = new Array();
@@ -108,6 +109,16 @@ async function unitrollerDeploy() {
         unitroller = await saddle.deploy('Unitroller');
     }
     generateLogAddress('UnitrollerImp', unitroller._address);
+};
+
+//deploy RlendingLens
+async function rlendingLensDeploy() {
+    if (rlendingLensAddress) {
+        rlendingLens = await saddle.getContractAt('RlendingLens', rlendingLensAddress);
+    } else {
+        rlendingLens = await saddle.deploy('RlendingLens');
+    }
+    generateLogAddress('RlendingLens', rlendingLens._address);
 };
 
 //deploy Comptroller
@@ -400,6 +411,7 @@ async function maint() {
     await validateEnvironment();
     printConfigAccount();
     //deploy contracts
+    await rlendingLensDeploy();
     await multiSigWallet();
     await unitrollerDeploy();
     await priceOracleProxy();

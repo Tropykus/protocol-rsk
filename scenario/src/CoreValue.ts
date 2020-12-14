@@ -969,7 +969,7 @@ const fetchers = [
 
 let contractFetchers = [
   { contract: "Counter", implicit: false },
-  { contract: "CompoundLens", implicit: false },
+  { contract: "RlendingLens", implicit: false },
   { contract: "Reservoir", implicit: true }
 ];
 
