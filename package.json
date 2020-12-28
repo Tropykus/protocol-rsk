@@ -12,6 +12,7 @@
     "lint": "./script/lint",
     "repl": "./scenario/script/repl",
     "profile": "yarn test tests/gasProfiler.js",
+    "report": "npx run ./script/saddle/gasReport.js",
     "test": "./script/test",
     "rsk": "./script/rsk",
     "abis": "node datagen.js",
