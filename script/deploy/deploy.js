@@ -205,7 +205,7 @@ async function setPriceProvider() {
             if (MockPriceProviderMocDaiAddress) {
                 priceOracleMocDai = await saddle.getContractAt('MockPriceProviderMoC', MockPriceProviderMocDaiAddress);
             } else {
-                priceOracleMocDai = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('1.08e+18')]);
+                priceOracleMocDai = await saddle.deploy('MockPriceProviderMoC', [root, new BigNumber('1.08e+18')]);
             }
             generateLogAddress('🔸MockPriceProviderMoC Dai', priceOracleMocDai._address);
             addressOraculoDai = priceOracleMocDai._address;
@@ -216,15 +216,15 @@ async function setPriceProvider() {
             break;
         default:
             //deploy Rif mock
-            priceOracleMocRif = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('9e+18')]);
+            priceOracleMocRif = await saddle.deploy('MockPriceProviderMoC', [root, new BigNumber('9e+18')]);
             generateLogAddress('🔸MockPriceProviderMoC Rif', priceOracleMocRif._address);
             addressOraculoRif = priceOracleMocRif._address;
             //deploy rBTC mock
-            priceOracleMocRBTC = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('115000e+18')]);
+            priceOracleMocRBTC = await saddle.deploy('MockPriceProviderMoC', [root, new BigNumber('115000e+18')]);
             generateLogAddress('🔸MockPriceProviderMoC rBTC', priceOracleMocRBTC._address);
             addressOraculoRbtc = priceOracleMocRBTC._address;
             //deploy Dai mock
-            priceOracleMocDai = await saddle.deploy('MockPriceProviderMoC', [new BigNumber('1.08e+18')]);
+            priceOracleMocDai = await saddle.deploy('MockPriceProviderMoC', [root, new BigNumber('1.08e+18')]);
             generateLogAddress('🔸MockPriceProviderMoC Dai', priceOracleMocDai._address);
             addressOraculoDai = priceOracleMocDai._address;
             break;
