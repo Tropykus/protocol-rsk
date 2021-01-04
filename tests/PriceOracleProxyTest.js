@@ -18,7 +18,7 @@ describe('PriceOracleProxy', () => {
     //set comptroller
     const comptroller = await deploy('ComptrollerHarness');
     //set PriceProviderMoC
-    const priceOracleMoC = await deploy('MockPriceProviderMoC', [new BigNumber('1e+18')]);
+    const priceOracleMoC = await deploy('MockPriceProviderMoC', [root, new BigNumber('1e+18')]);
     //set RBTCPriceProviderMoC with price=5
     const priceAdapterMoc = await deploy('PriceOracleAdapterMoc', [root, priceOracleMoC._address]);
     const priceAdapterCompound = await deploy('PriceOracleAdapterCompound', [root]);
@@ -72,6 +72,27 @@ describe('PriceOracleProxy', () => {
     it("revert when not account guardian try to set provider to adapter compund ", async () => {
       await expect(send(adapterCompound, "setPriceProvider", [backingOracle._address], { from: accounts[0] })).rejects.toRevert("revert PriceOracleAdapterCompound: only guardian may set the address");
     });
+  });
+
+  //test MoC mock 
+  describe("set price of Money on Chain mock", () => {
+    it("sets price", async () => {
+      const price = new BigNumber('10e+18');
+      const result = await send(backingOracleMoC, "setPrice", [price]);
+      expect(result).toHaveLog('MockPriceProviderMoCUpdated', {
+        oldPrice: new BigNumber('1e+18'),
+        newPrice: price,
+      });
+    });
+
+    it("revert when not account guardian try to set price", async () => {
+      await expect(send(backingOracleMoC, "setPrice", [new BigNumber('10e+18')], { from: accounts[0] })).rejects.toRevert("revert MockPriceProviderMoC: only guardian may set the address");
+    });
+
+    it("revert when try to set invalid price", async () => {
+      await expect(send(backingOracleMoC, "setPrice", [new BigNumber('0e+18')], { from: root })).rejects.toRevert("revert MockPriceProviderMoC: price could not be 0");
+    });
+
   });
 
   describe("set and accept new guardian", () => {
@@ -207,7 +228,7 @@ describe('PriceOracleProxy', () => {
       //token price (i.e. 9e+18)
       let tokenPrice = new BigNumber('9e+18');
       //set price oracle for RIF
-      let priceOracleMoC = await deploy('MockPriceProviderMoC', [tokenPrice]);
+      let priceOracleMoC = await deploy('MockPriceProviderMoC', [root, tokenPrice]);
       //deploy oracle adapter
       let priceAdapterMoc = await deploy('PriceOracleAdapterMoc', [root, priceOracleMoC._address]);
       //read and verify cRIF price
