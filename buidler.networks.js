@@ -8,7 +8,7 @@ const networks = {
     url: 'http://127.0.0.1:8545',
     blockGasLimit: 200000000,
     allowUnlimitedContractSize: false,
-    chainId: 5777
+    chainId: 1337
   },
   rskregtest: {
     url: 'http://127.0.0.1:4444',

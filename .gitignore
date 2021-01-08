@@ -23,6 +23,8 @@ networks/test-contracts/*
 networks/*-contracts.json
 networks/*-history
 networks/*-settings.json
+cache/
+deployments/ganache*/
 outputs/
 Reports/
 scTopics

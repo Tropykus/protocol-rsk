@@ -13,13 +13,12 @@ task(TASK_COMPILE_GET_COMPILER_INPUT).setAction(async (_, __, runSuper) => {
   return input;
 })
 
-const optimizerEnabled = !process.env.OPTIMIZER_DISABLED
 
 const config = {
   solc: {
     version: "0.5.17",
     optimizer: {
-      enabled: optimizerEnabled,
+      enabled: true,
       runs: 200
     },
     evmVersion: "istanbul"
@@ -47,6 +46,14 @@ const config = {
     rif: {
       30: "0x2acc95758f8b5f583470ba265eb685a8f45fc9d5",
       31: "0x19f64674d8a5b4e652319f5e239efd3bc969a1fe"
+    },
+    admin1: {
+      30: "0x9C95B0EF2D3E1D9ca479524Ba738C87BE28C1585",
+      31: "0x9C95B0EF2D3E1D9ca479524Ba738C87BE28C1585"
+    },
+    admin2: {
+      30: "0x8F63De841e7bccCe39FaA828128dA25f8A93411f",
+      31: "0x8F63De841e7bccCe39FaA828128dA25f8A93411f"
     }
   }
 };
