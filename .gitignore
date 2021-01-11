@@ -25,6 +25,7 @@ networks/*-history
 networks/*-settings.json
 cache/
 deployments/ganache*/
+deployments/rskregtest*/
 outputs/
 Reports/
 scTopics

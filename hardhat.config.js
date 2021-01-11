@@ -1,29 +1,23 @@
-const networks = require('./buidler.networks')
+require("@nomiclabs/hardhat-ethers");
+require("@nomiclabs/hardhat-waffle");
+require("hardhat-deploy");
 
-const {TASK_COMPILE_GET_COMPILER_INPUT} = require("@nomiclabs/buidler/builtin-tasks/task-names");
-
-usePlugin("@nomiclabs/buidler-waffle");
-usePlugin("buidler-deploy");
-
-// This must occur after buidler-deploy!
-task(TASK_COMPILE_GET_COMPILER_INPUT).setAction(async (_, __, runSuper) => {
-  const input = await runSuper();
-  input.settings.metadata.useLiteralContent = process.env.USE_LITERAL_CONTENT != 'false';
-  console.log(`useLiteralContent: ${input.settings.metadata.useLiteralContent}`)
-  return input;
-})
-
+const networks = require('./hardhat.networks')
 
 const config = {
-  solc: {
+  defaultNetwork: "hardhat",
+  solidity: {
     version: "0.5.17",
-    optimizer: {
-      enabled: true,
-      runs: 200
-    },
-    evmVersion: "istanbul"
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200
+      },
+    }
   },
   paths: {
+    sources: "./contracts",
+    cache: "./cache",
     artifacts: "./build"
   },
   networks,
@@ -48,13 +42,13 @@ const config = {
       31: "0x19f64674d8a5b4e652319f5e239efd3bc969a1fe"
     },
     admin1: {
-      30: "0x9C95B0EF2D3E1D9ca479524Ba738C87BE28C1585",
-      31: "0x9C95B0EF2D3E1D9ca479524Ba738C87BE28C1585"
-    },
-    admin2: {
       30: "0x8F63De841e7bccCe39FaA828128dA25f8A93411f",
       31: "0x8F63De841e7bccCe39FaA828128dA25f8A93411f"
-    }
+    },
+    admin2: {
+      30: "0x170346689cC312D8E19959Bc68c3AD03E72C9850",
+      31: "0x170346689cC312D8E19959Bc68c3AD03E72C9850"
+    },
   }
 };
 

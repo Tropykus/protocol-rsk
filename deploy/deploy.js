@@ -1,4 +1,3 @@
-const BigNumber = require('bignumber.js');
 const {
     etherMantissa,
 } = require('../tests/Utils/Ethereum');
@@ -9,22 +8,22 @@ const chainName = (chainId) => {
       case 31: return 'Rsk testnet';
       case 33: return 'Rsk regtest';
       case 5777: return 'Ganache';
-      case 31337: return 'BuidlerEVM';
+      case 31337: return 'hardhatEVM';
       default: return 'Unknown';
     }
 }
 
 const config = {
-    initialExchangeRateMantissa: new BigNumber(2e18),
-    liquidationIncentiveMantisa: new BigNumber(1.08e18),
+    initialExchangeRateMantissa:  ethers.utils.parseEther('2'),
+    liquidationIncentiveMantisa: ethers.utils.parseEther('1.08'),
     closeFactorMantisa: etherMantissa(.051),
     maxAssets: 20,
-    compRate: new BigNumber("0"), //0 to not drip
+    compRate: ethers.utils.parseEther('0'), //0 to not drip
     compMarkets: [],
 };
 
-module.exports = async (buidler) => {
-    const { getNamedAccounts, deployments, getChainId, ethers } = buidler
+module.exports = async (hardhat) => {
+    const { getNamedAccounts, deployments, getChainId, ethers } = hardhat
     const { deploy } = deployments
 
     let {
@@ -81,7 +80,7 @@ module.exports = async (buidler) => {
 
       console.log("\n  Deploying Dai...")
       const daiResult = await deploy("Dai", {
-        args: [(new BigNumber(2000000e18)).toFixed(), "dai token", 18, "rDai"],
+        args: [ethers.utils.parseEther('2000000'), "dai token", 18, "rDai"],
         contract: 'StandardToken',
         from: deployer,
         skipIfAlreadyDeployed: true
@@ -90,7 +89,7 @@ module.exports = async (buidler) => {
 
       console.log("\n  Deploying Rif...")
       const rifResult = await deploy("Rif", {
-        args: [(new BigNumber(2000000e18)).toFixed(), "rif token", 18, "Rif"],
+        args: [ethers.utils.parseEther('2000000'), "rif token", 18, "Rif"],
         contract: 'StandardToken',
         from: deployer,
         skipIfAlreadyDeployed: true
@@ -110,7 +109,7 @@ module.exports = async (buidler) => {
     // TODO we should use the DAI Oracle as soon as its ready instead of the Mock
     console.log("\n 🔸 Deploying Dai Oracle...")
     const daiOracleResult = await deploy("DaiOracle", {
-        args: [deployer, '1080000000000000000'],
+        args: [deployer, ethers.utils.parseEther('1.08')],
         contract: 'MockPriceProviderMoC',
         from: deployer,
         skipIfAlreadyDeployed: true
@@ -129,6 +128,11 @@ module.exports = async (buidler) => {
         })
         multiSig = multiSigResult.address
     }
+    const multiSigContract = await ethers.getContractAt(
+        "MultiSigWallet",
+        multiSig,
+        signer
+    )
 
     console.log("\n  Deploying Unitroller...")
     const unitrollerResult = await deploy("Unitroller", {
@@ -136,7 +140,7 @@ module.exports = async (buidler) => {
         from: deployer,
         skipIfAlreadyDeployed: true
     })
-    const unitrollerContract = await buidler.ethers.getContractAt(
+    const unitrollerContract = await ethers.getContractAt(
         "Unitroller",
         unitrollerResult.address,
         signer
@@ -152,7 +156,7 @@ module.exports = async (buidler) => {
         from: deployer,
         skipIfAlreadyDeployed: true
     })
-    const priceOracleProxyContract = await buidler.ethers.getContractAt(
+    const priceOracleProxyContract = await ethers.getContractAt(
         "PriceOracleProxy",
         priceOracleProxyResult.address,
         signer
@@ -192,44 +196,48 @@ module.exports = async (buidler) => {
         from: deployer,
         skipIfAlreadyDeployed: true
     })
-    console.log("comptrollerResult.newlyDeployed", comptrollerResult.newlyDeployed)
-    const comptrollerContract = await buidler.ethers.getContractAt(
+    const comptrollerContract = await ethers.getContractAt(
         "Comptroller",
         comptrollerResult.address,
         signer
     )
-    if(comptrollerResult.newlyDeployed) {
+    if (comptrollerResult.newlyDeployed) {
         console.log("\n  _setPendingImplementation Unitroller...")
         await unitrollerContract._setPendingImplementation(comptrollerResult.address)
+        console.log("\n  _become Comptroller...")
+        await comptrollerContract._become(unitrollerResult.address)
     } else {
         console.log("\n  already become Unitroller...")
     }
-    console.log("\n  _become Comptroller...")
-    await comptrollerContract._become(unitrollerResult.address)
 
-    const newUnitrollerContract = await buidler.ethers.getContractAt(
-        "Unitroller",
+    const newUnitrollerContract = await ethers.getContractAt(
+        "Comptroller",
         unitrollerContract.address,
         signer
     )
-    console.log("\n  _setPriceOracle new Unitroller...")
-    await newUnitrollerContract._setPriceOracle(priceOracleProxyResult.address)
 
-    console.log("\n  _setMaxAssets new Unitroller...")
-    await newUnitrollerContract._setMaxAssets(config.maxAssets)
+    if (comptrollerResult.newlyDeployed) {
+        console.log("\n  _setPriceOracle new Unitroller...")
+        await newUnitrollerContract._setPriceOracle(priceOracleProxyResult.address)
 
-    console.log("\n  _setCloseFactor new Unitroller...")
-    await newUnitrollerContract._setCloseFactor(config.closeFactorMantisa)
+        console.log("\n  _setMaxAssets new Unitroller...")
+        await newUnitrollerContract._setMaxAssets(config.maxAssets)
 
-    console.log("\n  _setLiquidationIncentive new Unitroller...")
-    await newUnitrollerContract._setLiquidationIncentive(config.liquidationIncentiveMantisa)
+        console.log("\n  _setCloseFactor new Unitroller...")
+        await newUnitrollerContract._setCloseFactor(config.closeFactorMantisa)
 
-    console.log("\n  _setCompRate new Unitroller...")
-    await newUnitrollerContract._setCompRate(config.compRate)
+        console.log("\n  _setLiquidationIncentive new Unitroller...")
+        await newUnitrollerContract._setLiquidationIncentive(config.liquidationIncentiveMantisa)
 
-    if(config.compMarkets.length > 0) {
-        console.log("\n  _addCompMarkets new Unitroller...")
-        await newUnitrollerContract._addCompMarkets(config.compMarkets)
+        console.log("\n  _setCompRate new Unitroller...")
+        result = await newUnitrollerContract._setCompRate(config.compRate)
+
+        if(config.compMarkets.length > 0) {
+            console.log("\n  _addCompMarkets new Unitroller...")
+            await newUnitrollerContract._addCompMarkets(config.compMarkets)
+        }
+    } else {
+        console.log("\n  already setted up new Unitroller...")
     }
     // ------------ End Deploying and configuring Comptroller --------- //
 
@@ -261,19 +269,26 @@ module.exports = async (buidler) => {
         from: deployer,
         skipIfAlreadyDeployed: true
     })
-    const cDaiContract = await buidler.ethers.getContractAt(
+    const cDaiContract = await ethers.getContractAt(
         "CErc20Immutable",
         cDaiResult.address,
         signer
     )
-    console.log("\n  setAdapterToToken cDai...")
-    await priceOracleProxyContract.setAdapterToToken(cDaiResult.address, daiPriceOracleAdapterResult.address)
-    console.log("\n  _supportMarket cDai...")
-    await newUnitrollerContract._supportMarket(cDaiResult.address)
-    console.log("\n  _setCollateralFactor cDai...")
-    await newUnitrollerContract._setCollateralFactor( [cDai._address, etherMantissa(0.75)])
-    console.log("\n  _setReserveFactor cDai...")
-    await cDaiContract._setReserveFactor(etherMantissa(0.15));
+    if (cDaiResult.newlyDeployed) {
+        console.log("\n  setAdapterToToken cDai...")
+        await priceOracleProxyContract.setAdapterToToken(cDaiResult.address, daiPriceOracleAdapterResult.address)
+
+        console.log("\n  _supportMarket cDai...")
+        await newUnitrollerContract._supportMarket(cDaiResult.address)
+
+        console.log("\n  _setCollateralFactor cDai...")
+        await newUnitrollerContract._setCollateralFactor(cDaiResult.address, etherMantissa(0.75))
+
+        console.log("\n  _setReserveFactor cDai...")
+        await cDaiContract._setReserveFactor(etherMantissa(0.15));
+    } else {
+        console.log("\n cDai already deployed...")
+    }
 
     // ### Deploy cRIF ### //
     console.log("\n  Deploy cRIF...")
@@ -283,19 +298,26 @@ module.exports = async (buidler) => {
         from: deployer,
         skipIfAlreadyDeployed: true
     })
-    const cRifContract = await buidler.ethers.getContractAt(
+    const cRifContract = await ethers.getContractAt(
         "CErc20Immutable",
         cRifResult.address,
         signer
     )
-    console.log("\n  setAdapterToToken cRif...")
-    await priceOracleProxyContract.setAdapterToToken(cRifResult.address, rifPriceOracleAdapterResult.address)
-    console.log("\n  _supportMarket cRif...")
-    await newUnitrollerContract._supportMarket(cRifResult.address)
-    console.log("\n  _setCollateralFactor cRif...")
-    await newUnitrollerContract._setCollateralFactor( [cRifResult._address, etherMantissa(0.5)])
-    console.log("\n  _setReserveFactor cRif...")
-    await cRifContract._setReserveFactor(etherMantissa(0.2));
+    if (cRifResult.newlyDeployed) {
+        console.log("\n  setAdapterToToken cRif...")
+        await priceOracleProxyContract.setAdapterToToken(cRifResult.address, rifPriceOracleAdapterResult.address)
+
+        console.log("\n  _supportMarket cRif...")
+        await newUnitrollerContract._supportMarket(cRifResult.address)
+
+        console.log("\n  _setCollateralFactor cRif...")
+        await newUnitrollerContract._setCollateralFactor(cRifResult.address, etherMantissa(0.5))
+
+        console.log("\n  _setReserveFactor cRif...")
+        await cRifContract._setReserveFactor(etherMantissa(0.2));
+    } else {
+        console.log("\n cRIF already deployed...")
+    }
 
     // ### Deploy cRIF ### //
     console.log("\n  Deploy cRBTC...")
@@ -305,19 +327,26 @@ module.exports = async (buidler) => {
         from: deployer,
         skipIfAlreadyDeployed: true
     })
-    const cRbtcContract = await buidler.ethers.getContractAt(
+    const cRbtcContract = await ethers.getContractAt(
         "CRBTC",
         cRbtcResult.address,
         signer
     )
-    console.log("\n  setAdapterToToken cRbtc...")
-    await priceOracleProxyContract.setAdapterToToken(cRbtcResult.address, rifPriceOracleAdapterResult.address)
-    console.log("\n  _supportMarket cRbtc...")
-    await newUnitrollerContract._supportMarket(cRbtcResult.address)
-    console.log("\n  _setCollateralFactor cRbtc...")
-    await newUnitrollerContract._setCollateralFactor( [cRbtcResult._address, etherMantissa(0.6)])
-    console.log("\n  _setReserveFactor cRbtc...")
-    await cRbtcContract._setReserveFactor(etherMantissa(0.2));
+    if (cRbtcResult.newlyDeployed) {
+        console.log("\n  setAdapterToToken cRbtc...")
+        await priceOracleProxyContract.setAdapterToToken(cRbtcResult.address, rifPriceOracleAdapterResult.address)
+
+        console.log(`\n  _supportMarket cRbtc...`)
+        await newUnitrollerContract._supportMarket(cRbtcResult.address)
+
+        console.log("\n  _setCollateralFactor cRbtc...")
+        await newUnitrollerContract._setCollateralFactor(cRbtcResult.address, etherMantissa(0.6))
+
+        console.log("\n  _setReserveFactor cRbtc...")
+        await cRbtcContract._setReserveFactor(etherMantissa(0.2));
+    } else {
+        console.log("\n cRBTC already deployed...")
+    }
     // -------------------------- End Deploy CTokerns ------------------------- //
 
     // -------------------------- Deploy rLen ------------------------- //
@@ -328,8 +357,12 @@ module.exports = async (buidler) => {
         from: deployer,
         skipIfAlreadyDeployed: true
     })
-    console.log("\n  setCompAddress RLEN...")
-    await newUnitrollerContract.setCompAddress(rLenResult.address)
+    if (rLenResult.newlyDeployed) {
+        console.log("\n  setCompAddress RLEN...")
+        await newUnitrollerContract.setCompAddress(rLenResult.address)
+    } else {
+        console.log("\n RLEN already deployed...")
+    }
     // -------------------------- End Deploy rLen ------------------------- //
 
     // -------------------------- Deploy Maximillion ------------------------- //
@@ -344,26 +377,29 @@ module.exports = async (buidler) => {
     // -------------------------- Deploy rLendingLens ------------------------- //
     console.log("\n  Deploy RlendingLens...")
     const rLedingLensResult = await deploy("RlendingLens", {
-        args: [cRbtcResult.address],
         contract: "RlendingLens",
         from: deployer,
         skipIfAlreadyDeployed: true
     })
 
     // -------------------------- setMultiSignOwnerAlpha ------------------------- //
-    console.log("\n  _setPendingAdmin Multisig...")
+    console.log("\n  set Multisig  as Owner...")
     let arrayToMultisigOwner = [cDaiContract, cRifContract, cRbtcContract, priceOracleProxyContract, unitrollerContract];
     for (let index = 0; index < arrayToMultisigOwner.length; index++) {
         //set pending admin
-        await arrayToMultisigOwner[index]["_setPendingAdmin"](multiSig._address);
+        console.log(`\n  _setPendingAdmin Multisig...`)
+        await arrayToMultisigOwner[index]["_setPendingAdmin"](multiSig);
         //generate data method accept admin
-        const data = arrayToMultisigOwner[index]["_acceptAdmin"]().encodeABI();
+        const data = arrayToMultisigOwner[index].interface.encodeFunctionData("_acceptAdmin",[]);
         //submit transacion multisig, when accept the admin of contract
+        console.log(`\n  _acceptAdmin Multisig...`)
         await multiSigContract.submitTransaction(arrayToMultisigOwner[index].address, 0, data);
         console.log(`multiSig owner of ${arrayToMultisigOwner[index].address}`);
     }
     console.log("\n  changeRequirement Multisig ...")
-    await multiSigContract.changeRequirement(2);
+    let data = multiSigContract.interface.encodeFunctionData("changeRequirement",[2]);
+    //submit transacion multisig
+    await multiSigContract.submitTransaction(multiSigContract.address, 0, data);
 
     // Display Contract Addresses
     console.log("\n  Contract Deployments Complete!\n")
@@ -382,7 +418,7 @@ module.exports = async (buidler) => {
     console.log("  - cRBTC:                           ", cRbtcResult.address)
     console.log("  - RLEN:                            ", rLenResult.address)
     console.log("  - Maximillion:                     ", maximillionResult.address)
-    console.log("  - rLendingLens:                    ", rLendingLendsResult.address)
+    console.log("  - rLendingLens:                    ", rLedingLensResult.address)
     console.log("  - Rbtc Oracle:                 ", rbtcOracle)
     console.log("  - Rif Oracle:                  ", rifOracle)
     console.log("  - Dai:                         ", dai)
