@@ -1,7 +1,6 @@
 pragma solidity ^0.5.16;
 
-import "./ERC20.sol";
-
+import "../../contracts/ERC20.sol";
 /**
  * @title The Compound Faucet Test Token
  * @author Compound

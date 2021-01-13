@@ -32,6 +32,6 @@ export function toEncodableNum(amountArgRaw: string | encodedNumber): encodedNum
     // bigNumberify (and the result class) only accept integers as digits, so we do .toFixed() to convert, for example, 1e4 to 10000.
     // Rather than doing toFixed(0) and silently truncating a fractional part, we'll let it through and get an error.
     // that case
-    return utils.bigNumberify(bigNumber.toFixed());
+    return new utils.BigNumber(bigNumber.toFixed());
   }
 }

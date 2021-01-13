@@ -4,6 +4,7 @@ build
 build_
 node_modules
 .env
+.envrc
 .certora*
 certora_*
 coverage/
@@ -22,6 +23,9 @@ networks/test-contracts/*
 networks/*-contracts.json
 networks/*-history
 networks/*-settings.json
+cache/
+deployments/ganache*/
+deployments/rskregtest*/
 outputs/
 Reports/
 scTopics
