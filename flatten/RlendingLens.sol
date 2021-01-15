@@ -2862,7 +2862,7 @@ contract PriceOracle {
 // Dependency file: contracts/Governance/GovernorAlpha.sol
 
 // pragma solidity ^0.5.16;
-pragma experimental ABIEncoderV2;
+// pragma experimental ABIEncoderV2;
 
 contract GovernorAlpha {
     /// @notice The name of this contract
@@ -3197,7 +3197,7 @@ interface CompInterface {
 // Dependency file: contracts/Governance/RLEN.sol
 
 // pragma solidity ^0.5.16;
-pragma experimental ABIEncoderV2;
+// pragma experimental ABIEncoderV2;
 
 contract RLEN {
     /// @notice EIP-20 token name for this token
