@@ -334,7 +334,7 @@ module.exports = async (hardhat) => {
     )
     if (cRbtcResult.newlyDeployed) {
         console.log("\n  setAdapterToToken cRbtc...")
-        await priceOracleProxyContract.setAdapterToToken(cRbtcResult.address, rifPriceOracleAdapterResult.address)
+        await priceOracleProxyContract.setAdapterToToken(cRbtcResult.address, rbtcPriceOracleAdapterResult.address)
 
         console.log(`\n  _supportMarket cRbtc...`)
         await newUnitrollerContract._supportMarket(cRbtcResult.address)
