@@ -169,6 +169,12 @@ module.exports = async (hardhat) => {
         from: deployer,
         skipIfAlreadyDeployed: true
     })
+    const rifPriceOracleAdapterContract = await ethers.getContractAt(
+        "PriceOracleAdapterMoc",
+        rifPriceOracleAdapterResult.address,
+        signer
+    )
+    rifPriceOracleAdapterContract.setGuardian(multiSig);
 
     console.log("\n  Deploying DaiPriceOracleAdapterMoc...")
     const daiPriceOracleAdapterResult = await deploy("DaiPriceOracleAdapterMoc", {
@@ -177,6 +183,12 @@ module.exports = async (hardhat) => {
         from: deployer,
         skipIfAlreadyDeployed: true
     })
+    const daiPriceOracleAdapterContract = await ethers.getContractAt(
+        "PriceOracleAdapterMoc",
+        daiPriceOracleAdapterResult.address,
+        signer
+    )
+    daiPriceOracleAdapterContract.setGuardian(multiSig);
 
     console.log("\n  Deploying RbtcPriceOracleAdapterMoc...")
     const rbtcPriceOracleAdapterResult = await deploy("RbtcPriceOracleAdapterMoc", {
@@ -185,6 +197,12 @@ module.exports = async (hardhat) => {
         from: deployer,
         skipIfAlreadyDeployed: true
     })
+    const rbtcPriceOracleAdapterContract = await ethers.getContractAt(
+        "PriceOracleAdapterMoc",
+        rbtcPriceOracleAdapterResult.address,
+        signer
+    )
+    rbtcPriceOracleAdapterContract.setGuardian(multiSig);
     // ----------- End deploying Oracles Adapters ------------ //
 
 
