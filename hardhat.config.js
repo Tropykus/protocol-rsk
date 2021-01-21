@@ -31,7 +31,7 @@ const config = {
     },
     rbtcOracle: {
       30: '0x7b19bb8e6c5188ec483b784d6fb5d807a77b21bf',
-      31: '0x2d39cc54dc44ff27ad23a91a9b5fd750dae4b218'
+      31: '0x26a00af444928d689ddec7b4d17c0e4a8c9d407d'
     },
     dai: {
       30: "0x6b1a73d547f4009a26b8485b63d7015d248ad406",
