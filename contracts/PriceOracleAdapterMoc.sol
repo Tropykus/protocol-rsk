@@ -11,6 +11,10 @@ contract PriceOracleAdapterMoc is PriceOracleAdapter {
     address public guardian;
     /// @notice The MoC price oracle, which will continue to serve prices
     PriceProviderMoC public priceProviderMoC;
+
+    /// @notice Guardian updated
+    event NewGuardian(address oldGuardian,address newGuardian);
+
     /**
      * @notice Construct a PriceOracleAdapter for a MoC oracle
      * @param guardian_ address of guardian that is allowed to manage this contract
@@ -46,7 +50,7 @@ contract PriceOracleAdapterMoc is PriceOracleAdapter {
     function setPriceProvider(address priceProviderAddress) public {
         require(
             msg.sender == guardian,
-            "PriceOracleAdapterMoc: only guardian may set the address"
+            "PriceOracleAdapterMoc: only guardian"
         );
         require(
             priceProviderAddress != address(0),
@@ -59,7 +63,31 @@ contract PriceOracleAdapterMoc is PriceOracleAdapter {
         //emit event
         emit PriceOracleAdapterUpdated(
             oldPriceProviderAddress,
-           priceProviderAddress
+            priceProviderAddress
+        );
+    }
+
+    /**
+     * @notice Set the address of the guardian
+     * @param newGuardian address of the guardian
+     */
+    function setGuardian(address newGuardian) public {
+        require(
+            msg.sender == guardian,
+            "PriceOracleAdapterMoc: only guardian"
+        );
+        require(
+            guardian != address(0),
+            "PriceOracleAdapterMoc: guardin address can not be 0"
+        );
+        //set old address
+        address oldGuardian = guardian;
+        //update
+        guardian = newGuardian;
+        //emit event
+        emit NewGuardian(
+            oldGuardian,
+            newGuardian
         );
     }
 }
