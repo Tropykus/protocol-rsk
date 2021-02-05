@@ -24,13 +24,13 @@ const config = {
 
 module.exports = async (hardhat) => {
     const { getNamedAccounts, deployments, getChainId, ethers } = hardhat
-    const { deploy } = deployments
+    const { deploy, execute } = deployments
 
     let {
       deployer,
       rifOracle,
       rbtcOracle,
-      dai,
+      usdt,
       rif,
       multiSig,
       admin1,
@@ -78,14 +78,14 @@ module.exports = async (hardhat) => {
       });
       rbtcOracle = rbtcOracleResult.address
 
-      console.log("\n  Deploying Dai...")
-      const daiResult = await deploy("Dai", {
-        args: [ethers.utils.parseEther('2000000'), "dai token", 18, "rDai"],
+      console.log("\n  Deploying USDT...")
+      const usdtResult = await deploy("USDT", {
+        args: [ethers.utils.parseEther('2000000'), "USDT token", 18, "rUSDT"],
         contract: 'StandardToken',
         from: deployer,
         skipIfAlreadyDeployed: true
       })
-      dai = daiResult.address
+      usdt = usdtResult.address
 
       console.log("\n  Deploying Rif...")
       const rifResult = await deploy("Rif", {
@@ -100,21 +100,21 @@ module.exports = async (hardhat) => {
       console.log("\n 🔹 Local Contract Deployments;\n")
       console.log("  - Rbtc Oracle:       ", rbtcOracleResult.address)
       console.log("  - Rif Oracle:       ", rifOracleResult.address)
-      console.log("  - Dai:              ", daiResult.address)
+      console.log("  - USDT:              ", usdtResult.address)
       console.log("  - Rif:              ", rifResult.address)
     } // ----------- End if local ------------- //
 
 
 
-    // TODO we should use the DAI Oracle as soon as its ready instead of the Mock
-    console.log("\n 🔸 Deploying Dai Oracle...")
-    const daiOracleResult = await deploy("DaiOracle", {
-        args: [deployer, ethers.utils.parseEther('1.08')],
+    // USDT Oracle returns always 1
+    console.log("\n 🔸 Deploying USDT Oracle...")
+    const usdtOracleResult = await deploy("USDTOracle", {
+        args: [deployer, ethers.utils.parseEther('1')],
         contract: 'MockPriceProviderMoC',
         from: deployer,
         skipIfAlreadyDeployed: true
     });
-    daiOracle = daiOracleResult.address
+    usdtOracle = usdtOracleResult.address
 
     // if not set by named config
     if (!multiSig) {
@@ -169,26 +169,20 @@ module.exports = async (hardhat) => {
         from: deployer,
         skipIfAlreadyDeployed: true
     })
-    const rifPriceOracleAdapterContract = await ethers.getContractAt(
-        "PriceOracleAdapterMoc",
-        rifPriceOracleAdapterResult.address,
-        signer
-    )
-    rifPriceOracleAdapterContract.setGuardian(multiSig);
+    if(rifPriceOracleAdapterResult.newlyDeployed) {
+        await execute("RifPriceOracleAdapterMoc", {from: deployer}, "setGuardian", multiSig)
+    }
 
-    console.log("\n  Deploying DaiPriceOracleAdapterMoc...")
-    const daiPriceOracleAdapterResult = await deploy("DaiPriceOracleAdapterMoc", {
-        args: [deployer, daiOracle],
+    console.log("\n  Deploying UsdtPriceOracleAdapterMoc...")
+    const usdtPriceOracleAdapterResult = await deploy("UsdtPriceOracleAdapterMoc", {
+        args: [deployer, usdtOracle],
         contract: "PriceOracleAdapterMoc",
         from: deployer,
         skipIfAlreadyDeployed: true
     })
-    const daiPriceOracleAdapterContract = await ethers.getContractAt(
-        "PriceOracleAdapterMoc",
-        daiPriceOracleAdapterResult.address,
-        signer
-    )
-    daiPriceOracleAdapterContract.setGuardian(multiSig);
+    if(usdtPriceOracleAdapterResult.newlyDeployed) {
+        await execute("UsdtPriceOracleAdapterMoc", {from: deployer}, "setGuardian", multiSig)
+    }
 
     console.log("\n  Deploying RbtcPriceOracleAdapterMoc...")
     const rbtcPriceOracleAdapterResult = await deploy("RbtcPriceOracleAdapterMoc", {
@@ -197,12 +191,9 @@ module.exports = async (hardhat) => {
         from: deployer,
         skipIfAlreadyDeployed: true
     })
-    const rbtcPriceOracleAdapterContract = await ethers.getContractAt(
-        "PriceOracleAdapterMoc",
-        rbtcPriceOracleAdapterResult.address,
-        signer
-    )
-    rbtcPriceOracleAdapterContract.setGuardian(multiSig);
+    if(rbtcPriceOracleAdapterResult.newlyDeployed) {
+        await execute("RbtcPriceOracleAdapterMoc", {from: deployer}, "setGuardian", multiSig)
+    }
     // ----------- End deploying Oracles Adapters ------------ //
 
 
@@ -214,16 +205,12 @@ module.exports = async (hardhat) => {
         from: deployer,
         skipIfAlreadyDeployed: true
     })
-    const comptrollerContract = await ethers.getContractAt(
-        "Comptroller",
-        comptrollerResult.address,
-        signer
-    )
+
     if (comptrollerResult.newlyDeployed) {
         console.log("\n  _setPendingImplementation Unitroller...")
-        await unitrollerContract._setPendingImplementation(comptrollerResult.address)
+        await execute("Unitroller", {from: deployer}, "_setPendingImplementation", comptrollerResult.address)
         console.log("\n  _become Comptroller...")
-        await comptrollerContract._become(unitrollerResult.address)
+        await execute("Comptroller", {from: deployer}, "_become", unitrollerResult.address)
     } else {
         console.log("\n  already become Unitroller...")
     }
@@ -236,23 +223,23 @@ module.exports = async (hardhat) => {
 
     if (comptrollerResult.newlyDeployed) {
         console.log("\n  _setPriceOracle new Unitroller...")
-        await newUnitrollerContract._setPriceOracle(priceOracleProxyResult.address)
+        await newUnitrollerContract._setPriceOracle(priceOracleProxyResult.address).then((tx) => tx.wait());
 
         console.log("\n  _setMaxAssets new Unitroller...")
-        await newUnitrollerContract._setMaxAssets(config.maxAssets)
+        await newUnitrollerContract._setMaxAssets(config.maxAssets).then((tx) => tx.wait());
 
         console.log("\n  _setCloseFactor new Unitroller...")
-        await newUnitrollerContract._setCloseFactor(config.closeFactorMantisa)
+        await newUnitrollerContract._setCloseFactor(config.closeFactorMantisa).then((tx) => tx.wait());
 
         console.log("\n  _setLiquidationIncentive new Unitroller...")
-        await newUnitrollerContract._setLiquidationIncentive(config.liquidationIncentiveMantisa)
+        await newUnitrollerContract._setLiquidationIncentive(config.liquidationIncentiveMantisa).then((tx) => tx.wait());
 
         console.log("\n  _setCompRate new Unitroller...")
-        result = await newUnitrollerContract._setCompRate(config.compRate)
+        result = await newUnitrollerContract._setCompRate(config.compRate).then((tx) => tx.wait());
 
         if(config.compMarkets.length > 0) {
             console.log("\n  _addCompMarkets new Unitroller...")
-            await newUnitrollerContract._addCompMarkets(config.compMarkets)
+            await newUnitrollerContract._addCompMarkets(config.compMarkets).then((tx) => tx.wait());
         }
     } else {
         console.log("\n  already setted up new Unitroller...")
@@ -279,33 +266,34 @@ module.exports = async (hardhat) => {
     // --------------------- End Deploy InterestRateModel ----------------- //
 
     // -------------------------- Deploy CTokerns ------------------------- //
-    // ### Deploy cDAI ### //
-    console.log("\n  Deploy cDai...")
-    const cDaiResult = await deploy("cDai", {
-        args: [dai, newUnitrollerContract.address, jumpRateModelV2Result.address, config.initialExchangeRateMantissa, "rLending rDai", "crDAI", 8, deployer],
+    // ### Deploy cUSDT ### //
+    console.log("\n  Deploy cUSDT...", usdt)
+    const cUsdtResult = await deploy("cUSDT", {
+        args: [usdt, newUnitrollerContract.address, jumpRateModelV2Result.address, config.initialExchangeRateMantissa, "rLending cUSDT", "crUSDT", 8, deployer],
         contract: "CErc20Immutable",
         from: deployer,
         skipIfAlreadyDeployed: true
     })
-    const cDaiContract = await ethers.getContractAt(
+
+    const cUsdtContract = await ethers.getContractAt(
         "CErc20Immutable",
-        cDaiResult.address,
+        cUsdtResult.address,
         signer
     )
-    if (cDaiResult.newlyDeployed) {
-        console.log("\n  setAdapterToToken cDai...")
-        await priceOracleProxyContract.setAdapterToToken(cDaiResult.address, daiPriceOracleAdapterResult.address)
+    if (cUsdtResult.newlyDeployed) {
+        console.log("\n  setAdapterToToken cUSDT...")
+        await priceOracleProxyContract.setAdapterToToken(cUsdtResult.address, usdtPriceOracleAdapterResult.address).then((tx) => tx.wait())
 
-        console.log("\n  _supportMarket cDai...")
-        await newUnitrollerContract._supportMarket(cDaiResult.address)
+        console.log("\n  _supportMarket cUSDT...")
+        await newUnitrollerContract._supportMarket(cUsdtResult.address).then((tx) => tx.wait())
 
-        console.log("\n  _setCollateralFactor cDai...")
-        await newUnitrollerContract._setCollateralFactor(cDaiResult.address, etherMantissa(0.75))
+        console.log("\n  _setCollateralFactor cUSDT...")
+        await newUnitrollerContract._setCollateralFactor(cUsdtResult.address, etherMantissa(0.75)).then((tx) => tx.wait())
 
-        console.log("\n  _setReserveFactor cDai...")
-        await cDaiContract._setReserveFactor(etherMantissa(0.15));
+        console.log("\n  _setReserveFactor cUSDT...")
+        await cUsdtContract._setReserveFactor(etherMantissa(0.15)).then((tx) => tx.wait())
     } else {
-        console.log("\n cDai already deployed...")
+        console.log("\n cUSDT already deployed...")
     }
 
     // ### Deploy cRIF ### //
@@ -323,21 +311,21 @@ module.exports = async (hardhat) => {
     )
     if (cRifResult.newlyDeployed) {
         console.log("\n  setAdapterToToken cRif...")
-        await priceOracleProxyContract.setAdapterToToken(cRifResult.address, rifPriceOracleAdapterResult.address)
+        await priceOracleProxyContract.setAdapterToToken(cRifResult.address, rifPriceOracleAdapterResult.address).then((tx) => tx.wait())
 
         console.log("\n  _supportMarket cRif...")
-        await newUnitrollerContract._supportMarket(cRifResult.address)
+        await newUnitrollerContract._supportMarket(cRifResult.address).then((tx) => tx.wait())
 
         console.log("\n  _setCollateralFactor cRif...")
-        await newUnitrollerContract._setCollateralFactor(cRifResult.address, etherMantissa(0.5))
+        await newUnitrollerContract._setCollateralFactor(cRifResult.address, etherMantissa(0.5)).then((tx) => tx.wait())
 
         console.log("\n  _setReserveFactor cRif...")
-        await cRifContract._setReserveFactor(etherMantissa(0.2));
+        await cRifContract._setReserveFactor(etherMantissa(0.2)).then((tx) => tx.wait())
     } else {
         console.log("\n cRIF already deployed...")
     }
 
-    // ### Deploy cRIF ### //
+    // ### Deploy cRBTC ### //
     console.log("\n  Deploy cRBTC...")
     const cRbtcResult = await deploy("CRBTC", {
         args: [newUnitrollerContract.address, whitePaperInterestRateModelResult.address, config.initialExchangeRateMantissa, "rLending RBTC", "cRBTC", 8, deployer],
@@ -352,16 +340,16 @@ module.exports = async (hardhat) => {
     )
     if (cRbtcResult.newlyDeployed) {
         console.log("\n  setAdapterToToken cRbtc...")
-        await priceOracleProxyContract.setAdapterToToken(cRbtcResult.address, rbtcPriceOracleAdapterResult.address)
+        await priceOracleProxyContract.setAdapterToToken(cRbtcResult.address, rbtcPriceOracleAdapterResult.address).then((tx) => tx.wait())
 
         console.log(`\n  _supportMarket cRbtc...`)
-        await newUnitrollerContract._supportMarket(cRbtcResult.address)
+        await newUnitrollerContract._supportMarket(cRbtcResult.address).then((tx) => tx.wait())
 
         console.log("\n  _setCollateralFactor cRbtc...")
-        await newUnitrollerContract._setCollateralFactor(cRbtcResult.address, etherMantissa(0.6))
+        await newUnitrollerContract._setCollateralFactor(cRbtcResult.address, etherMantissa(0.6)).then((tx) => tx.wait())
 
         console.log("\n  _setReserveFactor cRbtc...")
-        await cRbtcContract._setReserveFactor(etherMantissa(0.2));
+        await cRbtcContract._setReserveFactor(etherMantissa(0.2)).then((tx) => tx.wait())
     } else {
         console.log("\n cRBTC already deployed...")
     }
@@ -377,7 +365,7 @@ module.exports = async (hardhat) => {
     })
     if (rLenResult.newlyDeployed) {
         console.log("\n  setCompAddress RLEN...")
-        await newUnitrollerContract.setCompAddress(rLenResult.address)
+        await newUnitrollerContract.setCompAddress(rLenResult.address).then((tx) => tx.wait());
     } else {
         console.log("\n RLEN already deployed...")
     }
@@ -402,36 +390,36 @@ module.exports = async (hardhat) => {
 
     // -------------------------- setMultiSignOwnerAlpha ------------------------- //
     console.log("\n  set Multisig  as Owner...")
-    let arrayToMultisigOwner = [cDaiContract, cRifContract, cRbtcContract, priceOracleProxyContract, unitrollerContract];
+    let arrayToMultisigOwner = [cUsdtContract] //, cRifContract, cRbtcContract, priceOracleProxyContract, unitrollerContract];
     for (let index = 0; index < arrayToMultisigOwner.length; index++) {
         //set pending admin
         console.log(`\n  _setPendingAdmin Multisig...`)
-        await arrayToMultisigOwner[index]["_setPendingAdmin"](multiSig);
+        await arrayToMultisigOwner[index]["_setPendingAdmin"](multiSig)
         //generate data method accept admin
-        const data = arrayToMultisigOwner[index].interface.encodeFunctionData("_acceptAdmin",[]);
+        const data = arrayToMultisigOwner[index].interface.encodeFunctionData("_acceptAdmin",[])
         //submit transacion multisig, when accept the admin of contract
         console.log(`\n  _acceptAdmin Multisig...`)
-        await multiSigContract.submitTransaction(arrayToMultisigOwner[index].address, 0, data);
-        console.log(`multiSig owner of ${arrayToMultisigOwner[index].address}`);
+        await multiSigContract.submitTransaction(arrayToMultisigOwner[index].address, 0, data).then((tx) => tx.wait())
+        console.log(`multiSig owner of ${arrayToMultisigOwner[index].address}`)
     }
     console.log("\n  changeRequirement Multisig ...")
-    let data = multiSigContract.interface.encodeFunctionData("changeRequirement",[2]);
+    let data = multiSigContract.interface.encodeFunctionData("changeRequirement",[2])
     //submit transacion multisig
-    await multiSigContract.submitTransaction(multiSigContract.address, 0, data);
+    await multiSigContract.submitTransaction(multiSigContract.address, 0, data).then((tx) => tx.wait())
 
     // Display Contract Addresses
     console.log("\n  Contract Deployments Complete!\n")
-    console.log("  - Dai Oracle:                      ", daiOracle)
+    console.log("  - USDT Oracle:                     ", usdtOracle)
     console.log("  - MultiSigWallet:                  ", multiSig)
     console.log("  - Unitroller:                      ", unitrollerResult.address)
     console.log("  - PriceOracleProxy:                ", priceOracleProxyResult.address)
     console.log("  - RIF PriceOracleAdapter:          ", rifPriceOracleAdapterResult.address)
-    console.log("  - DAI PriceOracleAdapter:          ", daiPriceOracleAdapterResult.address)
+    console.log("  - USDT PriceOracleAdapter:         ", usdtPriceOracleAdapterResult.address)
     console.log("  - RBTC PriceOracleAdapter:         ", rbtcPriceOracleAdapterResult.address)
     console.log("  - Comptroller (Logic):             ", comptrollerResult.address)
     console.log("  - JumpRateModelV2:                 ", jumpRateModelV2Result.address)
     console.log("  - WhitePaperInterestRateModel:     ", whitePaperInterestRateModelResult.address)
-    console.log("  - crDAI:                           ", cDaiResult.address)
+    console.log("  - crUSDT:                          ", cUsdtResult.address)
     console.log("  - cRIF:                            ", cRifResult.address)
     console.log("  - cRBTC:                           ", cRbtcResult.address)
     console.log("  - RLEN:                            ", rLenResult.address)
@@ -439,7 +427,7 @@ module.exports = async (hardhat) => {
     console.log("  - rLendingLens:                    ", rLedingLensResult.address)
     console.log("  - Rbtc Oracle:                 ", rbtcOracle)
     console.log("  - Rif Oracle:                  ", rifOracle)
-    console.log("  - Dai:                         ", dai)
+    console.log("  - rUSDT:                       ", usdt)
     console.log("  - Rif:                         ", rif)
     console.log("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 
