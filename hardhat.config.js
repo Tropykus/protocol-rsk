@@ -33,9 +33,9 @@ const config = {
       30: '0x7b19bb8e6c5188ec483b784d6fb5d807a77b21bf',
       31: '0x26a00af444928d689ddec7b4d17c0e4a8c9d407d'
     },
-    dai: {
-      30: "0x6b1a73d547f4009a26b8485b63d7015d248ad406",
-      31: "0x0d86fca9be034a363cf12c9834af08d54a10451c"
+    usdt: {
+      30: "0xef213441a85df4d7acbdae0cf78004e1e486bb96",
+      31: "0x4cfe225ce54c6609a525768b13f7d87432358c57"
     },
     rif: {
       30: "0x2acc95758f8b5f583470ba265eb685a8f45fc9d5",
