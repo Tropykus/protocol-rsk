@@ -11,6 +11,9 @@ import {
 } from '../CoreValue';
 import {Arg, Command, processCommandEvent} from '../Command';
 import {encodedNumber} from '../Encoding';
+import BigNumber from 'bignumber.js';
+
+BigNumber.config({ EXPONENTIAL_AT: [-20, 50] })
 
 async function setTrxValue(world: World, value: encodedNumber): Promise<World> {
 	return world.update('trxInvokationOpts', (t) => t.set('value', value.toString()));

@@ -36,7 +36,7 @@ function etherMantissa(num, scale = 1e18) {
 }
 
 function etherUnsigned(num) {
-  return new BigNumber(num);
+  return num._isBigNumber ? new BigNumber(num.toString()) : new BigNumber(num)
 }
 
 function mergeInterface(into, from) {

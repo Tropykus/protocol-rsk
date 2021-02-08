@@ -151,7 +151,7 @@ async function makeCToken(opts = {}) {
       break;
 
     case 'ccomp':
-      underlying = await deploy('Comp', [opts.compHolder || root]);
+      underlying = await deploy('RLEN', [opts.compHolder || root]);
       cDelegatee = await deploy('CCompLikeDelegate');
       cDelegator = await deploy('CErc20Delegator',
         [
