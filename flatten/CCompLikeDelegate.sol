@@ -1,20 +1,3 @@
-// Dependency file: contracts/PriceOracleAdapter.sol
-
-// pragma solidity ^0.5.16;
-
-contract PriceOracleAdapter {
-    /// @notice Event adapter interface updated
-    event PriceOracleAdapterUpdated(address oldAddress, address newAddress);
-
-    /**
-     * @notice Get the price
-     * @return The underlying asset price mantissa (scaled by 1e18).
-     *  Zero means the price is unavailable.
-     */
-    function assetPrices(address cTokenAddress) external view returns (uint256);
-}
-
-
 // Dependency file: contracts/ComptrollerInterface.sol
 
 // pragma solidity ^0.5.16;
@@ -2888,116 +2871,82 @@ contract CErc20 is CToken, CErc20Interface {
 }
 
 
-// Root file: contracts/PriceOracleAdapterCompound.sol
+// Dependency file: contracts/CErc20Delegate.sol
+
+// pragma solidity ^0.5.16;
+
+// import "contracts/CErc20.sol";
+
+/**
+ * @title Compound's CErc20Delegate Contract
+ * @notice CTokens which wrap an EIP-20 underlying and are delegated to
+ * @author Compound
+ */
+contract CErc20Delegate is CErc20, CDelegateInterface {
+    /**
+     * @notice Construct an empty delegate
+     */
+    constructor() public {
+        // solium-disable-previous-line no-empty-blocks
+    }
+
+    /**
+     * @notice Called by the delegator on a delegate to initialize it for duty
+     * @param data The encoded bytes data for any initialization
+     */
+    function _becomeImplementation(bytes memory data) public {
+        // Shh -- currently unused
+        data;
+
+        // Shh -- we don't ever want this hook to be marked pure
+        if (false) {
+            implementation = address(0);
+        }
+
+        require(msg.sender == admin, "only the admin may call _becomeImplementation");
+    }
+
+    /**
+     * @notice Called by the delegator on a delegate to forfeit its responsibility
+     */
+    function _resignImplementation() public {
+        // Shh -- we don't ever want this hook to be marked pure
+        if (false) {
+            implementation = address(0);
+        }
+
+        require(msg.sender == admin, "only the admin may call _resignImplementation");
+    }
+}
+
+
+// Root file: contracts/CCompLikeDelegate.sol
 
 pragma solidity ^0.5.16;
 
-// import "contracts/PriceOracleAdapter.sol";
-// import "contracts/CErc20.sol";
+// import "contracts/CErc20Delegate.sol";
 
-interface V1PriceOracleInterface {
-    function assetPrices(address asset) external view returns (uint256);
+interface CompLike {
+  function delegate(address delegatee) external;
 }
 
-contract PriceOracleAdapterCompound is PriceOracleAdapter {
-    /// @notice Address of the guardian
-    address public guardian;
-    /// @notice Event oracle key updateed
-    event PriceOracleKeyUpdated(
-        address oldAddress,
-        address newAddress,
-        address cTokenAddress
-    );
-    /// @notice The price oracle, which will continue to serve prices of compound
-    V1PriceOracleInterface public priceProviderInterface;
+/**
+ * @title Compound's CCompLikeDelegate Contract
+ * @notice CTokens which can 'delegate votes' of their underlying ERC-20
+ * @author Compound
+ */
+contract CCompLikeDelegate is CErc20Delegate {
+  /**
+   * @notice Construct an empty delegate
+   */
+  constructor() public CErc20Delegate() {}
 
-    // mapping(addressCtoken => addressKeyOracle);
-    mapping(address => address) public oracleKeyAddress;
-
-    /// @notice Frozen SAI price (or 0 if not set yet)
-    uint256 public saiPrice;
-
-    constructor(address guardian_) public {
-        guardian = guardian_;
-    }
-
-    /**
-     * @notice Get the price
-     * @param cTokenAddress address of cToken
-     * @return The price
-     */
-    function assetPrices(address cTokenAddress) public view returns (uint256) {
-        //get keyAddress or undlerlyingAddress
-        address asset = (oracleKeyAddress[cTokenAddress] != address(0))
-            ? address(oracleKeyAddress[cTokenAddress])
-            : address(CErc20(cTokenAddress).underlying());
-        return priceProviderInterface.assetPrices(asset);
-    }
-
-    /**
-     * @notice Set the address of price provider
-     * @param priceProviderAddress address of price provider
-     */
-    function setPriceProvider(address priceProviderAddress) public {
-        require(
-            msg.sender == guardian,
-            "PriceOracleAdapterCompound: only guardian may set the address"
-        );
-        require(
-            priceProviderAddress != address(0),
-            "PriceOracleAdapterCompound: address could not be 0"
-        );
-        //set old address
-        address oldBtcPriceProviderAddress = address(priceProviderInterface);
-        //update interface address
-        priceProviderInterface = V1PriceOracleInterface(priceProviderAddress);
-        //emit event
-        emit PriceOracleAdapterUpdated(
-            oldBtcPriceProviderAddress,
-            address(priceProviderInterface)
-        );
-    }
-
-    /**
-     * @notice Set the key oracle address of cToken address
-     * @param cTokenAddress address of key ctoken
-     * @param keyOracle address of key oracle
-     */
-    function setKeyOracle(address cTokenAddress, address keyOracle) public {
-        require(
-            msg.sender == guardian,
-            "PriceOracleAdapterCompound: only guardian may set the address"
-        );
-        require(
-            cTokenAddress != address(0),
-            "PriceOracleAdapterCompound: cTokenAddress could not be 0"
-        );
-        require(
-            keyOracle != address(0),
-            "PriceOracleAdapterCompound: keyOracle could not be 0"
-        );
-        //set old address
-        address oldBtcPriceProviderAddress = address(
-            oracleKeyAddress[cTokenAddress]
-        );
-        //update key address
-        oracleKeyAddress[cTokenAddress] = keyOracle;
-        //emit event
-        emit PriceOracleKeyUpdated(
-            oldBtcPriceProviderAddress,
-            address(oracleKeyAddress[cTokenAddress]),
-            cTokenAddress
-        );
-    }
-
-    /**
-     * @notice Set the price of SAI, permanently
-     * @param price The price for SAI
-     */
-    function setSaiPrice(uint256 price) public {
-        require(msg.sender == guardian, "only guardian may set the SAI price");
-        require(saiPrice == 0, "SAI price may only be set once");
-        require(price < 0.1e18, "SAI price must be < 0.1 ETH");
-        saiPrice = price;
-    }
+  /**
+   * @notice Admin call to delegate the votes of the COMP-like underlying
+   * @param compLikeDelegatee The address to delegate votes to
+   */
+  function _delegateCompLikeTo(address compLikeDelegatee) external {
+    require(msg.sender == admin, "only the admin may set the comp-like delegate");
+    CompLike(underlying).delegate(compLikeDelegatee);
+  }
 }
