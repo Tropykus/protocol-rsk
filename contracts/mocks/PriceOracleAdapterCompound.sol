@@ -1,7 +1,7 @@
 pragma solidity ^0.5.16;
 
-import "./PriceOracleAdapter.sol";
-import "./CErc20.sol";
+import "../PriceOracleAdapter.sol";
+import "../CErc20.sol";
 
 interface V1PriceOracleInterface {
     function assetPrices(address asset) external view returns (uint256);

@@ -1,7 +1,7 @@
 pragma solidity ^0.5.16;
 
-import "./PriceOracle.sol";
-import "./CErc20.sol";
+import "../PriceOracle.sol";
+import "../CErc20.sol";
 
 /**
   * @title Simplified Oracle for testing purposes.
