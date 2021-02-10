@@ -1,6 +1,11 @@
 pragma solidity ^0.5.16;
 pragma experimental ABIEncoderV2;
 
+/**
+  * @title RLEN ERC20 tokens.
+  * @author rLending
+  * @notice Yield farming tokens that allow to  propose and vote for protocol changes using the governance system.
+  */
 contract RLEN {
     /// @notice EIP-20 token name for this token
     string public constant name = "rLending";

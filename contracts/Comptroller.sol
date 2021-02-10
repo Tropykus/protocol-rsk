@@ -9,8 +9,8 @@ import "./Unitroller.sol";
 import "./Governance/RLEN.sol";
 
 /**
- * @title Compound's Comptroller Contract
- * @author Compound
+ * @title rLending's Comptroller Contract
+ * @author rLending
  */
 contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerErrorReporter, ExponentialNoError {
     /// @notice Emitted when an admin supports a market

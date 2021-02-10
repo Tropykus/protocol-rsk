@@ -196,7 +196,7 @@ library SafeMath {
 
 /**
   * @title Logic for Compound's JumpRateModel Contract V2.
-  * @author Compound (modified by Dharma Labs, refactored by Arr00)
+  * @author rLending 
   * @notice Version 2 modifies Version 1 by enabling updateable parameters.
   */
 contract BaseJumpRateModelV2 {
@@ -335,7 +335,7 @@ contract BaseJumpRateModelV2 {
 
 /**
   * @title Compound's Legacy InterestRateModel Interface
-  * @author Compound (modified by Arr00)
+  * @author rLending (modified by Arr00)
   */
 contract LegacyInterestRateModel {
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)

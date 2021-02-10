@@ -4,9 +4,9 @@ import "./InterestRateModel.sol";
 import "./SafeMath.sol";
 
 /**
-  * @title Compound's WhitePaperInterestRateModel Contract
-  * @author Compound
-  * @notice The parameterized model described in section 2.4 of the original Compound Protocol whitepaper
+  * @title rLending's WhitePaperInterestRateModel Contract
+  * @author rLending
+  * @notice The parameterized model described in section 2.4 of the original rLending Protocol whitepaper
   */
 contract WhitePaperInterestRateModel is InterestRateModel {
     using SafeMath for uint;

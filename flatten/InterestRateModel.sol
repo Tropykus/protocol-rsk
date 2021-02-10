@@ -4,7 +4,7 @@ pragma solidity ^0.5.16;
 
 /**
   * @title Compound's InterestRateModel Interface
-  * @author Compound
+  * @author rLending
   */
 contract InterestRateModel {
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)

@@ -196,7 +196,7 @@ pragma solidity ^0.5.16;
 
 /**
   * @title Logic for Compound's JumpRateModel Contract V2.
-  * @author Compound (modified by Dharma Labs, refactored by Arr00)
+  * @author rLending 
   * @notice Version 2 modifies Version 1 by enabling updateable parameters.
   */
 contract BaseJumpRateModelV2 {
