@@ -9,9 +9,9 @@ import "./EIP20NonStandardInterface.sol";
 import "./InterestRateModel.sol";
 
 /**
- * @title Compound's CToken Contract
+ * @title rLending's CToken Contract
  * @notice Abstract base for CTokens
- * @author Compound
+ * @author rLending
  */
 contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     /**

@@ -9,8 +9,8 @@ import "./Unitroller.sol";
 import "./Governance/RLEN.sol";
 
 /**
- * @title Compound's Comptroller Contract
- * @author Compound
+ * @title rLending's Comptroller Contract
+ * @author rLending
  */
 contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerErrorReporter, ExponentialNoError {
     /// @notice Emitted when an admin supports a market
@@ -363,7 +363,7 @@ contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerE
     }
 
     // /**
-    //  * @notice Validates borrow and reverts on rejection. May emit logs.
+    //  * @notice Validates borrow and reverts on rejection. May emit logs. Currently unused
     //  * @param cToken Asset whose underlying is being borrowed
     //  * @param borrower The address borrowing the underlying
     //  * @param borrowAmount The amount of the underlying asset requested to borrow
@@ -401,7 +401,7 @@ contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerE
     }
 
     // /**
-    //  * @notice Validates repayBorrow and reverts on rejection. May emit logs.
+    //  * @notice Validates repayBorrow and reverts on rejection. May emit logs. Currently unused
     //  * @param cToken Asset being repaid
     //  * @param payer The address repaying the borrow
     //  * @param borrower The address of the borrower
@@ -457,7 +457,7 @@ contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerE
     }
 
     // /**
-    //  * @notice Validates liquidateBorrow and reverts on rejection. May emit logs.
+    //  * @notice Validates liquidateBorrow and reverts on rejection. May emit logs. Currently unused
     //  * @param cTokenBorrowed Asset which was borrowed by the borrower
     //  * @param cTokenCollateral Asset which was used as collateral and will be seized
     //  * @param liquidator The address repaying the borrow and seizing the collateral
@@ -511,7 +511,7 @@ contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerE
     }
 
     // /**
-    //  * @notice Validates seize and reverts on rejection. May emit logs.
+    //  * @notice Validates seize and reverts on rejection. May emit logs. Currently unused
     //  * @param cTokenCollateral Asset which was used as collateral and will be seized
     //  * @param cTokenBorrowed Asset which was borrowed by the borrower
     //  * @param liquidator The address repaying the borrow and seizing the collateral
@@ -556,7 +556,7 @@ contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerE
     }
 
     // /**
-    //  * @notice Validates transfer and reverts on rejection. May emit logs.
+    //  * @notice Validates transfer and reverts on rejection. May emit logs. Currently unused
     //  * @param cToken Asset being transferred
     //  * @param src The account which sources the tokens
     //  * @param dst The account which receives the tokens

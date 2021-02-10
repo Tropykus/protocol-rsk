@@ -5,8 +5,8 @@ import "./LegacyInterestRateModel.sol";
 
 
 /**
-  * @title Compound's JumpRateModel Contract V2 for legacy cTokens
-  * @author Arr00
+  * @title rLending's JumpRateModel Contract V2 for legacy cTokens
+  * @author rLending
   * @notice Supports only legacy cTokens
   */
 contract LegacyJumpRateModelV2 is LegacyInterestRateModel, BaseJumpRateModelV2  {

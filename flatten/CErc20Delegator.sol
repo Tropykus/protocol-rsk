@@ -79,7 +79,7 @@ contract ComptrollerInterface {
 
 /**
   * @title Compound's InterestRateModel Interface
-  * @author Compound
+  * @author rLending
   */
 contract InterestRateModel {
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)
@@ -422,7 +422,7 @@ pragma solidity ^0.5.16;
 /**
  * @title Compound's CErc20Delegator Contract
  * @notice CTokens which wrap an EIP-20 underlying and delegate to an implementation
- * @author Compound
+ * @author rLending
  */
 contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterface {
     /**

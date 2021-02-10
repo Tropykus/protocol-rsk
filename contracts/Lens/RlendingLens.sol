@@ -17,6 +17,11 @@ interface ComptrollerLensInterface {
     function compAccrued(address) external view returns (uint);
 }
 
+/**
+  * @title Helper contract to get information of the protocol .
+  * @author rLending
+  * @notice RlendingLens allows to make obtain global information with a single call.
+  */
 contract RlendingLens {
     struct CTokenMetadata {
         address cToken;

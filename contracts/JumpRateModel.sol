@@ -4,8 +4,8 @@ import "./InterestRateModel.sol";
 import "./SafeMath.sol";
 
 /**
-  * @title Compound's JumpRateModel Contract
-  * @author Compound
+  * @title rLending's JumpRateModel Contract
+  * @author rLending
   */
 contract JumpRateModel is InterestRateModel {
     using SafeMath for uint;

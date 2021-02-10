@@ -9,8 +9,8 @@ import "./ComptrollerStorage.sol";
 import "./Unitroller.sol";
 
 /**
- * @title RLending's Comptroller Contract
- * @author RLending
+ * @title rLending's Comptroller Contract
+ * @author rLending
  */
 contract ComptrollerG2 is ComptrollerV2Storage, ComptrollerInterface, ComptrollerErrorReporter, Exponential {
     /**

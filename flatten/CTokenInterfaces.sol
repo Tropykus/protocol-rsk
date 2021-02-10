@@ -79,7 +79,7 @@ contract ComptrollerInterface {
 
 /**
   * @title Compound's InterestRateModel Interface
-  * @author Compound
+  * @author rLending
   */
 contract InterestRateModel {
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)

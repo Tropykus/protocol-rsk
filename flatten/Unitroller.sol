@@ -289,7 +289,7 @@ contract ComptrollerInterface {
 
 /**
   * @title Compound's InterestRateModel Interface
-  * @author Compound
+  * @author rLending
   */
 contract InterestRateModel {
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)
@@ -629,7 +629,7 @@ contract CDelegateInterface is CDelegationStorage {
 
 /**
   * @title Careful Math
-  * @author Compound
+  * @author rLending
   * @notice Derived from OpenZeppelin's SafeMath library
   *         https://github.com/OpenZeppelin/openzeppelin-solidity/blob/master/contracts/math/SafeMath.sol
   */
@@ -717,7 +717,7 @@ contract CarefulMath {
 
 /**
  * @title Exponential module for storing fixed-precision decimals
- * @author Compound
+ * @author rLending
  * @notice Exp is a struct which stores decimals with a fixed precision of 18 decimal places.
  *         Thus, if we wanted to store the 5.1, mantissa would store 5.1e18. That is:
  *         `Exp({mantissa: 5100000000000000000})`.
@@ -919,7 +919,7 @@ contract ExponentialNoError {
 
 /**
  * @title Exponential module for storing fixed-precision decimals
- * @author Compound
+ * @author rLending
  * @dev Legacy contract for compatibility reasons with existing contracts that still use MathError
  * @notice Exp is a struct which stores decimals with a fixed precision of 18 decimal places.
  *         Thus, if we wanted to store the 5.1, mantissa would store 5.1e18. That is:
@@ -1252,7 +1252,7 @@ interface EIP20NonStandardInterface {
 /**
  * @title Compound's CToken Contract
  * @notice Abstract base for CTokens
- * @author Compound
+ * @author rLending
  */
 contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     /**
