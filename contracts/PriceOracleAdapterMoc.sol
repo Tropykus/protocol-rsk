@@ -50,7 +50,7 @@ contract PriceOracleAdapterMoc is PriceOracleAdapter {
     function setPriceProvider(address priceProviderAddress) public {
         require(
             msg.sender == guardian,
-            "PriceOracleAdapterMoc: only guardian"
+            "PriceOracleAdapterMoc: only guardian may set the address"
         );
         require(
             priceProviderAddress != address(0),

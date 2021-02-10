@@ -711,11 +711,9 @@ contract CarefulMath {
     }
 }
 
-// Dependency file: contracts/Exponential.sol
+// Dependency file: contracts/ExponentialNoError.sol
 
 // pragma solidity ^0.5.16;
-
-// import "contracts/CarefulMath.sol";
 
 /**
  * @title Exponential module for storing fixed-precision decimals
@@ -724,7 +722,7 @@ contract CarefulMath {
  *         Thus, if we wanted to store the 5.1, mantissa would store 5.1e18. That is:
  *         `Exp({mantissa: 5100000000000000000})`.
  */
-contract Exponential is CarefulMath {
+contract ExponentialNoError {
     uint constant expScale = 1e18;
     uint constant doubleScale = 1e36;
     uint constant halfExpScale = expScale/2;
@@ -738,6 +736,196 @@ contract Exponential is CarefulMath {
         uint mantissa;
     }
 
+    /**
+     * @dev Truncates the given exp to a whole number value.
+     *      For example, truncate(Exp{mantissa: 15 * expScale}) = 15
+     */
+    function truncate(Exp memory exp) pure internal returns (uint) {
+        // Note: We are not using careful math here as we're performing a division that cannot fail
+        return exp.mantissa / expScale;
+    }
+
+    /**
+     * @dev Multiply an Exp by a scalar, then truncate to return an unsigned integer.
+     */
+    function mul_ScalarTruncate(Exp memory a, uint scalar) pure internal returns (uint) {
+        Exp memory product = mul_(a, scalar);
+        return truncate(product);
+    }
+
+    /**
+     * @dev Multiply an Exp by a scalar, truncate, then add an to an unsigned integer, returning an unsigned integer.
+     */
+    function mul_ScalarTruncateAddUInt(Exp memory a, uint scalar, uint addend) pure internal returns (uint) {
+        Exp memory product = mul_(a, scalar);
+        return add_(truncate(product), addend);
+    }
+
+    /**
+     * @dev Checks if first Exp is less than second Exp.
+     */
+    function lessThanExp(Exp memory left, Exp memory right) pure internal returns (bool) {
+        return left.mantissa < right.mantissa;
+    }
+
+    /**
+     * @dev Checks if left Exp <= right Exp.
+     */
+    function lessThanOrEqualExp(Exp memory left, Exp memory right) pure internal returns (bool) {
+        return left.mantissa <= right.mantissa;
+    }
+
+    /**
+     * @dev Checks if left Exp > right Exp.
+     */
+    function greaterThanExp(Exp memory left, Exp memory right) pure internal returns (bool) {
+        return left.mantissa > right.mantissa;
+    }
+
+    /**
+     * @dev returns true if Exp is exactly zero
+     */
+    function isZeroExp(Exp memory value) pure internal returns (bool) {
+        return value.mantissa == 0;
+    }
+
+    function safe224(uint n, string memory errorMessage) pure internal returns (uint224) {
+        require(n < 2**224, errorMessage);
+        return uint224(n);
+    }
+
+    function safe32(uint n, string memory errorMessage) pure internal returns (uint32) {
+        require(n < 2**32, errorMessage);
+        return uint32(n);
+    }
+
+    function add_(Exp memory a, Exp memory b) pure internal returns (Exp memory) {
+        return Exp({mantissa: add_(a.mantissa, b.mantissa)});
+    }
+
+    function add_(Double memory a, Double memory b) pure internal returns (Double memory) {
+        return Double({mantissa: add_(a.mantissa, b.mantissa)});
+    }
+
+    function add_(uint a, uint b) pure internal returns (uint) {
+        return add_(a, b, "addition overflow");
+    }
+
+    function add_(uint a, uint b, string memory errorMessage) pure internal returns (uint) {
+        uint c = a + b;
+        require(c >= a, errorMessage);
+        return c;
+    }
+
+    function sub_(Exp memory a, Exp memory b) pure internal returns (Exp memory) {
+        return Exp({mantissa: sub_(a.mantissa, b.mantissa)});
+    }
+
+    function sub_(Double memory a, Double memory b) pure internal returns (Double memory) {
+        return Double({mantissa: sub_(a.mantissa, b.mantissa)});
+    }
+
+    function sub_(uint a, uint b) pure internal returns (uint) {
+        return sub_(a, b, "subtraction underflow");
+    }
+
+    function sub_(uint a, uint b, string memory errorMessage) pure internal returns (uint) {
+        require(b <= a, errorMessage);
+        return a - b;
+    }
+
+    function mul_(Exp memory a, Exp memory b) pure internal returns (Exp memory) {
+        return Exp({mantissa: mul_(a.mantissa, b.mantissa) / expScale});
+    }
+
+    function mul_(Exp memory a, uint b) pure internal returns (Exp memory) {
+        return Exp({mantissa: mul_(a.mantissa, b)});
+    }
+
+    function mul_(uint a, Exp memory b) pure internal returns (uint) {
+        return mul_(a, b.mantissa) / expScale;
+    }
+
+    function mul_(Double memory a, Double memory b) pure internal returns (Double memory) {
+        return Double({mantissa: mul_(a.mantissa, b.mantissa) / doubleScale});
+    }
+
+    function mul_(Double memory a, uint b) pure internal returns (Double memory) {
+        return Double({mantissa: mul_(a.mantissa, b)});
+    }
+
+    function mul_(uint a, Double memory b) pure internal returns (uint) {
+        return mul_(a, b.mantissa) / doubleScale;
+    }
+
+    function mul_(uint a, uint b) pure internal returns (uint) {
+        return mul_(a, b, "multiplication overflow");
+    }
+
+    function mul_(uint a, uint b, string memory errorMessage) pure internal returns (uint) {
+        if (a == 0 || b == 0) {
+            return 0;
+        }
+        uint c = a * b;
+        require(c / a == b, errorMessage);
+        return c;
+    }
+
+    function div_(Exp memory a, Exp memory b) pure internal returns (Exp memory) {
+        return Exp({mantissa: div_(mul_(a.mantissa, expScale), b.mantissa)});
+    }
+
+    function div_(Exp memory a, uint b) pure internal returns (Exp memory) {
+        return Exp({mantissa: div_(a.mantissa, b)});
+    }
+
+    function div_(uint a, Exp memory b) pure internal returns (uint) {
+        return div_(mul_(a, expScale), b.mantissa);
+    }
+
+    function div_(Double memory a, Double memory b) pure internal returns (Double memory) {
+        return Double({mantissa: div_(mul_(a.mantissa, doubleScale), b.mantissa)});
+    }
+
+    function div_(Double memory a, uint b) pure internal returns (Double memory) {
+        return Double({mantissa: div_(a.mantissa, b)});
+    }
+
+    function div_(uint a, Double memory b) pure internal returns (uint) {
+        return div_(mul_(a, doubleScale), b.mantissa);
+    }
+
+    function div_(uint a, uint b) pure internal returns (uint) {
+        return div_(a, b, "divide by zero");
+    }
+
+    function div_(uint a, uint b, string memory errorMessage) pure internal returns (uint) {
+        require(b > 0, errorMessage);
+        return a / b;
+    }
+
+    function fraction(uint a, uint b) pure internal returns (Double memory) {
+        return Double({mantissa: div_(mul_(a, doubleScale), b)});
+    }
+}
+
+
+// Dependency file: contracts/Exponential.sol
+
+// pragma solidity ^0.5.16;
+
+// import "contracts/CarefulMath.sol";
+// import "contracts/ExponentialNoError.sol";
+
+/**
+ * @title Exponential module for storing fixed-precision decimals
+ * @author Compound
+ * @dev Legacy contract for compatibility reasons with existing contracts that still use MathError
+ * @notice Exp is a struct which stores decimals with a fixed precision of 18 decimal places.
+ *         Thus, if we wanted to store the 5.1, mantissa would store 5.1e18. That is:
+ *         `Exp({mantissa: 5100000000000000000})`.
+ */
+contract Exponential is CarefulMath, ExponentialNoError {
     /**
      * @dev Creates an exponential from numerator and denominator values.
      *      Note: Returns an error if (`num` * 10e18) > MAX_INT,
@@ -905,162 +1093,6 @@ contract Exponential is CarefulMath {
      */
     function divExp(Exp memory a, Exp memory b) internal pure returns (MathError, Exp memory) {
         return getExp(a.mantissa, b.mantissa);
-    }
-
-    /**
-     * @dev Truncates the given exp to a whole number value.
-     *      For example, truncate(Exp{mantissa: 15 * expScale}) = 15
-     */
-    function truncate(Exp memory exp) internal pure returns (uint) {
-        // Note: We are not using careful math here as we're performing a division that cannot fail
-        return exp.mantissa / expScale;
-    }
-
-    /**
-     * @dev Checks if first Exp is less than second Exp.
-     */
-    function lessThanExp(Exp memory left, Exp memory right) internal pure returns (bool) {
-        return left.mantissa < right.mantissa;
-    }
-
-    /**
-     * @dev Checks if left Exp <= right Exp.
-     */
-    function lessThanOrEqualExp(Exp memory left, Exp memory right) internal pure returns (bool) {
-        return left.mantissa <= right.mantissa;
-    }
-
-    /**
-     * @dev Checks if left Exp > right Exp.
-     */
-    function greaterThanExp(Exp memory left, Exp memory right) internal pure returns (bool) {
-        return left.mantissa > right.mantissa;
-    }
-
-    /**
-     * @dev returns true if Exp is exactly zero
-     */
-    function isZeroExp(Exp memory value) internal pure returns (bool) {
-        return value.mantissa == 0;
-    }
-
-    function safe224(uint n, string memory errorMessage) internal pure returns (uint224) {
-        require(n < 2**224, errorMessage);
-        return uint224(n);
-    }
-
-    function safe32(uint n, string memory errorMessage) internal pure returns (uint32) {
-        require(n < 2**32, errorMessage);
-        return uint32(n);
-    }
-
-    function add_(Exp memory a, Exp memory b) internal pure returns (Exp memory) {
-        return Exp({mantissa: add_(a.mantissa, b.mantissa)});
-    }
-
-    function add_(Double memory a, Double memory b) internal pure returns (Double memory) {
-        return Double({mantissa: add_(a.mantissa, b.mantissa)});
-    }
-
-    function add_(uint a, uint b) internal pure returns (uint) {
-        return add_(a, b, "addition overflow");
-    }
-
-    function add_(uint a, uint b, string memory errorMessage) internal pure returns (uint) {
-        uint c = a + b;
-        require(c >= a, errorMessage);
-        return c;
-    }
-
-    function sub_(Exp memory a, Exp memory b) internal pure returns (Exp memory) {
-        return Exp({mantissa: sub_(a.mantissa, b.mantissa)});
-    }
-
-    function sub_(Double memory a, Double memory b) internal pure returns (Double memory) {
-        return Double({mantissa: sub_(a.mantissa, b.mantissa)});
-    }
-
-    function sub_(uint a, uint b) internal pure returns (uint) {
-        return sub_(a, b, "subtraction underflow");
-    }
-
-    function sub_(uint a, uint b, string memory errorMessage) internal pure returns (uint) {
-        require(b <= a, errorMessage);
-        return a - b;
-    }
-
-    function mul_(Exp memory a, Exp memory b) internal pure returns (Exp memory) {
-        return Exp({mantissa: mul_(a.mantissa, b.mantissa) / expScale});
-    }
-
-    function mul_(Exp memory a, uint b) internal pure returns (Exp memory) {
-        return Exp({mantissa: mul_(a.mantissa, b)});
-    }
-
-    function mul_(uint a, Exp memory b) internal pure returns (uint) {
-        return mul_(a, b.mantissa) / expScale;
-    }
-
-    function mul_(Double memory a, Double memory b) internal pure returns (Double memory) {
-        return Double({mantissa: mul_(a.mantissa, b.mantissa) / doubleScale});
-    }
-
-    function mul_(Double memory a, uint b) internal pure returns (Double memory) {
-        return Double({mantissa: mul_(a.mantissa, b)});
-    }
-
-    function mul_(uint a, Double memory b) internal pure returns (uint) {
-        return mul_(a, b.mantissa) / doubleScale;
-    }
-
-    function mul_(uint a, uint b) internal pure returns (uint) {
-        return mul_(a, b, "multiplication overflow");
-    }
-
-    function mul_(uint a, uint b, string memory errorMessage) internal pure returns (uint) {
-        if (a == 0 || b == 0) {
-            return 0;
-        }
-        uint c = a * b;
-        require(c / a == b, errorMessage);
-        return c;
-    }
-
-    function div_(Exp memory a, Exp memory b) internal pure returns (Exp memory) {
-        return Exp({mantissa: div_(mul_(a.mantissa, expScale), b.mantissa)});
-    }
-
-    function div_(Exp memory a, uint b) internal pure returns (Exp memory) {
-        return Exp({mantissa: div_(a.mantissa, b)});
-    }
-
-    function div_(uint a, Exp memory b) internal pure returns (uint) {
-        return div_(mul_(a, expScale), b.mantissa);
-    }
-
-    function div_(Double memory a, Double memory b) internal pure returns (Double memory) {
-        return Double({mantissa: div_(mul_(a.mantissa, doubleScale), b.mantissa)});
-    }
-
-    function div_(Double memory a, uint b) internal pure returns (Double memory) {
-        return Double({mantissa: div_(a.mantissa, b)});
-    }
-
-    function div_(uint a, Double memory b) internal pure returns (uint) {
-        return div_(mul_(a, doubleScale), b.mantissa);
-    }
-
-    function div_(uint a, uint b) internal pure returns (uint) {
-        return div_(a, b, "divide by zero");
-    }
-
-    function div_(uint a, uint b, string memory errorMessage) internal pure returns (uint) {
-        require(b > 0, errorMessage);
-        return a / b;
-    }
-
-    function fraction(uint a, uint b) internal pure returns (Double memory) {
-        return Double({mantissa: div_(mul_(a, doubleScale), b)});
     }
 }
 
@@ -2800,6 +2832,14 @@ contract ComptrollerV4Storage is ComptrollerV3Storage {
     address public rLenAddress;
 }
 
+contract ComptrollerV5Storage is ComptrollerV4Storage {
+    /// @notice The portion of COMP that each contributor receives per block
+    mapping(address => uint) public compContributorSpeeds;
+
+    /// @notice Last block at which a contributor's COMP rewards have been allocated
+    mapping(address => uint) public lastContributorBlock;
+}
+
 
 // Dependency file: contracts/Unitroller.sol
 
@@ -3264,7 +3304,6 @@ pragma solidity ^0.5.16;
 
 // import "contracts/CToken.sol";
 // import "contracts/ErrorReporter.sol";
-// import "contracts/Exponential.sol";
 // import "contracts/PriceOracle.sol";
 // import "contracts/ComptrollerInterface.sol";
 // import "contracts/ComptrollerStorage.sol";
@@ -3275,7 +3314,7 @@ pragma solidity ^0.5.16;
  * @title Compound's Comptroller Contract
  * @author Compound
  */
-contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerErrorReporter, Exponential {
+contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerErrorReporter, ExponentialNoError {
     /// @notice Emitted when an admin supports a market
     event MarketListed(CToken cToken);
 
@@ -3294,9 +3333,6 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
     /// @notice Emitted when liquidation incentive is changed by admin
     event NewLiquidationIncentive(uint oldLiquidationIncentiveMantissa, uint newLiquidationIncentiveMantissa);
 
-    /// @notice Emitted when maxAssets is changed by admin
-    event NewMaxAssets(uint oldMaxAssets, uint newMaxAssets);
-
     /// @notice Emitted when price oracle is changed
     event NewPriceOracle(PriceOracle oldPriceOracle, PriceOracle newPriceOracle);
 
@@ -3309,14 +3345,11 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
     /// @notice Emitted when an action is paused on a market
     event ActionPaused(CToken cToken, string action, bool pauseState);
 
-    /// @notice Emitted when market comped status is changed
-    event MarketComped(CToken cToken, bool isComped);
-
-    /// @notice Emitted when COMP rate is changed
-    event NewCompRate(uint oldCompRate, uint newCompRate);
-
     /// @notice Emitted when a new COMP speed is calculated for a market
     event CompSpeedUpdated(CToken indexed cToken, uint newSpeed);
+
+    /// @notice Emitted when a new COMP speed is set for a contributor
+    event ContributorCompSpeedUpdated(address indexed contributor, uint newSpeed);
 
     /// @notice Emitted when COMP is distributed to a supplier
     event DistributedSupplierComp(CToken indexed cToken, address indexed supplier, uint compDelta, uint compSupplyIndex);
@@ -3330,8 +3363,8 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
     /// @notice Emitted when borrow cap guardian is changed
     event NewBorrowCapGuardian(address oldBorrowCapGuardian, address newBorrowCapGuardian);
 
-    /// @notice The threshold above which the flywheel transfers COMP, in wei
-    uint public constant compClaimThreshold = 0.001e18;
+    /// @notice Emitted when COMP is granted by admin
+    event CompGranted(address recipient, uint amount);
 
     /// @notice The initial COMP index for a market
     uint224 public constant compInitialIndex = 1e36;
@@ -3344,12 +3377,6 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
 
     // No collateralFactorMantissa may exceed this value
     uint internal constant collateralFactorMaxMantissa = 0.9e18; // 0.9
-
-    // liquidationIncentiveMantissa must be no less than this value
-    uint internal constant liquidationIncentiveMinMantissa = 1.0e18; // 1.0
-
-    // liquidationIncentiveMantissa must be no greater than this value
-    uint internal constant liquidationIncentiveMaxMantissa = 1.5e18; // 1.5
 
     constructor() public {
         admin = msg.sender;
@@ -3411,11 +3438,6 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
         if (marketToJoin.accountMembership[borrower] == true) {
             // already joined
             return Error.NO_ERROR;
-        }
-
-        if (accountAssets[borrower].length >= maxAssets)  {
-            // no space, cannot join
-            return Error.TOO_MANY_ASSETS;
         }
 
         // survived the gauntlet, add to list
@@ -3510,7 +3532,7 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
 
         // Keep the flywheel moving
         updateCompSupplyIndex(cToken);
-        distributeSupplierComp(cToken, minter, false);
+        distributeSupplierComp(cToken, minter);
 
         return uint(Error.NO_ERROR);
     }
@@ -3541,7 +3563,7 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
 
         // Keep the flywheel moving
         updateCompSupplyIndex(cToken);
-        distributeSupplierComp(cToken, redeemer, false);
+        distributeSupplierComp(cToken, redeemer);
 
         return uint(Error.NO_ERROR);
     }
@@ -3622,9 +3644,8 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
         // Borrow cap of 0 corresponds to unlimited borrowing
         if (borrowCap != 0) {
             uint totalBorrows = CToken(cToken).totalBorrows();
-            (MathError mathErr, uint nextTotalBorrows) = addUInt(totalBorrows, borrowAmount);
-            require(mathErr == MathError.NO_ERROR, "total borrows overflow");
-            require(nextTotalBorrows < borrowCap, "market borrowCap reached");
+            uint nextTotalBorrows = add_(totalBorrows, borrowAmount);
+            require(nextTotalBorrows < borrowCap, "market borrow cap reached");
         }
 
         (Error err, , uint shortfall) = getHypotheticalAccountLiquidityInternal(borrower, CToken(cToken), 0, borrowAmount);
@@ -3638,7 +3659,7 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
         // Keep the flywheel moving
         Exp memory borrowIndex = Exp({mantissa: CToken(cToken).borrowIndex()});
         updateCompBorrowIndex(cToken, borrowIndex);
-        distributeBorrowerComp(cToken, borrower, borrowIndex, false);
+        distributeBorrowerComp(cToken, borrower, borrowIndex);
 
         return uint(Error.NO_ERROR);
     }
@@ -3676,7 +3697,7 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
         // Keep the flywheel moving
         Exp memory borrowIndex = Exp({mantissa: CToken(cToken).borrowIndex()});
         updateCompBorrowIndex(cToken, borrowIndex);
-        distributeBorrowerComp(cToken, borrower, borrowIndex, false);
+        distributeBorrowerComp(cToken, borrower, borrowIndex);
 
         return uint(Error.NO_ERROR);
     }
@@ -3729,10 +3750,7 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
 
         /* The liquidator may not repay more than what is allowed by the closeFactor */
         uint borrowBalance = CToken(cTokenBorrowed).borrowBalanceStored(borrower);
-        (MathError mathErr, uint maxClose) = mulScalarTruncate(Exp({mantissa: closeFactorMantissa}), borrowBalance);
-        if (mathErr != MathError.NO_ERROR) {
-            return uint(Error.MATH_ERROR);
-        }
+        uint maxClose = mul_ScalarTruncate(Exp({mantissa: closeFactorMantissa}), borrowBalance);
         if (repayAmount > maxClose) {
             return uint(Error.TOO_MUCH_REPAY);
         }
@@ -3788,8 +3806,8 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
 
         // Keep the flywheel moving
         updateCompSupplyIndex(cTokenCollateral);
-        distributeSupplierComp(cTokenCollateral, borrower, false);
-        distributeSupplierComp(cTokenCollateral, liquidator, false);
+        distributeSupplierComp(cTokenCollateral, borrower);
+        distributeSupplierComp(cTokenCollateral, liquidator);
 
         return uint(Error.NO_ERROR);
     }
@@ -3833,8 +3851,8 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
 
         // Keep the flywheel moving
         updateCompSupplyIndex(cToken);
-        distributeSupplierComp(cToken, src, false);
-        distributeSupplierComp(cToken, dst, false);
+        distributeSupplierComp(cToken, src);
+        distributeSupplierComp(cToken, dst);
 
         return uint(Error.NO_ERROR);
     }
@@ -3932,7 +3950,6 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
 
         AccountLiquidityLocalVars memory vars; // Holds all our calculation results
         uint oErr;
-        MathError mErr;
 
         // For each asset the account is in
         CToken[] memory assets = accountAssets[account];
@@ -3955,38 +3972,23 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
             vars.oraclePrice = Exp({mantissa: vars.oraclePriceMantissa});
 
             // Pre-compute a conversion factor from tokens -> ether (normalized price value)
-            (mErr, vars.tokensToDenom) = mulExp3(vars.collateralFactor, vars.exchangeRate, vars.oraclePrice);
-            if (mErr != MathError.NO_ERROR) {
-                return (Error.MATH_ERROR, 0, 0);
-            }
+            vars.tokensToDenom = mul_(mul_(vars.collateralFactor, vars.exchangeRate), vars.oraclePrice);
 
             // sumCollateral += tokensToDenom * cTokenBalance
-            (mErr, vars.sumCollateral) = mulScalarTruncateAddUInt(vars.tokensToDenom, vars.cTokenBalance, vars.sumCollateral);
-            if (mErr != MathError.NO_ERROR) {
-                return (Error.MATH_ERROR, 0, 0);
-            }
+            vars.sumCollateral = mul_ScalarTruncateAddUInt(vars.tokensToDenom, vars.cTokenBalance, vars.sumCollateral);
 
             // sumBorrowPlusEffects += oraclePrice * borrowBalance
-            (mErr, vars.sumBorrowPlusEffects) = mulScalarTruncateAddUInt(vars.oraclePrice, vars.borrowBalance, vars.sumBorrowPlusEffects);
-            if (mErr != MathError.NO_ERROR) {
-                return (Error.MATH_ERROR, 0, 0);
-            }
+            vars.sumBorrowPlusEffects = mul_ScalarTruncateAddUInt(vars.oraclePrice, vars.borrowBalance, vars.sumBorrowPlusEffects);
 
             // Calculate effects of interacting with cTokenModify
             if (asset == cTokenModify) {
                 // redeem effect
                 // sumBorrowPlusEffects += tokensToDenom * redeemTokens
-                (mErr, vars.sumBorrowPlusEffects) = mulScalarTruncateAddUInt(vars.tokensToDenom, redeemTokens, vars.sumBorrowPlusEffects);
-                if (mErr != MathError.NO_ERROR) {
-                    return (Error.MATH_ERROR, 0, 0);
-                }
+                vars.sumBorrowPlusEffects = mul_ScalarTruncateAddUInt(vars.tokensToDenom, redeemTokens, vars.sumBorrowPlusEffects);
 
                 // borrow effect
                 // sumBorrowPlusEffects += oraclePrice * borrowAmount
-                (mErr, vars.sumBorrowPlusEffects) = mulScalarTruncateAddUInt(vars.oraclePrice, borrowAmount, vars.sumBorrowPlusEffects);
-                if (mErr != MathError.NO_ERROR) {
-                    return (Error.MATH_ERROR, 0, 0);
-                }
+                vars.sumBorrowPlusEffects = mul_ScalarTruncateAddUInt(vars.oraclePrice, borrowAmount, vars.sumBorrowPlusEffects);
             }
         }
 
@@ -4025,27 +4027,12 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
         Exp memory numerator;
         Exp memory denominator;
         Exp memory ratio;
-        MathError mathErr;
 
-        (mathErr, numerator) = mulExp(liquidationIncentiveMantissa, priceBorrowedMantissa);
-        if (mathErr != MathError.NO_ERROR) {
-            return (uint(Error.MATH_ERROR), 0);
-        }
+        numerator = mul_(Exp({mantissa: liquidationIncentiveMantissa}), Exp({mantissa: priceBorrowedMantissa}));
+        denominator = mul_(Exp({mantissa: priceCollateralMantissa}), Exp({mantissa: exchangeRateMantissa}));
+        ratio = div_(numerator, denominator);
 
-        (mathErr, denominator) = mulExp(priceCollateralMantissa, exchangeRateMantissa);
-        if (mathErr != MathError.NO_ERROR) {
-            return (uint(Error.MATH_ERROR), 0);
-        }
-
-        (mathErr, ratio) = divExp(numerator, denominator);
-        if (mathErr != MathError.NO_ERROR) {
-            return (uint(Error.MATH_ERROR), 0);
-        }
-
-        (mathErr, seizeTokens) = mulScalarTruncate(ratio, actualRepayAmount);
-        if (mathErr != MathError.NO_ERROR) {
-            return (uint(Error.MATH_ERROR), 0);
-        }
+        seizeTokens = mul_ScalarTruncate(ratio, actualRepayAmount);
 
         return (uint(Error.NO_ERROR), seizeTokens);
     }
@@ -4079,24 +4066,11 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
       * @notice Sets the closeFactor used when liquidating borrows
       * @dev Admin function to set closeFactor
       * @param newCloseFactorMantissa New close factor, scaled by 1e18
-      * @return uint 0=success, otherwise a failure. (See ErrorReporter for details)
+      * @return uint 0=success, otherwise a failure
       */
     function _setCloseFactor(uint newCloseFactorMantissa) external returns (uint) {
         // Check caller is admin
-        if (msg.sender != admin) {
-            return fail(Error.UNAUTHORIZED, FailureInfo.SET_CLOSE_FACTOR_OWNER_CHECK);
-        }
-
-        Exp memory newCloseFactorExp = Exp({mantissa: newCloseFactorMantissa});
-        Exp memory lowLimit = Exp({mantissa: closeFactorMinMantissa});
-        if (lessThanOrEqualExp(newCloseFactorExp, lowLimit)) {
-            return fail(Error.INVALID_CLOSE_FACTOR, FailureInfo.SET_CLOSE_FACTOR_VALIDATION);
-        }
-
-        Exp memory highLimit = Exp({mantissa: closeFactorMaxMantissa});
-        if (lessThanExp(highLimit, newCloseFactorExp)) {
-            return fail(Error.INVALID_CLOSE_FACTOR, FailureInfo.SET_CLOSE_FACTOR_VALIDATION);
-        }
+    	require(msg.sender == admin, "only admin can set close factor");
 
         uint oldCloseFactorMantissa = closeFactorMantissa;
         closeFactorMantissa = newCloseFactorMantissa;
@@ -4148,25 +4122,6 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
     }
 
     /**
-      * @notice Sets maxAssets which controls how many markets can be entered
-      * @dev Admin function to set maxAssets
-      * @param newMaxAssets New max assets
-      * @return uint 0=success, otherwise a failure. (See ErrorReporter for details)
-      */
-    function _setMaxAssets(uint newMaxAssets) external returns (uint) {
-        // Check caller is admin
-        if (msg.sender != admin) {
-            return fail(Error.UNAUTHORIZED, FailureInfo.SET_MAX_ASSETS_OWNER_CHECK);
-        }
-
-        uint oldMaxAssets = maxAssets;
-        maxAssets = newMaxAssets;
-        emit NewMaxAssets(oldMaxAssets, newMaxAssets);
-
-        return uint(Error.NO_ERROR);
-    }
-
-    /**
       * @notice Sets liquidationIncentive
       * @dev Admin function to set liquidationIncentive
       * @param newLiquidationIncentiveMantissa New liquidationIncentive scaled by 1e18
@@ -4176,18 +4131,6 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
         // Check caller is admin
         if (msg.sender != admin) {
             return fail(Error.UNAUTHORIZED, FailureInfo.SET_LIQUIDATION_INCENTIVE_OWNER_CHECK);
-        }
-
-        // Check de-scaled min <= newLiquidationIncentive <= max
-        Exp memory newLiquidationIncentive = Exp({mantissa: newLiquidationIncentiveMantissa});
-        Exp memory minLiquidationIncentive = Exp({mantissa: liquidationIncentiveMinMantissa});
-        if (lessThanExp(newLiquidationIncentive, minLiquidationIncentive)) {
-            return fail(Error.INVALID_LIQUIDATION_INCENTIVE, FailureInfo.SET_LIQUIDATION_INCENTIVE_VALIDATION);
-        }
-
-        Exp memory maxLiquidationIncentive = Exp({mantissa: liquidationIncentiveMaxMantissa});
-        if (lessThanExp(maxLiquidationIncentive, newLiquidationIncentive)) {
-            return fail(Error.INVALID_LIQUIDATION_INCENTIVE, FailureInfo.SET_LIQUIDATION_INCENTIVE_VALIDATION);
         }
 
         // Save current value for use in log
@@ -4219,6 +4162,7 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
 
         cToken.isCToken(); // Sanity check to make sure its really a CToken
 
+        // Note that isComped is not in active use anymore
         markets[address(cToken)] = Market({isListed: true, isComped: false, collateralFactorMantissa: 0});
 
         _addMarketInternal(address(cToken));
@@ -4348,40 +4292,40 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
     /*** RLEN Distribution ***/
 
     /**
-     * @notice Recalculate and update COMP speeds for all COMP markets
+     * @notice Set COMP speed for a single market
+     * @param cToken The market whose COMP speed to update
+     * @param compSpeed New COMP speed for market
      */
-    function refreshCompSpeeds() public {
-        require(msg.sender == tx.origin, "only externall refresh speeds");
-        refreshCompSpeedsInternal();
-    }
-
-    function refreshCompSpeedsInternal() internal {
-        CToken[] memory allMarkets_ = allMarkets;
-
-        for (uint i = 0; i < allMarkets_.length; i++) {
-            CToken cToken = allMarkets_[i];
+    function setCompSpeedInternal(CToken cToken, uint compSpeed) internal {
+        uint currentCompSpeed = compSpeeds[address(cToken)];
+        if (currentCompSpeed != 0) {
+            // note that COMP speed could be set to 0 to halt liquidity rewards for a market
             Exp memory borrowIndex = Exp({mantissa: cToken.borrowIndex()});
             updateCompSupplyIndex(address(cToken));
             updateCompBorrowIndex(address(cToken), borrowIndex);
-        }
+        } else if (compSpeed != 0) {
+            // Add the COMP market
+            Market storage market = markets[address(cToken)];
+            require(market.isListed == true, "comp market is not listed");
 
-        Exp memory totalUtility = Exp({mantissa: 0});
-        Exp[] memory utilities = new Exp[](allMarkets_.length);
-        for (uint i = 0; i < allMarkets_.length; i++) {
-            CToken cToken = allMarkets_[i];
-            if (markets[address(cToken)].isComped) {
-                Exp memory assetPrice = Exp({mantissa: oracle.getUnderlyingPrice(cToken)});
-                Exp memory utility = mul_(assetPrice, cToken.totalBorrows());
-                utilities[i] = utility;
-                totalUtility = add_(totalUtility, utility);
+            if (compSupplyState[address(cToken)].index == 0 && compSupplyState[address(cToken)].block == 0) {
+                compSupplyState[address(cToken)] = CompMarketState({
+                    index: compInitialIndex,
+                    block: safe32(getBlockNumber(), "block number exceeds 32 bits")
+                });
+            }
+
+            if (compBorrowState[address(cToken)].index == 0 && compBorrowState[address(cToken)].block == 0) {
+                compBorrowState[address(cToken)] = CompMarketState({
+                    index: compInitialIndex,
+                    block: safe32(getBlockNumber(), "block number exceeds 32 bits")
+                });
             }
         }
 
-        for (uint i = 0; i < allMarkets_.length; i++) {
-            CToken cToken = allMarkets[i];
-            uint newSpeed = totalUtility.mantissa > 0 ? mul_(compRate, div_(utilities[i], totalUtility)) : 0;
-            compSpeeds[address(cToken)] = newSpeed;
-            emit CompSpeedUpdated(cToken, newSpeed);
+        if (currentCompSpeed != compSpeed) {
+            compSpeeds[address(cToken)] = compSpeed;
+            emit CompSpeedUpdated(cToken, compSpeed);
         }
     }
 
@@ -4436,7 +4380,7 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
      * @param cToken The market in which the supplier is interacting
      * @param supplier The address of the supplier to distribute COMP to
      */
-    function distributeSupplierComp(address cToken, address supplier, bool distributeAll) internal {
+    function distributeSupplierComp(address cToken, address supplier) internal {
         CompMarketState storage supplyState = compSupplyState[cToken];
         Double memory supplyIndex = Double({mantissa: supplyState.index});
         Double memory supplierIndex = Double({mantissa: compSupplierIndex[cToken][supplier]});
@@ -4450,7 +4394,7 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
         uint supplierTokens = CToken(cToken).balanceOf(supplier);
         uint supplierDelta = mul_(supplierTokens, deltaIndex);
         uint supplierAccrued = add_(compAccrued[supplier], supplierDelta);
-        compAccrued[supplier] = transferComp(supplier, supplierAccrued, distributeAll ? 0 : compClaimThreshold);
+        compAccrued[supplier] = supplierAccrued;
         emit DistributedSupplierComp(CToken(cToken), supplier, supplierDelta, supplyIndex.mantissa);
     }
 
@@ -4460,7 +4404,7 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
      * @param cToken The market in which the borrower is interacting
      * @param borrower The address of the borrower to distribute COMP to
      */
-    function distributeBorrowerComp(address cToken, address borrower, Exp memory marketBorrowIndex, bool distributeAll) internal {
+    function distributeBorrowerComp(address cToken, address borrower, Exp memory marketBorrowIndex) internal {
         CompMarketState storage borrowState = compBorrowState[cToken];
         Double memory borrowIndex = Double({mantissa: borrowState.index});
         Double memory borrowerIndex = Double({mantissa: compBorrowerIndex[cToken][borrower]});
@@ -4471,28 +4415,26 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
             uint borrowerAmount = div_(CToken(cToken).borrowBalanceStored(borrower), marketBorrowIndex);
             uint borrowerDelta = mul_(borrowerAmount, deltaIndex);
             uint borrowerAccrued = add_(compAccrued[borrower], borrowerDelta);
-            compAccrued[borrower] = transferComp(borrower, borrowerAccrued, distributeAll ? 0 : compClaimThreshold);
+            compAccrued[borrower] = borrowerAccrued;
             emit DistributedBorrowerComp(CToken(cToken), borrower, borrowerDelta, borrowIndex.mantissa);
         }
     }
 
     /**
-     * @notice Transfer COMP to the user, if they are above the threshold
-     * @dev Note: If there is not enough COMP, we do not perform the transfer all.
-     * @param user The address of the user to transfer COMP to
-     * @param userAccrued The amount of COMP to (possibly) transfer
-     * @return The amount of COMP which was NOT transferred to the user
+     * @notice Calculate additional accrued COMP for a contributor since last accrual
+     * @param contributor The address to calculate contributor rewards for
      */
-    function transferComp(address user, uint userAccrued, uint threshold) internal returns (uint) {
-        if (userAccrued >= threshold && userAccrued > 0) {
-            RLEN rLen = RLEN(getCompAddress());
-            uint rLenRemaining = rLen.balanceOf(address(this));
-            if (userAccrued <= rLenRemaining) {
-                rLen.transfer(user, userAccrued);
-                return 0;
-            }
+    function updateContributorRewards(address contributor) public {
+        uint compSpeed = compContributorSpeeds[contributor];
+        uint blockNumber = getBlockNumber();
+        uint deltaBlocks = sub_(blockNumber, lastContributorBlock[contributor]);
+        if (deltaBlocks > 0 && compSpeed > 0) {
+            uint newAccrued = mul_(deltaBlocks, compSpeed);
+            uint contributorAccrued = add_(compAccrued[contributor], newAccrued);
+
+            compAccrued[contributor] = contributorAccrued;
+            lastContributorBlock[contributor] = blockNumber;
         }
-        return userAccrued;
     }
 
     /**
@@ -4529,85 +4471,81 @@ contract Comptroller is ComptrollerV4Storage, ComptrollerInterface, ComptrollerE
                 Exp memory borrowIndex = Exp({mantissa: cToken.borrowIndex()});
                 updateCompBorrowIndex(address(cToken), borrowIndex);
                 for (uint j = 0; j < holders.length; j++) {
-                    distributeBorrowerComp(address(cToken), holders[j], borrowIndex, true);
+                    distributeBorrowerComp(address(cToken), holders[j], borrowIndex);
+                    compAccrued[holders[j]] = grantCompInternal(holders[j], compAccrued[holders[j]]);
                 }
             }
             if (suppliers == true) {
                 updateCompSupplyIndex(address(cToken));
                 for (uint j = 0; j < holders.length; j++) {
-                    distributeSupplierComp(address(cToken), holders[j], true);
+                    distributeSupplierComp(address(cToken), holders[j]);
+                    compAccrued[holders[j]] = grantCompInternal(holders[j], compAccrued[holders[j]]);
                 }
             }
         }
     }
 
+    /**
+     * @notice Transfer RLEN to the user
+     * @dev Note: If there is not enough COMP, we do not perform the transfer all.
+     * @param user The address of the user to transfer COMP to
+     * @param amount The amount of COMP to (possibly) transfer
+     * @return The amount of COMP which was NOT transferred to the user
+     */
+    function grantCompInternal(address user, uint amount) internal returns (uint) {
+        RLEN comp = RLEN(getCompAddress());
+        uint compRemaining = comp.balanceOf(address(this));
+        if (amount > 0 && amount <= compRemaining) {
+            comp.transfer(user, amount);
+            return 0;
+        }
+        return amount;
+    }
+
     /*** RLEN Distribution Admin ***/
 
     /**
-     * @notice Set the amount of COMP distributed per block
-     * @param compRate_ The amount of COMP wei per block to distribute
+     * @notice Transfer COMP to the recipient
+     * @dev Note: If there is not enough COMP, we do not perform the transfer all.
+     * @param recipient The address of the recipient to transfer COMP to
+     * @param amount The amount of COMP to (possibly) transfer
      */
-    function _setCompRate(uint compRate_) public {
-        require(adminOrInitializing(), "only admin can set compRate");
-
-        uint oldRate = compRate;
-        compRate = compRate_;
-        emit NewCompRate(oldRate, compRate_);
-
-        refreshCompSpeedsInternal();
+    function _grantComp(address recipient, uint amount) public {
+        require(adminOrInitializing(), "only admin can grant comp");
+        uint amountLeft = grantCompInternal(recipient, amount);
+        require(amountLeft == 0, "insufficient comp for grant");
+        emit CompGranted(recipient, amount);
     }
 
     /**
-     * @notice Add markets to compMarkets, allowing them to earn COMP in the flywheel
-     * @param cTokens The addresses of the markets to add
+     * @notice Set COMP speed for a single market
+     * @param cToken The market whose COMP speed to update
+     * @param compSpeed New COMP speed for market
      */
-    function _addCompMarkets(address[] memory cTokens) public {
-        require(adminOrInitializing(), "only admin can add compMarket");
-
-        for (uint i = 0; i < cTokens.length; i++) {
-            _addCompMarketInternal(cTokens[i]);
-        }
-
-        refreshCompSpeedsInternal();
-    }
-
-    function _addCompMarketInternal(address cToken) internal {
-        Market storage market = markets[cToken];
-        require(market.isListed == true, "compMarket is not listed");
-        require(market.isComped == false, "compMarket already added");
-
-        market.isComped = true;
-        emit MarketComped(CToken(cToken), true);
-
-        if (compSupplyState[cToken].index == 0 && compSupplyState[cToken].block == 0) {
-            compSupplyState[cToken] = CompMarketState({
-                index: compInitialIndex,
-                block: safe32(getBlockNumber(), "block exceeds 32 bits")
-            });
-        }
-
-        if (compBorrowState[cToken].index == 0 && compBorrowState[cToken].block == 0) {
-            compBorrowState[cToken] = CompMarketState({
-                index: compInitialIndex,
-                block: safe32(getBlockNumber(), "block exceeds 32 bits")
-            });
-        }
+    function _setCompSpeed(CToken cToken, uint compSpeed) public {
+        require(adminOrInitializing(), "only admin can set comp speed");
+        setCompSpeedInternal(cToken, compSpeed);
     }
 
     /**
-     * @notice Remove a market from compMarkets, preventing it from earning COMP in the flywheel
-     * @param cToken The address of the market to drop
+     * @notice Set COMP speed for a single contributor
+     * @param contributor The contributor whose COMP speed to update
+     * @param compSpeed New COMP speed for contributor
      */
-    function _dropCompMarket(address cToken) public {
-        require(msg.sender == admin, "only admin can drop compMarket");
+    function _setContributorCompSpeed(address contributor, uint compSpeed) public {
+        require(adminOrInitializing(), "only admin can set comp speed");
 
-        Market storage market = markets[cToken];
-        require(market.isComped == true, "market is not a compMarket");
+        // note that COMP speed could be set to 0 to halt liquidity rewards for a contributor
+        updateContributorRewards(contributor);
+        if (compSpeed == 0) {
+            // release storage
+            delete lastContributorBlock[contributor];
+        } else {
+            lastContributorBlock[contributor] = getBlockNumber();
+        }
+        compContributorSpeeds[contributor] = compSpeed;
 
-        market.isComped = false;
-        emit MarketComped(CToken(cToken), false);
-
-        refreshCompSpeedsInternal();
+        emit ContributorCompSpeedUpdated(contributor, compSpeed);
     }
 
     /**

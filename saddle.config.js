@@ -164,6 +164,7 @@ module.exports = {
       providers: [
         {env: "PROVIDER"},
         {file: "~/.ethereum/ropsten-url"},                    // Load from given file with contents as the URL (e.g. https://infura.io/api-key)
+        {http: "https://ropsten-eth.compound.finance"}
       ],
       web3: {
         gas: [
@@ -219,7 +220,7 @@ module.exports = {
       web3: {
         gas: [
           {env: "GAS"},
-          {default: "4600000"}
+          {default: "6000000"}
         ],
         gas_price: [
           {env: "GAS_PRICE"},

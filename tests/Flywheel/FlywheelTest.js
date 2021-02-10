@@ -24,7 +24,7 @@ async function compBalance(comptroller, user) {
 }
 
 async function totalCompAccrued(comptroller, user) {
-  return (await compAccrued(comptroller, user)).add(await compBalance(comptroller, user));
+  return (await compAccrued(comptroller, user)).plus(await compBalance(comptroller, user));
 }
 
 describe('Flywheel upgrade', () => {
@@ -87,23 +87,110 @@ describe('Flywheel', () => {
     cREP = await makeCToken({comptroller, supportMarket: true, underlyingPrice: 2, interestRateModelOpts});
     cZRX = await makeCToken({comptroller, supportMarket: true, underlyingPrice: 3, interestRateModelOpts});
     cEVIL = await makeCToken({comptroller, supportMarket: false, underlyingPrice: 3, interestRateModelOpts});
-    await send(comptroller, '_addCompMarkets', [[cLOW, cREP, cZRX].map(c => c._address)]);
+  });
+
+  describe('_grantComp()', () => {
+    beforeEach(async () => {
+      await send(comptroller.comp, 'transfer', [comptroller._address, etherUnsigned(50e18)], {from: root});
+    });
+
+    it('should award comp if called by admin', async () => {
+      const tx = await send(comptroller, '_grantComp', [a1, 100]);
+      expect(tx).toHaveLog('CompGranted', {
+        recipient: a1,
+        amount: 100
+      });
+    });
+
+    it('should revert if not called by admin', async () => {
+      await expect(
+        send(comptroller, '_grantComp', [a1, 100], {from: a1})
+      ).rejects.toRevert('revert only admin can grant comp');
+    });
+
+    it('should revert if insufficient comp', async () => {
+      await expect(
+        send(comptroller, '_grantComp', [a1, etherUnsigned(1e20)])
+      ).rejects.toRevert('revert insufficient comp for grant');
+    });
   });
 
   describe('getCompMarkets()', () => {
     it('should return the comp markets', async () => {
+      for (let mkt of [cLOW, cREP, cZRX]) {
+        await send(comptroller, '_setCompSpeed', [mkt._address, etherExp(0.5)]);
+      }
       expect(await call(comptroller, 'getCompMarkets')).toEqual(
         [cLOW, cREP, cZRX].map((c) => c._address)
       );
     });
   });
 
+  describe('_setCompSpeed()', () => {
+    it('should update market index when calling setCompSpeed', async () => {
+      const mkt = cREP;
+      await send(comptroller, 'setBlockNumber', [0]);
+      await send(mkt, 'harnessSetTotalSupply', [etherUnsigned(10e18)]);
+
+      await send(comptroller, '_setCompSpeed', [mkt._address, etherExp(0.5)]);
+      await fastForward(comptroller, 20);
+      await send(comptroller, '_setCompSpeed', [mkt._address, etherExp(1)]);
+
+      const {index, block} = await call(comptroller, 'compSupplyState', [mkt._address]);
+      expect(index).toEqualNumber(2e36);
+      expect(block).toEqualNumber(20);
+    });
+
+    it('should correctly drop a comp market if called by admin', async () => {
+      for (let mkt of [cLOW, cREP, cZRX]) {
+        await send(comptroller, '_setCompSpeed', [mkt._address, etherExp(0.5)]);
+      }
+      const tx = await send(comptroller, '_setCompSpeed', [cLOW._address, 0]);
+      expect(await call(comptroller, 'getCompMarkets')).toEqual(
+        [cREP, cZRX].map((c) => c._address)
+      );
+      expect(tx).toHaveLog('CompSpeedUpdated', {
+        cToken: cLOW._address,
+        newSpeed: 0
+      });
+    });
+
+    it('should correctly drop a comp market from middle of array', async () => {
+      for (let mkt of [cLOW, cREP, cZRX]) {
+        await send(comptroller, '_setCompSpeed', [mkt._address, etherExp(0.5)]);
+      }
+      await send(comptroller, '_setCompSpeed', [cREP._address, 0]);
+      expect(await call(comptroller, 'getCompMarkets')).toEqual(
+        [cLOW, cZRX].map((c) => c._address)
+      );
+    });
+
+    it('should not drop a comp market unless called by admin', async () => {
+      for (let mkt of [cLOW, cREP, cZRX]) {
+        await send(comptroller, '_setCompSpeed', [mkt._address, etherExp(0.5)]);
+      }
+      await expect(
+        send(comptroller, '_setCompSpeed', [cLOW._address, 0], {from: a1})
+      ).rejects.toRevert('revert only admin can set comp speed');
+    });
+
+    it('should not add non-listed markets', async () => {
+      const cBAT = await makeCToken({ comptroller, supportMarket: false });
+      await expect(
+        send(comptroller, 'harnessAddCompMarkets', [[cBAT._address]])
+      ).rejects.toRevert('revert comp market is not listed');
+
+      const markets = await call(comptroller, 'getCompMarkets');
+      expect(markets).toEqual([]);
+    });
+  });
+
   describe('updateCompBorrowIndex()', () => {
     it('should calculate comp borrower index correctly', async () => {
       const mkt = cREP;
+      await send(comptroller, '_setCompSpeed', [mkt._address, etherExp(0.5)]);
       await send(comptroller, 'setBlockNumber', [100]);
       await send(mkt, 'harnessSetTotalBorrows', [etherUnsigned(11e18)]);
-      await send(comptroller, 'setCompSpeed', [mkt._address, etherExp(0.5)]);
       await send(comptroller, 'harnessUpdateCompBorrowIndex', [
         mkt._address,
         etherExp(1.1),
@@ -145,7 +232,7 @@ describe('Flywheel', () => {
 
     it('should not update index if no blocks passed since last accrual', async () => {
       const mkt = cREP;
-      await send(comptroller, 'setCompSpeed', [mkt._address, etherExp(0.5)]);
+      await send(comptroller, '_setCompSpeed', [mkt._address, etherExp(0.5)]);
       await send(comptroller, 'harnessUpdateCompBorrowIndex', [
         mkt._address,
         etherExp(1.1),
@@ -158,8 +245,9 @@ describe('Flywheel', () => {
 
     it('should not update index if comp speed is 0', async () => {
       const mkt = cREP;
-      await send(comptroller, 'setCompSpeed', [mkt._address, etherExp(0)]);
+      await send(comptroller, '_setCompSpeed', [mkt._address, etherExp(0.5)]);
       await send(comptroller, 'setBlockNumber', [100]);
+      await send(comptroller, '_setCompSpeed', [mkt._address, etherExp(0)]);
       await send(comptroller, 'harnessUpdateCompBorrowIndex', [
         mkt._address,
         etherExp(1.1),
@@ -174,9 +262,9 @@ describe('Flywheel', () => {
   describe('updateCompSupplyIndex()', () => {
     it('should calculate comp supplier index correctly', async () => {
       const mkt = cREP;
+      await send(comptroller, '_setCompSpeed', [mkt._address, etherExp(0.5)]);
       await send(comptroller, 'setBlockNumber', [100]);
       await send(mkt, 'harnessSetTotalSupply', [etherUnsigned(10e18)]);
-      await send(comptroller, 'setCompSpeed', [mkt._address, etherExp(0.5)]);
       await send(comptroller, 'harnessUpdateCompSupplyIndex', [mkt._address]);
       /*
         suppyTokens = 10e18
@@ -214,7 +302,7 @@ describe('Flywheel', () => {
       const mkt = cREP;
       await send(comptroller, 'setBlockNumber', [0]);
       await send(mkt, 'harnessSetTotalSupply', [etherUnsigned(10e18)]);
-      await send(comptroller, 'setCompSpeed', [mkt._address, etherExp(0.5)]);
+      await send(comptroller, '_setCompSpeed', [mkt._address, etherExp(0.5)]);
       await send(comptroller, 'harnessUpdateCompSupplyIndex', [mkt._address]);
 
       const {index, block} = await call(comptroller, 'compSupplyState', [mkt._address]);
@@ -223,10 +311,11 @@ describe('Flywheel', () => {
     });
 
     it('should not matter if the index is updated multiple times', async () => {
-      const compRemaining = compRate.mul(100)
+      const compRemaining = compRate.multipliedBy(100)
+      await send(comptroller, 'harnessAddCompMarkets', [[cLOW._address]]);
       await send(comptroller.comp, 'transfer', [comptroller._address, compRemaining], {from: root});
       await pretendBorrow(cLOW, a1, 1, 1, 100);
-      await send(comptroller, 'refreshCompSpeeds');
+      await send(comptroller, 'harnessRefreshCompSpeeds');
 
       await quickMint(cLOW, a2, etherUnsigned(10e18));
       await quickMint(cLOW, a3, etherUnsigned(15e18));
@@ -238,7 +327,7 @@ describe('Flywheel', () => {
 
       await fastForward(comptroller, 20);
 
-      const txT1 = await send(cLOW, 'transfer', [a2, a3Balance0.sub(a2Balance0)], {from: a3});
+      const txT1 = await send(cLOW, 'transfer', [a2, a3Balance0.minus(a2Balance0)], {from: a3});
 
       const a2Accrued1 = await totalCompAccrued(comptroller, a2);
       const a3Accrued1 = await totalCompAccrued(comptroller, a3);
@@ -249,7 +338,7 @@ describe('Flywheel', () => {
       await send(comptroller, 'harnessUpdateCompSupplyIndex', [cLOW._address]);
       await fastForward(comptroller, 10);
 
-      const txT2 = await send(cLOW, 'transfer', [a3, a2Balance1.sub(a3Balance1)], {from: a2});
+      const txT2 = await send(cLOW, 'transfer', [a3, a2Balance1.minus(a3Balance1)], {from: a2});
 
       const a2Accrued2 = await totalCompAccrued(comptroller, a2);
       const a3Accrued2 = await totalCompAccrued(comptroller, a3);
@@ -258,13 +347,13 @@ describe('Flywheel', () => {
       expect(a3Accrued0).toEqualNumber(0);
       expect(a2Accrued1).not.toEqualNumber(0);
       expect(a3Accrued1).not.toEqualNumber(0);
-      expect(a2Accrued1).toEqualNumber(a3Accrued2.sub(a3Accrued1));
-      expect(a3Accrued1).toEqualNumber(a2Accrued2.sub(a2Accrued1));
+      expect(a2Accrued1).toEqualNumber(a3Accrued2.minus(a3Accrued1));
+      expect(a3Accrued1).toEqualNumber(a2Accrued2.minus(a2Accrued1));
 
       expect(txT1.gasUsed).toBeLessThan(200000);
       expect(txT1.gasUsed).toBeGreaterThan(150000);
-      expect(txT2.gasUsed).toBeLessThan(200000);
-      expect(txT2.gasUsed).toBeGreaterThan(150000);
+      expect(txT2.gasUsed).toBeLessThan(150000);
+      expect(txT2.gasUsed).toBeGreaterThan(100000);
     });
   });
 
@@ -298,17 +387,17 @@ describe('Flywheel', () => {
                        = 5e18 * 5e36 / 1e36 = 25e18
       */
       const tx = await send(comptroller, "harnessDistributeBorrowerComp", [mkt._address, a1, etherUnsigned(1.1e18)]);
-      expect(await compAccrued(comptroller, a1)).toEqualNumber(0);
-      expect(await compBalance(comptroller, a1)).toEqualNumber(25e18);
+      expect(await compAccrued(comptroller, a1)).toEqualNumber(25e18);
+      expect(await compBalance(comptroller, a1)).toEqualNumber(0);
       expect(tx).toHaveLog('DistributedBorrowerComp', {
         cToken: mkt._address,
         borrower: a1,
-        compDelta: etherUnsigned(25e18).toString(),
-        compBorrowIndex: etherDouble(6).toString()
+        compDelta: etherUnsigned(25e18).toFixed(),
+        compBorrowIndex: etherDouble(6).toFixed()
       });
     });
 
-    it('should not transfer if below comp claim threshold', async () => {
+    it('should not transfer comp automatically', async () => {
       const mkt = cREP;
       await send(comptroller.comp, 'transfer', [comptroller._address, etherUnsigned(50e18)], {from: root});
       await send(mkt, "harnessSetAccountBorrows", [a1, etherUnsigned(5.5e17), etherExp(1)]);
@@ -359,14 +448,14 @@ describe('Flywheel', () => {
                         = 5e18 * 5e36 / 1e36 = 25e18
       */
 
-      const tx = await send(comptroller, "harnessDistributeSupplierComp", [mkt._address, a1]);
+      const tx = await send(comptroller, "harnessDistributeAllSupplierComp", [mkt._address, a1]);
       expect(await compAccrued(comptroller, a1)).toEqualNumber(0);
       expect(await compBalance(comptroller, a1)).toEqualNumber(25e18);
       expect(tx).toHaveLog('DistributedSupplierComp', {
         cToken: mkt._address,
         supplier: a1,
-        compDelta: etherUnsigned(25e18).toString(),
-        compSupplyIndex: etherDouble(6).toString()
+        compDelta: etherUnsigned(25e18).toFixed(),
+        compSupplyIndex: etherDouble(6).toFixed()
       });
     });
 
@@ -385,7 +474,7 @@ describe('Flywheel', () => {
                         = 5e18 * 4e36 / 1e36 = 20e18
       */
 
-      await send(comptroller, "harnessDistributeSupplierComp", [mkt._address, a1]);
+      await send(comptroller, "harnessDistributeAllSupplierComp", [mkt._address, a1]);
       expect(await compAccrued(comptroller, a1)).toEqualNumber(0);
       expect(await compBalance(comptroller, a1)).toEqualNumber(20e18);
     });
@@ -464,10 +553,11 @@ describe('Flywheel', () => {
 
   describe('claimComp', () => {
     it('should accrue comp and then transfer comp accrued', async () => {
-      const compRemaining = compRate.mul(100), mintAmount = etherUnsigned(12e18), deltaBlocks = 10;
+      const compRemaining = compRate.multipliedBy(100), mintAmount = etherUnsigned(12e18), deltaBlocks = 10;
       await send(comptroller.comp, 'transfer', [comptroller._address, compRemaining], {from: root});
       await pretendBorrow(cLOW, a1, 1, 1, 100);
-      await send(comptroller, 'refreshCompSpeeds');
+      await send(comptroller, '_setCompSpeed', [cLOW._address, etherExp(0.5)]);
+      await send(comptroller, 'harnessRefreshCompSpeeds');
       const speed = await call(comptroller, 'compSpeeds', [cLOW._address]);
       const a2AccruedPre = await compAccrued(comptroller, a2);
       const compBalancePre = await compBalance(comptroller, a2);
@@ -476,19 +566,20 @@ describe('Flywheel', () => {
       const tx = await send(comptroller, 'claimComp', [a2]);
       const a2AccruedPost = await compAccrued(comptroller, a2);
       const compBalancePost = await compBalance(comptroller, a2);
-      expect(tx.gasUsed).toBeLessThan(330000);
+      expect(tx.gasUsed).toBeLessThan(400000);
       expect(speed).toEqualNumber(compRate);
       expect(a2AccruedPre).toEqualNumber(0);
       expect(a2AccruedPost).toEqualNumber(0);
       expect(compBalancePre).toEqualNumber(0);
-      expect(compBalancePost).toEqualNumber(compRate.mul(deltaBlocks).sub(1)); // index is 8333...
+      expect(compBalancePost).toEqualNumber(compRate.multipliedBy(deltaBlocks).minus(1)); // index is 8333...
     });
 
     it('should accrue comp and then transfer comp accrued in a single market', async () => {
-      const compRemaining = compRate.mul(100), mintAmount = etherUnsigned(12e18), deltaBlocks = 10;
+      const compRemaining = compRate.multipliedBy(100), mintAmount = etherUnsigned(12e18), deltaBlocks = 10;
       await send(comptroller.comp, 'transfer', [comptroller._address, compRemaining], {from: root});
       await pretendBorrow(cLOW, a1, 1, 1, 100);
-      await send(comptroller, 'refreshCompSpeeds');
+      await send(comptroller, 'harnessAddCompMarkets', [[cLOW._address]]);
+      await send(comptroller, 'harnessRefreshCompSpeeds');
       const speed = await call(comptroller, 'compSpeeds', [cLOW._address]);
       const a2AccruedPre = await compAccrued(comptroller, a2);
       const compBalancePre = await compBalance(comptroller, a2);
@@ -497,12 +588,12 @@ describe('Flywheel', () => {
       const tx = await send(comptroller, 'claimComp', [a2, [cLOW._address]]);
       const a2AccruedPost = await compAccrued(comptroller, a2);
       const compBalancePost = await compBalance(comptroller, a2);
-      expect(tx.gasUsed).toBeLessThan(160000);
+      expect(tx.gasUsed).toBeLessThan(170000);
       expect(speed).toEqualNumber(compRate);
       expect(a2AccruedPre).toEqualNumber(0);
       expect(a2AccruedPost).toEqualNumber(0);
       expect(compBalancePre).toEqualNumber(0);
-      expect(compBalancePost).toEqualNumber(compRate.mul(deltaBlocks).sub(1)); // index is 8333...
+      expect(compBalancePost).toEqualNumber(compRate.multipliedBy(deltaBlocks).minus(1)); // index is 8333...
     });
 
     it('should claim when comp accrued is below threshold', async () => {
@@ -524,7 +615,7 @@ describe('Flywheel', () => {
 
   describe('claimComp batch', () => {
     it('should revert when claiming comp from non-listed market', async () => {
-      const compRemaining = compRate.mul(100), deltaBlocks = 10, mintAmount = etherExp(10);
+      const compRemaining = compRate.multipliedBy(100), deltaBlocks = 10, mintAmount = etherExp(10);
       await send(comptroller.comp, 'transfer', [comptroller._address, compRemaining], {from: root});
       let [_, __, ...claimAccts] = saddle.accounts;
 
@@ -535,16 +626,15 @@ describe('Flywheel', () => {
       }
 
       await pretendBorrow(cLOW, root, 1, 1, etherExp(10));
-      await send(comptroller, 'refreshCompSpeeds');
+      await send(comptroller, 'harnessRefreshCompSpeeds');
 
       await fastForward(comptroller, deltaBlocks);
 
       await expect(send(comptroller, 'claimComp', [claimAccts, [cLOW._address, cEVIL._address], true, true])).rejects.toRevert('revert market must be listed');
     });
 
-
     it('should claim the expected amount when holders and ctokens arg is duplicated', async () => {
-      const compRemaining = compRate.mul(100), deltaBlocks = 10, mintAmount = etherExp(10);
+      const compRemaining = compRate.multipliedBy(100), deltaBlocks = 10, mintAmount = etherExp(10);
       await send(comptroller.comp, 'transfer', [comptroller._address, compRemaining], {from: root});
       let [_, __, ...claimAccts] = saddle.accounts;
       for(let from of claimAccts) {
@@ -553,7 +643,8 @@ describe('Flywheel', () => {
         send(cLOW, 'mint', [mintAmount], { from });
       }
       await pretendBorrow(cLOW, root, 1, 1, etherExp(10));
-      await send(comptroller, 'refreshCompSpeeds');
+      await send(comptroller, 'harnessAddCompMarkets', [[cLOW._address]]);
+      await send(comptroller, 'harnessRefreshCompSpeeds');
 
       await fastForward(comptroller, deltaBlocks);
 
@@ -566,7 +657,7 @@ describe('Flywheel', () => {
     });
 
     it('claims comp for multiple suppliers only', async () => {
-      const compRemaining = compRate.mul(100), deltaBlocks = 10, mintAmount = etherExp(10);
+      const compRemaining = compRate.multipliedBy(100), deltaBlocks = 10, mintAmount = etherExp(10);
       await send(comptroller.comp, 'transfer', [comptroller._address, compRemaining], {from: root});
       let [_, __, ...claimAccts] = saddle.accounts;
       for(let from of claimAccts) {
@@ -575,7 +666,8 @@ describe('Flywheel', () => {
         send(cLOW, 'mint', [mintAmount], { from });
       }
       await pretendBorrow(cLOW, root, 1, 1, etherExp(10));
-      await send(comptroller, 'refreshCompSpeeds');
+      await send(comptroller, 'harnessAddCompMarkets', [[cLOW._address]]);
+      await send(comptroller, 'harnessRefreshCompSpeeds');
 
       await fastForward(comptroller, deltaBlocks);
 
@@ -588,7 +680,7 @@ describe('Flywheel', () => {
     });
 
     it('claims comp for multiple borrowers only, primes uninitiated', async () => {
-      const compRemaining = compRate.mul(100), deltaBlocks = 10, mintAmount = etherExp(10), borrowAmt = etherExp(1), borrowIdx = etherExp(1)
+      const compRemaining = compRate.multipliedBy(100), deltaBlocks = 10, mintAmount = etherExp(10), borrowAmt = etherExp(1), borrowIdx = etherExp(1)
       await send(comptroller.comp, 'transfer', [comptroller._address, compRemaining], {from: root});
       let [_,__, ...claimAccts] = saddle.accounts;
 
@@ -596,7 +688,8 @@ describe('Flywheel', () => {
         await send(cLOW, 'harnessIncrementTotalBorrows', [borrowAmt]);
         await send(cLOW, 'harnessSetAccountBorrows', [acct, borrowAmt, borrowIdx]);
       }
-      await send(comptroller, 'refreshCompSpeeds');
+      await send(comptroller, 'harnessAddCompMarkets', [[cLOW._address]]);
+      await send(comptroller, 'harnessRefreshCompSpeeds');
 
       await send(comptroller, 'harnessFastForward', [10]);
 
@@ -615,87 +708,50 @@ describe('Flywheel', () => {
     });
   });
 
-  describe('refreshCompSpeeds', () => {
+  describe('harnessRefreshCompSpeeds', () => {
     it('should start out 0', async () => {
-      await send(comptroller, 'refreshCompSpeeds');
+      await send(comptroller, 'harnessRefreshCompSpeeds');
       const speed = await call(comptroller, 'compSpeeds', [cLOW._address]);
       expect(speed).toEqualNumber(0);
     });
 
     it('should get correct speeds with borrows', async () => {
       await pretendBorrow(cLOW, a1, 1, 1, 100);
-      const tx = await send(comptroller, 'refreshCompSpeeds');
+      await send(comptroller, 'harnessAddCompMarkets', [[cLOW._address]]);
+      const tx = await send(comptroller, 'harnessRefreshCompSpeeds');
       const speed = await call(comptroller, 'compSpeeds', [cLOW._address]);
       expect(speed).toEqualNumber(compRate);
       expect(tx).toHaveLog(['CompSpeedUpdated', 0], {
         cToken: cLOW._address,
         newSpeed: speed
       });
-      expect(tx).toHaveLog(['CompSpeedUpdated', 1], {
-        cToken: cREP._address,
-        newSpeed: 0
-      });
-      expect(tx).toHaveLog(['CompSpeedUpdated', 2], {
-        cToken: cZRX._address,
-        newSpeed: 0
-      });
     });
 
     it('should get correct speeds for 2 assets', async () => {
       await pretendBorrow(cLOW, a1, 1, 1, 100);
       await pretendBorrow(cZRX, a1, 1, 1, 100);
-      await send(comptroller, 'refreshCompSpeeds');
+      await send(comptroller, 'harnessAddCompMarkets', [[cLOW._address, cZRX._address]]);
+      await send(comptroller, 'harnessRefreshCompSpeeds');
       const speed1 = await call(comptroller, 'compSpeeds', [cLOW._address]);
       const speed2 = await call(comptroller, 'compSpeeds', [cREP._address]);
       const speed3 = await call(comptroller, 'compSpeeds', [cZRX._address]);
-      expect(speed1).toEqualNumber(compRate.div(4));
+      expect(speed1).toEqualNumber(compRate.dividedBy(4));
       expect(speed2).toEqualNumber(0);
-      expect(speed3).toEqualNumber(compRate.div(4).mul(3));
-    });
-
-    it('should not be callable inside a contract', async () => {
-      await pretendBorrow(cLOW, a1, 1, 1, 100);
-      await pretendBorrow(cZRX, a1, 1, 1, 100);
-      await expect(deploy('RefreshSpeedsProxy', [comptroller._address])).rejects.toRevert('revert only externall refresh speeds');
+      expect(speed3).toEqualNumber(compRate.dividedBy(4).multipliedBy(3));
     });
   });
 
-  describe('_addCompMarkets', () => {
+  describe('harnessAddCompMarkets', () => {
     it('should correctly add a comp market if called by admin', async () => {
       const cBAT = await makeCToken({comptroller, supportMarket: true});
-      const tx = await send(comptroller, '_addCompMarkets', [[cBAT._address]]);
+      const tx1 = await send(comptroller, 'harnessAddCompMarkets', [[cLOW._address, cREP._address, cZRX._address]]);
+      const tx2 = await send(comptroller, 'harnessAddCompMarkets', [[cBAT._address]]);
       const markets = await call(comptroller, 'getCompMarkets');
       expect(markets).toEqual([cLOW, cREP, cZRX, cBAT].map((c) => c._address));
-      expect(tx).toHaveLog('MarketComped', {
+      expect(tx2).toHaveLog('CompSpeedUpdated', {
         cToken: cBAT._address,
-        isComped: true
+        newSpeed: 1
       });
-    });
-
-    it('should revert if not called by admin', async () => {
-      const cBAT = await makeCToken({ comptroller, supportMarket: true });
-      await expect(
-        send(comptroller, '_addCompMarkets', [[cBAT._address]], {from: a1})
-      ).rejects.toRevert('revert only admin can add compMarket');
-    });
-
-    it('should not add non-listed markets', async () => {
-      const cBAT = await makeCToken({ comptroller, supportMarket: false });
-      await expect(
-        send(comptroller, '_addCompMarkets', [[cBAT._address]])
-      ).rejects.toRevert('revert compMarket is not listed');
-
-      const markets = await call(comptroller, 'getCompMarkets');
-      expect(markets).toEqual([cLOW, cREP, cZRX].map((c) => c._address));
-    });
-
-    it('should not add duplicate markets', async () => {
-      const cBAT = await makeCToken({comptroller, supportMarket: true});
-      await send(comptroller, '_addCompMarkets', [[cBAT._address]]);
-
-      await expect(
-        send(comptroller, '_addCompMarkets', [[cBAT._address]])
-      ).rejects.toRevert('revert compMarket already added');
     });
 
     it('should not write over a markets existing state', async () => {
@@ -703,72 +759,77 @@ describe('Flywheel', () => {
       const bn0 = 10, bn1 = 20;
       const idx = etherUnsigned(1.5e36);
 
+      await send(comptroller, "harnessAddCompMarkets", [[mkt]]);
       await send(comptroller, "setCompSupplyState", [mkt, idx, bn0]);
       await send(comptroller, "setCompBorrowState", [mkt, idx, bn0]);
       await send(comptroller, "setBlockNumber", [bn1]);
-      await send(comptroller, "_dropCompMarket", [mkt]);
-      await send(comptroller, "_addCompMarkets", [[mkt]]);
+      await send(comptroller, "_setCompSpeed", [mkt, 0]);
+      await send(comptroller, "harnessAddCompMarkets", [[mkt]]);
 
       const supplyState = await call(comptroller, 'compSupplyState', [mkt]);
       expect(supplyState.block).toEqual(bn1.toString());
-      expect(supplyState.index).toEqual(idx.toString());
+      expect(supplyState.index).toEqual(idx.toFixed());
 
       const borrowState = await call(comptroller, 'compBorrowState', [mkt]);
       expect(borrowState.block).toEqual(bn1.toString());
-      expect(borrowState.index).toEqual(idx.toString());
+      expect(borrowState.index).toEqual(idx.toFixed());
     });
   });
 
-  describe('_dropCompMarket', () => {
-    it('should correctly drop a comp market if called by admin', async () => {
-      const tx = await send(comptroller, '_dropCompMarket', [cLOW._address]);
-      expect(await call(comptroller, 'getCompMarkets')).toEqual(
-        [cREP, cZRX].map((c) => c._address)
-      );
-      expect(tx).toHaveLog('MarketComped', {
-        cToken: cLOW._address,
-        isComped: false
-      });
+
+  describe('updateContributorRewards', () => {
+    it('should not fail when contributor rewards called on non-contributor', async () => {
+      const tx1 = await send(comptroller, 'updateContributorRewards', [a1]);
     });
 
-    it('should correctly drop a comp market from middle of array', async () => {
-      await send(comptroller, '_dropCompMarket', [cREP._address]);
-      expect(await call(comptroller, 'getCompMarkets')).toEqual(
-        [cLOW, cZRX].map((c) => c._address)
-      );
+    it('should accrue comp to contributors', async () => {
+      const tx1 = await send(comptroller, '_setContributorCompSpeed', [a1, 2000]);
+      await fastForward(comptroller, 50);
+
+      const a1Accrued = await compAccrued(comptroller, a1);
+      expect(a1Accrued).toEqualNumber(0);
+
+      const tx2 = await send(comptroller, 'updateContributorRewards', [a1], {from: a1});
+      const a1Accrued2 = await compAccrued(comptroller, a1);
+      expect(a1Accrued2).toEqualNumber(50 * 2000);
     });
 
-    it('should not drop a comp market unless called by admin', async () => {
-      await expect(
-        send(comptroller, '_dropCompMarket', [cLOW._address], {from: a1})
-      ).rejects.toRevert('revert only admin can drop compMarket');
-    });
+    it('should accrue comp with late set', async () => {
+      await fastForward(comptroller, 1000);
+      const tx1 = await send(comptroller, '_setContributorCompSpeed', [a1, 2000]);
+      await fastForward(comptroller, 50);
 
-    it('should not drop a comp market already dropped', async () => {
-      await send(comptroller, '_dropCompMarket', [cLOW._address]);
-      await expect(
-        send(comptroller, '_dropCompMarket', [cLOW._address])
-      ).rejects.toRevert('revert market is not a compMarket');
+      const tx2 = await send(comptroller, 'updateContributorRewards', [a1], {from: a1});
+      const a1Accrued2 = await compAccrued(comptroller, a1);
+      expect(a1Accrued2).toEqualNumber(50 * 2000);
     });
   });
 
-  describe('_setCompRate', () => {
-    it('should correctly change comp rate if called by admin', async () => {
-      expect(await call(comptroller, 'compRate')).toEqualNumber(etherUnsigned(1e18));
-      const tx1 = await send(comptroller, '_setCompRate', [etherUnsigned(3e18)]);
-      expect(await call(comptroller, 'compRate')).toEqualNumber(etherUnsigned(3e18));
-      const tx2 = await send(comptroller, '_setCompRate', [etherUnsigned(2e18)]);
-      expect(await call(comptroller, 'compRate')).toEqualNumber(etherUnsigned(2e18));
-      expect(tx2).toHaveLog('NewCompRate', {
-        oldCompRate: etherUnsigned(3e18),
-        newCompRate: etherUnsigned(2e18)
+  describe('_setContributorCompSpeed', () => {
+    it('should revert if not called by admin', async () => {
+      await expect(
+        send(comptroller, '_setContributorCompSpeed', [a1, 1000], {from: a1})
+      ).rejects.toRevert('revert only admin can set comp speed');
+    });
+
+    it('should start comp stream if called by admin', async () => {
+      const tx = await send(comptroller, '_setContributorCompSpeed', [a1, 1000]);
+      expect(tx).toHaveLog('ContributorCompSpeedUpdated', {
+        contributor: a1,
+        newSpeed: 1000
       });
     });
 
-    it('should not change comp rate unless called by admin', async () => {
-      await expect(
-        send(comptroller, '_setCompRate', [cLOW._address], {from: a1})
-      ).rejects.toRevert('revert only admin can set compRate');
+    it('should reset comp stream if set to 0', async () => {
+      const tx1 = await send(comptroller, '_setContributorCompSpeed', [a1, 2000]);
+      await fastForward(comptroller, 50);
+
+      const tx2 = await send(comptroller, '_setContributorCompSpeed', [a1, 0]);
+      await fastForward(comptroller, 50);
+
+      const tx3 = await send(comptroller, 'updateContributorRewards', [a1], {from: a1});
+      const a1Accrued = await compAccrued(comptroller, a1);
+      expect(a1Accrued).toEqualNumber(50 * 2000);
     });
   });
 });

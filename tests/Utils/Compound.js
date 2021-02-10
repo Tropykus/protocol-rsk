@@ -8,6 +8,7 @@ const {
   etherUnsigned,
   mergeInterface
 } = require('./Ethereum');
+const BigNumber = require('bignumber.js');
 
 async function makeComptroller(opts = {}) {
   const {
@@ -27,10 +28,8 @@ async function makeComptroller(opts = {}) {
     const comptroller = await deploy('ComptrollerHarness');
     const priceOracle = opts.priceOracle || await makePriceOracle(opts.priceOracleOpts);
     const closeFactor = etherMantissa(dfn(opts.closeFactor, .051));
-    const maxAssets = etherUnsigned(dfn(opts.maxAssets, 10));
 
     await send(comptroller, '_setCloseFactor', [closeFactor]);
-    await send(comptroller, '_setMaxAssets', [maxAssets]);
     await send(comptroller, '_setPriceOracle', [priceOracle._address]);
 
     return Object.assign(comptroller, { priceOracle });
@@ -77,12 +76,32 @@ async function makeComptroller(opts = {}) {
     return Object.assign(unitroller, { priceOracle });
   }
 
+  if (kind == 'unitroller-g6') {
+    const unitroller = opts.unitroller || await deploy('Unitroller');
+    const comptroller = await deploy('ComptrollerScenarioG6');
+    const priceOracle = opts.priceOracle || await makePriceOracle(opts.priceOracleOpts);
+    const closeFactor = etherMantissa(dfn(opts.closeFactor, .051));
+    const liquidationIncentive = etherMantissa(1);
+    const comp = opts.comp || await deploy('Comp', [opts.compOwner || root]);
+    const compRate = etherUnsigned(dfn(opts.compRate, 1e18));
+
+    await send(unitroller, '_setPendingImplementation', [comptroller._address]);
+    await send(comptroller, '_become', [unitroller._address]);
+    mergeInterface(unitroller, comptroller);
+    await send(unitroller, '_setLiquidationIncentive', [liquidationIncentive]);
+    await send(unitroller, '_setCloseFactor', [closeFactor]);
+    await send(unitroller, '_setPriceOracle', [priceOracle._address]);
+    await send(unitroller, '_setCompRate', [compRate]);
+    await send(unitroller, 'setCompAddress', [comp._address]); // harness only
+
+    return Object.assign(unitroller, { priceOracle, comp });
+  }
+
   if (kind == 'unitroller') {
     const unitroller = opts.unitroller || await deploy('Unitroller');
     const comptroller = await deploy('ComptrollerHarness');
     const priceOracle = opts.priceOracle || await makePriceOracle(opts.priceOracleOpts);
     const closeFactor = etherMantissa(dfn(opts.closeFactor, .051));
-    const maxAssets = etherUnsigned(dfn(opts.maxAssets, 10));
     const liquidationIncentive = etherMantissa(1);
     const comp = opts.comp || await deploy('RLEN', [opts.compOwner || root]);
     const compRate = etherUnsigned(dfn(opts.compRate, 1e18));
@@ -92,10 +111,9 @@ async function makeComptroller(opts = {}) {
     mergeInterface(unitroller, comptroller);
     await send(unitroller, '_setLiquidationIncentive', [liquidationIncentive]);
     await send(unitroller, '_setCloseFactor', [closeFactor]);
-    await send(unitroller, '_setMaxAssets', [maxAssets]);
     await send(unitroller, '_setPriceOracle', [priceOracle._address]);
     await send(unitroller, 'setCompAddress', [comp._address]); // harness only
-    await send(unitroller, '_setCompRate', [compRate]);
+    await send(unitroller, 'harnessSetCompRate', [compRate]);
 
     return Object.assign(unitroller, { priceOracle, comp });
   }
@@ -132,6 +150,26 @@ async function makeCToken(opts = {}) {
         ])
       break;
 
+    case 'ccomp':
+      underlying = await deploy('RLEN', [opts.compHolder || root]);
+      cDelegatee = await deploy('CCompLikeDelegate');
+      cDelegator = await deploy('CErc20Delegator',
+        [
+          underlying._address,
+          comptroller._address,
+          interestRateModel._address,
+          exchangeRate,
+          name,
+          symbol,
+          decimals,
+          admin,
+          cDelegatee._address,
+          "0x0"
+        ]
+      );
+      cToken = await saddle.getContractAt('CCompLikeDelegate', cDelegator._address);
+      break;
+
     case 'cerc20':
     default:
       underlying = opts.underlying || await makeToken(opts.underlyingOpts);
@@ -150,7 +188,7 @@ async function makeCToken(opts = {}) {
           "0x0"
         ]
       );
-      cToken = await saddle.getContractAt('CErc20DelegateHarness', cDelegator._address); // XXXS at
+      cToken = await saddle.getContractAt('CErc20DelegateHarness', cDelegator._address);
       break;
   }
 
@@ -313,7 +351,8 @@ async function adjustBalances(balances, deltas) {
       ([cToken, key, diff] = delta);
       account = cToken._address;
     }
-    balances[cToken._address][account][key] = balances[cToken._address][account][key].add(diff);
+
+    balances[cToken._address][account][key] = new BigNumber(balances[cToken._address][account][key]).plus(diff);
   }
   return balances;
 }

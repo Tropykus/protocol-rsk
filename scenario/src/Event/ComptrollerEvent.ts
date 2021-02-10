@@ -248,12 +248,60 @@ async function claimComp(world: World, from: string, comptroller: Comptroller, h
   return world;
 }
 
+async function updateContributorRewards(world: World, from: string, comptroller: Comptroller, contributor: string): Promise<World> {
+  let invokation = await invoke(world, comptroller.methods.updateContributorRewards(contributor), from, ComptrollerErrorReporter);
+
+  world = addAction(
+    world,
+    `Contributor rewards updated for ${contributor}`,
+    invokation
+  );
+
+  return world;
+}
+
+async function grantComp(world: World, from: string, comptroller: Comptroller, recipient: string, amount: NumberV): Promise<World> {
+  let invokation = await invoke(world, comptroller.methods._grantComp(recipient, amount.encode()), from, ComptrollerErrorReporter);
+
+  world = addAction(
+    world,
+    `${amount.show()} comp granted to ${recipient}`,
+    invokation
+  );
+
+  return world;
+}
+
 async function setCompRate(world: World, from: string, comptroller: Comptroller, rate: NumberV): Promise<World> {
   let invokation = await invoke(world, comptroller.methods._setCompRate(rate.encode()), from, ComptrollerErrorReporter);
 
   world = addAction(
     world,
     `RLEN rate set to ${rate.show()}`,
+    invokation
+  );
+
+  return world;
+}
+
+async function setCompSpeed(world: World, from: string, comptroller: Comptroller, cToken: CToken, speed: NumberV): Promise<World> {
+  let invokation = await invoke(world, comptroller.methods._setCompSpeed(cToken._address, speed.encode()), from, ComptrollerErrorReporter);
+
+  world = addAction(
+    world,
+    `Comp speed for market ${cToken._address} set to ${speed.show()}`,
+    invokation
+  );
+
+  return world;
+}
+
+async function setContributorCompSpeed(world: World, from: string, comptroller: Comptroller, contributor: string, speed: NumberV): Promise<World> {
+  let invokation = await invoke(world, comptroller.methods._setContributorCompSpeed(contributor, speed.encode()), from, ComptrollerErrorReporter);
+
+  world = addAction(
+    world,
+    `Comp speed for contributor ${contributor} set to ${speed.show()}`,
     invokation
   );
 
@@ -700,6 +748,33 @@ export function comptrollerCommands() {
       ],
       (world, from, {comptroller, holder}) => claimComp(world, from, comptroller, holder.val)
     ),
+    new Command<{comptroller: Comptroller, contributor: AddressV}>(`
+      #### UpdateContributorRewards
+
+      * "Comptroller UpdateContributorRewards <contributor>" - Updates rewards for a contributor
+      * E.g. "Comptroller UpdateContributorRewards Geoff
+      `,
+      "UpdateContributorRewards",
+      [
+        new Arg("comptroller", getComptroller, {implicit: true}),
+        new Arg("contributor", getAddressV)
+      ],
+      (world, from, {comptroller, contributor}) => updateContributorRewards(world, from, comptroller, contributor.val)
+    ),
+    new Command<{comptroller: Comptroller, recipient: AddressV, amount: NumberV}>(`
+      #### GrantComp
+
+      * "Comptroller GrantComp <recipient> <amount>" - Grants COMP to a recipient
+      * E.g. "Comptroller GrantComp Geoff 1e18
+      `,
+      "GrantComp",
+      [
+        new Arg("comptroller", getComptroller, {implicit: true}),
+        new Arg("recipient", getAddressV),
+        new Arg("amount", getNumberV)
+      ],
+      (world, from, {comptroller, recipient, amount}) => grantComp(world, from, comptroller, recipient.val, amount)
+    ),
     new Command<{comptroller: Comptroller, rate: NumberV}>(`
       #### SetCompRate
 
@@ -712,6 +787,32 @@ export function comptrollerCommands() {
         new Arg("rate", getNumberV)
       ],
       (world, from, {comptroller, rate}) => setCompRate(world, from, comptroller, rate)
+    ),
+    new Command<{comptroller: Comptroller, cToken: CToken, speed: NumberV}>(`
+      #### SetCompSpeed
+      * "Comptroller SetCompSpeed <cToken> <rate>" - Sets COMP speed for market
+      * E.g. "Comptroller SetCompSpeed cToken 1000
+      `,
+      "SetCompSpeed",
+      [
+        new Arg("comptroller", getComptroller, {implicit: true}),
+        new Arg("cToken", getCTokenV),
+        new Arg("speed", getNumberV)
+      ],
+      (world, from, {comptroller, cToken, speed}) => setCompSpeed(world, from, comptroller, cToken, speed)
+    ),
+    new Command<{comptroller: Comptroller, contributor: AddressV, speed: NumberV}>(`
+      #### SetContributorCompSpeed
+      * "Comptroller SetContributorCompSpeed <contributor> <rate>" - Sets COMP speed for contributor
+      * E.g. "Comptroller SetContributorCompSpeed contributor 1000
+      `,
+      "SetContributorCompSpeed",
+      [
+        new Arg("comptroller", getComptroller, {implicit: true}),
+        new Arg("contributor", getAddressV),
+        new Arg("speed", getNumberV)
+      ],
+      (world, from, {comptroller, contributor, speed}) => setContributorCompSpeed(world, from, comptroller, contributor.val, speed)
     ),
     new Command<{comptroller: Comptroller, cTokens: CToken[], borrowCaps: NumberV[]}>(`
       #### SetMarketBorrowCaps

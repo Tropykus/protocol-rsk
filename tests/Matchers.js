@@ -1,6 +1,6 @@
 const { last } = require('./Utils/JS');
 const { address, etherUnsigned } = require('./Utils/Ethereum');
-const diff = require('jest-diff');
+const { default: diff } = require('jest-diff');
 const { ComptrollerErr, TokenErr, IRErr, MathErr } = require('./Errors');
 const networkEnv = process.env['network'];
 
@@ -340,7 +340,7 @@ expect.extend({
   },
 
   toEqualNumber(actual, expected) {
-    return match.call(this, actual, expected, etherUnsigned(actual).eq(etherUnsigned(expected)), opts('toEqualNumber'));
+    return match.call(this, actual, expected, etherUnsigned(actual).isEqualTo(etherUnsigned(expected)), opts('toEqualNumber'));
   },
 
   toPartEqual(actual, expected) {
