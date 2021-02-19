@@ -1,0 +1,214 @@
+%% XCharter is an extension of the Bitstream Charter fonts, adding osf,  
+% small caps and superior figures. Generated 2017/06/25 by Michael Sharpe.
+%%
+\NeedsTeXFormat{LaTeX2e}
+
+\def\fileversion{1.207}
+\def\filedate{2020/06/27}
+
+\ProvidesPackage{XCharter}[\filedate\space v\fileversion]
+
+\message{`XCharter' v\fileversion, \filedate\space Text macros for XCharter, an extension of Charter (msharpe)}
+
+\RequirePackage[T2A,LY1,T1]{fontenc}
+\RequirePackage{textcomp}
+\RequirePackage{scalefnt} % only for \textruble
+\DeclareEncodingSubset{TS1}{XCharter-*}{0}
+\IfFileExists{mweights.sty}{\RequirePackage{mweights}}{}
+\RequirePackage{etoolbox} %etoolbox loads etex.sty
+\RequirePackage{xstring,ifthen} % for \textfrac
+\IfFileExists{fontaxes.sty}{
+    \RequirePackage{fontaxes}
+    \fa@naming@exception{figures}{{superior}{proportional}}{Sup}
+    \fa@naming@exception{figures}{{superior}{tabular}}{Sup}
+    \def\sufigures{\@nomath\sufigures
+        \fontfigurestyle{superior}\selectfont}
+    \DeclareTextFontCommand{\textsu}{\sufigures}
+    \let\textsuperior\textsu
+    
+    \fa@naming@exception{figures}{{inferior}{proportional}}{Inf}
+    \fa@naming@exception{figures}{{inferior}{tabular}}{Inf}
+    \def\infigures{\@nomath\infigures
+        \fontfigurestyle{inferior}\selectfont}
+    \DeclareTextFontCommand{\textin}{\infigures}
+    \let\textinferior\textin
+
+    \fa@naming@exception{figures}{{numerators}{proportional}}{Numr}
+    \fa@naming@exception{figures}{{numerators}{tabular}}{Numr}
+    \def\nufigures{\@nomath\nufigures%
+        \fontfigurestyle{numerators}\selectfont}
+    \DeclareTextFontCommand{\textnu}{\nufigures}
+    \let\textnumerator\textnu
+
+    \fa@naming@exception{figures}{{denominators}{proportional}}{Dnom}
+    \fa@naming@exception{figures}{{denominators}{tabular}}{Dnom}
+    \def\defigures{\@nomath\defigures%
+        \fontfigurestyle{denominators}\selectfont}
+    \DeclareTextFontCommand{\textde}{\defigures}
+    \let\textdenominator\textde
+}{}
+\newcommand{\textfrac}[3][]{% like \textfrac[1]{7}{8}
+  \mbox{%
+    \ifthenelse{\not\equal{#1}{}}%Test for integer portion [optional #1]
+      {\textlf{#1}\kern.05em}{}%         
+    \textsu{#2}% numerator
+    \StrRight{#2}{1}[\@digit@]%
+    % look for  1, 2, 3, 4, 7
+    \ifcase\@digit@% 0
+    \or% 1
+    \or\kern.03em% 2
+    \or\kern-.01em% 3
+    \or%\kern-.01em% 4
+    \or%\kern.01em% 5
+    \or\kern.01em% 6
+    \or\kern-.09em% 7
+    \fi%
+    \kern\XCh@foresolidus\textfractionsolidus\kern\XCh@aftsolidus%
+    \StrLeft{#3}{1}[\@digit@]%
+    % look for 1, 4, 5, 7
+    \ifcase\@digit@% 0
+    \or\kern -.02em% 1
+    \or\kern .01em% 2
+    \or\kern -.02em% 3
+    \or\kern -.08em% 4
+    \or\kern -.01em% 5
+    \or\kern -.03em% 6
+    \or\kern .02em% 7
+    \fi%
+    \textde{#3}%       denominator [#3]
+  }%
+}
+
+\DeclareRobustCommand{\lfstyle}{%
+  \not@math@alphabet\lfstyle\relax
+  \fontfamily{XCharter-TLF}\selectfont }
+\DeclareRobustCommand{\osfstyle}{%
+  \not@math@alphabet\osfstyle\relax
+  \fontfamily{XCharter-TOsF}\selectfont }
+\def\textlf#1{{\lfstyle #1}}
+%\def\textosf#1{{\osfstyle #1}}
+
+\newcommand*{\XCharter@scale}{1}
+\IfFileExists{xkeyval.sty}{
+    \RequirePackage{xkeyval}
+    \DeclareOptionX{scale}{\renewcommand*{\XCharter@scale}{##1}}
+    \DeclareOptionX{scaled}{\renewcommand*{\XCharter@scale}{##1}}
+}{
+    \let\DeclareOptionX\DeclareOption
+    \let\ExecuteOptionsX\ExecuteOptions
+    \let\ProcessOptionsX\ProcessOptions
+}
+\let\orig@footnote=\thefootnote
+\let\orig@makefnmark=\@makefnmark
+\def\XCh@foresolidus{-.02em}
+\def\XCh@aftsolidus{-.02em}
+%\newif\ifXCh@babel
+%\ifdefined\bbl@tempa \XCh@babeltrue\fi
+\newif\if@XCh@scosf
+\newif\if@XCh@srb
+\def\XCharter@altone{1}% default is to use 1, not I
+\newif\if@XCh@sups
+\DeclareOptionX{foresolidus}{\gdef\XCh@foresolidus{#1}}
+\DeclareOptionX{aftsolidus}{\gdef\XCh@aftsolidus{#1}}
+\DeclareOptionX{lf}{\edef\XCharter@figurestyle{TLF}}
+\DeclareOptionX{lining}{\edef\XCharter@figurestyle{TLF}}
+\DeclareOptionX{oldstyle}{\edef\XCharter@figurestyle{TOsF}%
+\edef\XCharter@altone{1}}
+\DeclareOptionX{oldstyleI}{\edef\XCharter@figurestyle{TOsF}%
+\edef\XCharter@altone{}}
+\DeclareOptionX{osf}{\edef\XCharter@figurestyle{TOsF}\edef\XCharter@altone{1}}
+\DeclareOptionX{osfI}{\edef\XCharter@figurestyle{TOsF}\edef\XCharter@altone{}}
+\DeclareOptionX{sups}{\@XCh@supstrue}
+\DeclareOptionX{scosf}{\@XCh@scosftrue}
+\DeclareOptionX{serbianc}{\@XCh@srbtrue}
+
+\edef\bfseries@rm{b}
+\edef\mdseries@rm{m}
+\ExecuteOptionsX{lining}
+\ProcessOptionsX\relax
+
+\def\useosf{\edef\XCharter@figurestyle{TOsF}\def\XCharter@altone{1}}
+\def\useosfI{\edef\XCharter@figurestyle{TOsF}\def\XCharter@altone{}}
+\@onlypreamble\useosf
+\@onlypreamble\useosfI
+
+\newcommand{\textosfI}[1]{\oldstylenums{#1}}% to get XCharter osfI
+\newcommand{\textosf}[1]{{\fontencoding{T1}\fontfamily{XCharterx}\selectfont #1}}% to get XCharter osf
+
+\renewcommand*{\bfdefault}{b}
+\renewcommand*{\scdefault}{sc}% for better compatibility with mathdesign
+
+% The following are provided so that we may access osf in any mode
+% osfx corresponds to small 1 rather than small I
+\DeclareFontFamily{T1}{XCharterx}{}
+
+\DeclareFontShape{T1}{XCharterx}{m}{n}{
+   <-> s*[\XCharter@scale]  XCharter1-Roman-tosf-t1
+}{}
+\DeclareFontShape{T1}{XCharterx}{m}{it}{
+   <-> s*[\XCharter@scale]  XCharter1-Italic-tosf-t1
+}{}
+\DeclareFontShape{T1}{XCharterx}{b}{n}{
+   <-> s*[\XCharter@scale]  XCharter1-Bold-tosf-t1
+}{}
+\DeclareFontShape{T1}{XCharterx}{b}{it}{
+   <-> s*[\XCharter@scale]  XCharter1-BoldItalic-tosf-t1
+}{}
+
+
+\renewcommand*{\rmdefault}{XCharter-TLF}
+\renewcommand*{\familydefault}{\rmdefault}
+
+\if@XCh@scosf %
+\DeclareRobustCommand{\textsc}[1]{%
+{\fontfamily{XCharter-TOsF}\fontshape{sc}\selectfont #1}%
+}\fi% use OsF in small caps
+
+\DeclareRobustCommand{\textruble}{\rlap{\kern.03em\rule[.258em]{.1em}{.032em}}\rlap{\kern.03em\rule[.173em]{.41em}{.032em}}{\scalefont{.966}P}}
+
+\DeclareTextCommand{\textcircled}{TS1}[1]{%
+\hmode@bgroup
+   \ooalign{%
+      \hfil \raise .32ex\hbox {\fontencoding{T1}\fontseries{m}\fontshape{sc}\fontsize{7.5}{7.5}\selectfont \lowercase{#1}}\hfil \crcr
+     \char 79 %\textbigcircle 
+   }%
+ \egroup}
+
+%\DeclareTextCommand{\textcircled}{TS1}[1]{\hmode@bgroup
+%   \ooalign{%
+%      \hfil \raise .37ex\hbox {\fontencoding{T1}\fontseries{m}\fontshape{sc}\fontsize{7.2}{7.2}\selectfont \lowercase{#1}}\hfil \crcr
+%     \textbigcircle 
+%   }%
+% \egroup}
+
+\if@XCh@sups %
+ \ifdefined\sufigures
+  \def\f@@tn@te{footnote}
+  \def\@makefnmark{%
+    \ifx\@mpfn\f@@tn@te%not in a minipage
+      \ifx\thefootnote\orig@footnote%
+        \hbox{\sufigures\hspace*{.04em}\@thefnmark\hspace*{.04em}}%
+      \else%
+        \orig@makefnmark%
+      \fi%
+    \else%
+      \orig@makefnmark%
+    \fi}%
+ \fi%
+\fi
+
+%\AtEndPreamble{%
+%\renewcommand*{\rmdefault}{XCharter-\XCharter@figurestyle}
+%\normalfont}
+
+%\ifXCh@babel
+%    \renewcommand*{\rmdefault}{XCharter-\XCharter@figurestyle}
+%	\normalfont
+%\else
+\AtEndPreamble{%
+\renewcommand*{\rmdefault}{XCharter-\XCharter@figurestyle}
+\normalfont}
+%\fi
+
+
+\endinput
