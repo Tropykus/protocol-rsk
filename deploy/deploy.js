@@ -291,7 +291,7 @@ module.exports = async (hardhat) => {
         await newUnitrollerContract._setCollateralFactor(cUsdtResult.address, etherMantissa(0.75)).then((tx) => tx.wait())
 
         console.log("\n  _setReserveFactor cUSDT...")
-        await cUsdtContract._setReserveFactor(etherMantissa(0.15)).then((tx) => tx.wait())
+        await cUsdtContract._setReserveFactor(etherMantissa(0.1)).then((tx) => tx.wait())
     } else {
         console.log("\n cUSDT already deployed...")
     }
@@ -320,7 +320,7 @@ module.exports = async (hardhat) => {
         await newUnitrollerContract._setCollateralFactor(cRifResult.address, etherMantissa(0.5)).then((tx) => tx.wait())
 
         console.log("\n  _setReserveFactor cRif...")
-        await cRifContract._setReserveFactor(etherMantissa(0.2)).then((tx) => tx.wait())
+        await cRifContract._setReserveFactor(etherMantissa(0.1)).then((tx) => tx.wait())
     } else {
         console.log("\n cRIF already deployed...")
     }
