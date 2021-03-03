@@ -78,7 +78,7 @@ contract ComptrollerInterface {
 // pragma solidity ^0.5.16;
 
 /**
-  * @title Compound's InterestRateModel Interface
+  * @title rLending's InterestRateModel Interface
   * @author rLending
   */
 contract InterestRateModel {
@@ -1250,7 +1250,7 @@ interface EIP20NonStandardInterface {
 // import "contracts/InterestRateModel.sol";
 
 /**
- * @title Compound's CToken Contract
+ * @title rLending's CToken Contract
  * @notice Abstract base for CTokens
  * @author rLending
  */
@@ -2696,7 +2696,7 @@ contract PriceOracle {
 // import "contracts/CToken.sol";
 
 /**
- * @title Compound's CErc20 Contract
+ * @title rLending's CErc20 Contract
  * @notice CTokens which wrap an EIP-20 underlying
  * @author rLending
  */
@@ -2891,13 +2891,18 @@ contract CErc20 is CToken, CErc20Interface {
 }
 
 
-// Root file: contracts/SimplePriceOracle.sol
+// Root file: contracts/mocks/SimplePriceOracle.sol
 
 pragma solidity ^0.5.16;
 
 // import "contracts/PriceOracle.sol";
 // import "contracts/CErc20.sol";
 
+/**
+  * @title Simplified Oracle for testing purposes.
+  * @author rLending
+  * @notice This contract is meant for testing only.
+  */
 contract SimplePriceOracle is PriceOracle {
     mapping(address => uint) prices;
     event PricePosted(address asset, uint previousPriceMantissa, uint requestedPriceMantissa, uint newPriceMantissa);

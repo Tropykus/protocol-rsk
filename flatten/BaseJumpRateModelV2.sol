@@ -195,19 +195,26 @@ pragma solidity ^0.5.16;
 // import "contracts/SafeMath.sol";
 
 /**
-  * @title Logic for Compound's JumpRateModel Contract V2.
-  * @author rLending 
+  * @title Logic for rLeding's JumpRateModel Contract V2.
+  * @author rLending
   * @notice Version 2 modifies Version 1 by enabling updateable parameters.
   */
 contract BaseJumpRateModelV2 {
     using SafeMath for uint;
 
     event NewInterestParams(uint baseRatePerBlock, uint multiplierPerBlock, uint jumpMultiplierPerBlock, uint kink);
+    event NewAdmin(address indexed newAdmin);
+    event NewPendingAdmin(address indexed newPendingAdmin);
 
     /**
      * @notice The address of the owner, i.e. the Timelock contract, which can update parameters directly
      */
     address public owner;
+
+    /**
+     * @notice The address of the owner, i.e. the Timelock contract, which can update parameters directly
+     */
+    address public pendingAdmin;
 
     /**
      * @notice The approximate number of blocks per year that is assumed by the interest rate model
@@ -244,7 +251,7 @@ contract BaseJumpRateModelV2 {
      */
     constructor(uint baseRatePerYear, uint multiplierPerYear, uint jumpMultiplierPerYear, uint kink_, address owner_) internal {
         owner = owner_;
-
+        emit NewAdmin(owner);
         updateJumpRateModelInternal(baseRatePerYear,  multiplierPerYear, jumpMultiplierPerYear, kink_);
     }
 
@@ -325,5 +332,20 @@ contract BaseJumpRateModelV2 {
         kink = kink_;
 
         emit NewInterestParams(baseRatePerBlock, multiplierPerBlock, jumpMultiplierPerBlock, kink);
+    }
+
+    function acceptAdmin() public {
+        require(msg.sender == pendingAdmin, "BaseJumpRateModelV2::acceptAdmin: Call must come from pendingAdmin.");
+        owner = msg.sender;
+        pendingAdmin = address(0);
+
+        emit NewAdmin(owner);
+    }
+
+    function setPendingAdmin(address pendingAdmin_) public {
+        require(msg.sender == owner, "BaseJumpRateModelV2::setPendingAdmin: Call must come from owner.");
+        pendingAdmin = pendingAdmin_;
+
+        emit NewPendingAdmin(pendingAdmin);
     }
 }

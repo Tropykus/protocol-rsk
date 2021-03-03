@@ -3,7 +3,7 @@
 // pragma solidity ^0.5.16;
 
 /**
-  * @title Compound's InterestRateModel Interface
+  * @title rLending's InterestRateModel Interface
   * @author rLending
   */
 contract InterestRateModel {
@@ -230,9 +230,9 @@ pragma solidity ^0.5.16;
 // import "contracts/SafeMath.sol";
 
 /**
-  * @title Compound's WhitePaperInterestRateModel Contract
+  * @title rLending's WhitePaperInterestRateModel Contract
   * @author rLending
-  * @notice The parameterized model described in section 2.4 of the original Compound Protocol whitepaper
+  * @notice The parameterized model described in section 2.4 of the original rLending Protocol whitepaper
   */
 contract WhitePaperInterestRateModel is InterestRateModel {
     using SafeMath for uint;

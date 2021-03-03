@@ -78,7 +78,7 @@ contract ComptrollerInterface {
 // pragma solidity ^0.5.16;
 
 /**
-  * @title Compound's InterestRateModel Interface
+  * @title rLending's InterestRateModel Interface
   * @author rLending
   */
 contract InterestRateModel {
@@ -1250,7 +1250,7 @@ interface EIP20NonStandardInterface {
 // import "contracts/InterestRateModel.sol";
 
 /**
- * @title Compound's CToken Contract
+ * @title rLending's CToken Contract
  * @notice Abstract base for CTokens
  * @author rLending
  */
@@ -3006,8 +3006,8 @@ pragma solidity ^0.5.16;
 // import "contracts/Unitroller.sol";
 
 /**
- * @title RLending's Comptroller Contract
- * @author RLending
+ * @title rLending's Comptroller Contract
+ * @author rLending
  */
 contract ComptrollerG2 is ComptrollerV2Storage, ComptrollerInterface, ComptrollerErrorReporter, Exponential {
     /**

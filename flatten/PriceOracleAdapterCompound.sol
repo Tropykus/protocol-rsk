@@ -95,7 +95,7 @@ contract ComptrollerInterface {
 // pragma solidity ^0.5.16;
 
 /**
-  * @title Compound's InterestRateModel Interface
+  * @title rLending's InterestRateModel Interface
   * @author rLending
   */
 contract InterestRateModel {
@@ -1267,7 +1267,7 @@ interface EIP20NonStandardInterface {
 // import "contracts/InterestRateModel.sol";
 
 /**
- * @title Compound's CToken Contract
+ * @title rLending's CToken Contract
  * @notice Abstract base for CTokens
  * @author rLending
  */
@@ -2693,7 +2693,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 // import "contracts/CToken.sol";
 
 /**
- * @title Compound's CErc20 Contract
+ * @title rLending's CErc20 Contract
  * @notice CTokens which wrap an EIP-20 underlying
  * @author rLending
  */
@@ -2888,7 +2888,7 @@ contract CErc20 is CToken, CErc20Interface {
 }
 
 
-// Root file: contracts/PriceOracleAdapterCompound.sol
+// Root file: contracts/mocks/PriceOracleAdapterCompound.sol
 
 pragma solidity ^0.5.16;
 

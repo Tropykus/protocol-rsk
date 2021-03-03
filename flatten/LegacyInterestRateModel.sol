@@ -3,7 +3,7 @@
 pragma solidity ^0.5.16;
 
 /**
-  * @title Compound's Legacy InterestRateModel Interface
+  * @title rLending's Legacy InterestRateModel Interface
   * @author rLending (modified by Arr00)
   */
 contract LegacyInterestRateModel {
