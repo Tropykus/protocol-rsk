@@ -249,16 +249,25 @@ module.exports = async (hardhat) => {
 
 
     // --------------------- Deploy InterestRateModel ----------------- //
-    console.log("\n  Deploy JumpRateModelV2...")
-    const jumpRateModelV2Result = await deploy("JumpRateModelV2", {
-        args: [etherMantissa(0.05), etherMantissa(0.2), etherMantissa(2), etherMantissa(0.90), deployer],
+    // nice explination of the arguments https://compound.finance/governance/proposals/23
+    console.log("\n  USDT Deploy JumpRateModelV2...")
+    const usdtJumpRateModelV2Result = await deploy("UsdtJumpRateModelV2", {
+        // 0% base rate, 4% borrow rate at kink, 25% borrow rate at 100% utilization, Kink at 80% utilization
+        args: [etherMantissa(0).toString(), etherMantissa(0.04).toString(), etherMantissa(1.09).toString(), etherMantissa(0.8).toString(), deployer],
         contract: "JumpRateModelV2",
         from: deployer,
         skipIfAlreadyDeployed: true
     })
-    console.log("\n  Deploy WhitePaperInterestRateModel...")
-    const whitePaperInterestRateModelResult = await deploy("WhitePaperInterestRateModel", {
-        args: [etherMantissa(0.05), etherMantissa(0.2)],
+    console.log("\n  Deploy BTC WhitePaperInterestRateModel...")
+    const btcWhitePaperInterestRateModelResult = await deploy("BtcWhitePaperInterestRateModel", {
+        args: [etherMantissa(0.02).toString(), etherMantissa(0.3).toString()],
+        contract: "WhitePaperInterestRateModel",
+        from: deployer,
+        skipIfAlreadyDeployed: true
+    })
+    console.log("\n  Deploy RIF WhitePaperInterestRateModel...")
+    const rifWhitePaperInterestRateModelResult = await deploy("RifWhitePaperInterestRateModel", {
+        args: [etherMantissa(0.02).toString(), etherMantissa(0.3).toString()],
         contract: "WhitePaperInterestRateModel",
         from: deployer,
         skipIfAlreadyDeployed: true
@@ -269,7 +278,7 @@ module.exports = async (hardhat) => {
     // ### Deploy cUSDT ### //
     console.log("\n  Deploy cUSDT...", usdt)
     const cUsdtResult = await deploy("cUSDT", {
-        args: [usdt, newUnitrollerContract.address, jumpRateModelV2Result.address, config.initialExchangeRateMantissa, "rLending cUSDT", "crUSDT", 8, deployer],
+        args: [usdt, newUnitrollerContract.address, usdtJumpRateModelV2Result.address, config.initialExchangeRateMantissa, "rLending cUSDT", "crUSDT", 8, deployer],
         contract: "CErc20Immutable",
         from: deployer,
         skipIfAlreadyDeployed: true
@@ -291,7 +300,7 @@ module.exports = async (hardhat) => {
         await newUnitrollerContract._setCollateralFactor(cUsdtResult.address, etherMantissa(0.75)).then((tx) => tx.wait())
 
         console.log("\n  _setReserveFactor cUSDT...")
-        await cUsdtContract._setReserveFactor(etherMantissa(0.1)).then((tx) => tx.wait())
+        await cUsdtContract._setReserveFactor(etherMantissa(0.15)).then((tx) => tx.wait())
     } else {
         console.log("\n cUSDT already deployed...")
     }
@@ -299,7 +308,7 @@ module.exports = async (hardhat) => {
     // ### Deploy cRIF ### //
     console.log("\n  Deploy cRIF...")
     const cRifResult = await deploy("cRIF", {
-        args: [rif, newUnitrollerContract.address, whitePaperInterestRateModelResult.address, config.initialExchangeRateMantissa, "rLending RIF", "cRIF", 8, deployer],
+        args: [rif, newUnitrollerContract.address, rifWhitePaperInterestRateModelResult.address, config.initialExchangeRateMantissa, "rLending RIF", "cRIF", 8, deployer],
         contract: "CErc20Immutable",
         from: deployer,
         skipIfAlreadyDeployed: true
@@ -320,7 +329,7 @@ module.exports = async (hardhat) => {
         await newUnitrollerContract._setCollateralFactor(cRifResult.address, etherMantissa(0.5)).then((tx) => tx.wait())
 
         console.log("\n  _setReserveFactor cRif...")
-        await cRifContract._setReserveFactor(etherMantissa(0.1)).then((tx) => tx.wait())
+        await cRifContract._setReserveFactor(etherMantissa(0.15)).then((tx) => tx.wait())
     } else {
         console.log("\n cRIF already deployed...")
     }
@@ -328,7 +337,7 @@ module.exports = async (hardhat) => {
     // ### Deploy cRBTC ### //
     console.log("\n  Deploy cRBTC...")
     const cRbtcResult = await deploy("CRBTC", {
-        args: [newUnitrollerContract.address, whitePaperInterestRateModelResult.address, config.initialExchangeRateMantissa, "rLending RBTC", "cRBTC", 8, deployer],
+        args: [newUnitrollerContract.address, btcWhitePaperInterestRateModelResult.address, config.initialExchangeRateMantissa, "rLending RBTC", "cRBTC", 8, deployer],
         contract: "CRBTC",
         from: deployer,
         skipIfAlreadyDeployed: true
@@ -346,7 +355,7 @@ module.exports = async (hardhat) => {
         await newUnitrollerContract._supportMarket(cRbtcResult.address).then((tx) => tx.wait())
 
         console.log("\n  _setCollateralFactor cRbtc...")
-        await newUnitrollerContract._setCollateralFactor(cRbtcResult.address, etherMantissa(0.6)).then((tx) => tx.wait())
+        await newUnitrollerContract._setCollateralFactor(cRbtcResult.address, etherMantissa(0.75)).then((tx) => tx.wait())
 
         console.log("\n  _setReserveFactor cRbtc...")
         await cRbtcContract._setReserveFactor(etherMantissa(0.2)).then((tx) => tx.wait())
@@ -417,8 +426,9 @@ module.exports = async (hardhat) => {
     console.log("  - USDT PriceOracleAdapter:         ", usdtPriceOracleAdapterResult.address)
     console.log("  - RBTC PriceOracleAdapter:         ", rbtcPriceOracleAdapterResult.address)
     console.log("  - Comptroller (Logic):             ", comptrollerResult.address)
-    console.log("  - JumpRateModelV2:                 ", jumpRateModelV2Result.address)
-    console.log("  - WhitePaperInterestRateModel:     ", whitePaperInterestRateModelResult.address)
+    console.log("  - USDT JumpRateModelV2:            ", usdtJumpRateModelV2Result.address)
+    console.log("  - RIF WhitePaperInterestRateModel: ", rifWhitePaperInterestRateModelResult.address)
+    console.log("  - BTC WhitePaperInterestRateModel: ", btcWhitePaperInterestRateModelResult.address)
     console.log("  - crUSDT:                          ", cUsdtResult.address)
     console.log("  - cRIF:                            ", cRifResult.address)
     console.log("  - cRBTC:                           ", cRbtcResult.address)

@@ -1,7 +1,7 @@
 {
-  "name": "compound-protocol",
+  "name": "rlending-protocol",
   "version": "0.2.1",
-  "description": "The Compound Money Market",
+  "description": "The rLending Money Market",
   "main": "index.js",
   "scripts": {
     "compile": "./script/compile",
@@ -19,8 +19,8 @@
     "test:prepare": "NO_RUN=true ./script/test",
     "checksize": "npx run ./script/saddle/comptrollerSize.js"
   },
-  "repository": "git@github.com:compound-finance/compound-protocol.git",
-  "author": "Compound Finance",
+  "repository": "git@github.com:riflending/rlending-protocol.git",
+  "author": "rLeding",
   "license": "UNLICENSED",
   "devDependencies": {
     "bignumber.js": "9.0.0",

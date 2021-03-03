@@ -78,7 +78,7 @@ contract ComptrollerInterface {
 // pragma solidity ^0.5.16;
 
 /**
-  * @title Compound's InterestRateModel Interface
+  * @title rLending's InterestRateModel Interface
   * @author rLending
   */
 contract InterestRateModel {
@@ -1250,7 +1250,7 @@ interface EIP20NonStandardInterface {
 // import "contracts/InterestRateModel.sol";
 
 /**
- * @title Compound's CToken Contract
+ * @title rLending's CToken Contract
  * @notice Abstract base for CTokens
  * @author rLending
  */
@@ -2998,6 +2998,11 @@ contract Unitroller is UnitrollerAdminStorage, ComptrollerErrorReporter {
 // pragma solidity ^0.5.16;
 pragma experimental ABIEncoderV2;
 
+/**
+  * @title RLEN ERC20 tokens.
+  * @author rLending
+  * @notice Yield farming tokens that allow to  propose and vote for protocol changes using the governance system.
+  */
 contract RLEN {
     /// @notice EIP-20 token name for this token
     string public constant name = "rLending";
@@ -3311,7 +3316,7 @@ pragma solidity ^0.5.16;
 // import "contracts/Governance/RLEN.sol";
 
 /**
- * @title Compound's Comptroller Contract
+ * @title rLending's Comptroller Contract
  * @author rLending
  */
 contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerErrorReporter, ExponentialNoError {
@@ -3665,7 +3670,7 @@ contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerE
     }
 
     // /**
-    //  * @notice Validates borrow and reverts on rejection. May emit logs.
+    //  * @notice Validates borrow and reverts on rejection. May emit logs. Currently unused
     //  * @param cToken Asset whose underlying is being borrowed
     //  * @param borrower The address borrowing the underlying
     //  * @param borrowAmount The amount of the underlying asset requested to borrow
@@ -3703,7 +3708,7 @@ contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerE
     }
 
     // /**
-    //  * @notice Validates repayBorrow and reverts on rejection. May emit logs.
+    //  * @notice Validates repayBorrow and reverts on rejection. May emit logs. Currently unused
     //  * @param cToken Asset being repaid
     //  * @param payer The address repaying the borrow
     //  * @param borrower The address of the borrower
@@ -3759,7 +3764,7 @@ contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerE
     }
 
     // /**
-    //  * @notice Validates liquidateBorrow and reverts on rejection. May emit logs.
+    //  * @notice Validates liquidateBorrow and reverts on rejection. May emit logs. Currently unused
     //  * @param cTokenBorrowed Asset which was borrowed by the borrower
     //  * @param cTokenCollateral Asset which was used as collateral and will be seized
     //  * @param liquidator The address repaying the borrow and seizing the collateral
@@ -3813,7 +3818,7 @@ contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerE
     }
 
     // /**
-    //  * @notice Validates seize and reverts on rejection. May emit logs.
+    //  * @notice Validates seize and reverts on rejection. May emit logs. Currently unused
     //  * @param cTokenCollateral Asset which was used as collateral and will be seized
     //  * @param cTokenBorrowed Asset which was borrowed by the borrower
     //  * @param liquidator The address repaying the borrow and seizing the collateral
@@ -3858,7 +3863,7 @@ contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerE
     }
 
     // /**
-    //  * @notice Validates transfer and reverts on rejection. May emit logs.
+    //  * @notice Validates transfer and reverts on rejection. May emit logs. Currently unused
     //  * @param cToken Asset being transferred
     //  * @param src The account which sources the tokens
     //  * @param dst The account which receives the tokens

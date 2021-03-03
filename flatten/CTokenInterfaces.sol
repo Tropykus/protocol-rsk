@@ -78,7 +78,7 @@ contract ComptrollerInterface {
 // pragma solidity ^0.5.16;
 
 /**
-  * @title Compound's InterestRateModel Interface
+  * @title rLending's InterestRateModel Interface
   * @author rLending
   */
 contract InterestRateModel {

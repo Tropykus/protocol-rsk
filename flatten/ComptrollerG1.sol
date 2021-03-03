@@ -78,7 +78,7 @@ contract ComptrollerInterface {
 // pragma solidity ^0.5.16;
 
 /**
-  * @title Compound's InterestRateModel Interface
+  * @title rLending's InterestRateModel Interface
   * @author rLending
   */
 contract InterestRateModel {
@@ -1250,7 +1250,7 @@ interface EIP20NonStandardInterface {
 // import "contracts/InterestRateModel.sol";
 
 /**
- * @title Compound's CToken Contract
+ * @title rLending's CToken Contract
  * @notice Abstract base for CTokens
  * @author rLending
  */
@@ -3006,7 +3006,7 @@ pragma solidity ^0.5.16;
 // import "contracts/Unitroller.sol";
 
 /**
- * @title Compound's Comptroller Contract
+ * @title rLending's Comptroller Contract
  * @author rLending
  * @dev This was the first version of the Comptroller brains.
  *  We keep it so our tests can continue to do the real-life behavior of upgrading from this logic forward.

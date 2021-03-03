@@ -3,6 +3,11 @@
 pragma solidity ^0.5.16;
 pragma experimental ABIEncoderV2;
 
+/**
+  * @title Governor contract to vote on rLending platform using RLEN tokens.
+  * @author rLending
+  * @notice This contract allows to propose and vote for protocol changes using the RLEN tokens.
+  */
 contract GovernorAlpha {
     /// @notice The name of this contract
     string public constant name = "Compound Governor Alpha";

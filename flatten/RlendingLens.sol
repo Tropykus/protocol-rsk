@@ -78,7 +78,7 @@ contract ComptrollerInterface {
 // pragma solidity ^0.5.16;
 
 /**
-  * @title Compound's InterestRateModel Interface
+  * @title rLending's InterestRateModel Interface
   * @author rLending
   */
 contract InterestRateModel {
@@ -1250,7 +1250,7 @@ interface EIP20NonStandardInterface {
 // import "contracts/InterestRateModel.sol";
 
 /**
- * @title Compound's CToken Contract
+ * @title rLending's CToken Contract
  * @notice Abstract base for CTokens
  * @author rLending
  */
@@ -2676,7 +2676,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 // import "contracts/CToken.sol";
 
 /**
- * @title Compound's CErc20 Contract
+ * @title rLending's CErc20 Contract
  * @notice CTokens which wrap an EIP-20 underlying
  * @author rLending
  */
@@ -2896,6 +2896,11 @@ contract PriceOracle {
 // pragma solidity ^0.5.16;
 pragma experimental ABIEncoderV2;
 
+/**
+  * @title Governor contract to vote on rLending platform using RLEN tokens.
+  * @author rLending
+  * @notice This contract allows to propose and vote for protocol changes using the RLEN tokens.
+  */
 contract GovernorAlpha {
     /// @notice The name of this contract
     string public constant name = "Compound Governor Alpha";
@@ -3231,6 +3236,11 @@ interface CompInterface {
 // pragma solidity ^0.5.16;
 pragma experimental ABIEncoderV2;
 
+/**
+  * @title RLEN ERC20 tokens.
+  * @author rLending
+  * @notice Yield farming tokens that allow to  propose and vote for protocol changes using the governance system.
+  */
 contract RLEN {
     /// @notice EIP-20 token name for this token
     string public constant name = "rLending";
@@ -3552,6 +3562,11 @@ interface ComptrollerLensInterface {
     function compAccrued(address) external view returns (uint);
 }
 
+/**
+  * @title Helper contract to get information of the protocol .
+  * @author rLending
+  * @notice RlendingLens allows to make obtain global information with a single call.
+  */
 contract RlendingLens {
     struct CTokenMetadata {
         address cToken;
