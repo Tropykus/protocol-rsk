@@ -4,11 +4,9 @@ rLending Protocol
 
 rLending is an algorithmic distributed protocol deployed on the RSK network.. As such, it's main motivation is to allow users to lend crypto currencies as collateral and to borrow crypto assets based on interest rates set by real-time supply and demand smart contracts. The rLending Protocol is developed using RSK smart contracts for supplying or borrowing assets. Through the cToken contracts, accounts on the blockchain *supply* capital (rBTC or ERC-20 tokens) to receive cTokens or *borrow* assets from the protocol (holding other assets as collateral). The rLending cToken contracts track these balances and algorithmically set interest rates for borrowers.
 
-* TODO: add link to official documentation
+You can read the protocol documentation at [rlending.app](https://rlending.app/docs/introduction)
 
-For questions about interacting with rLending, please visit [our Discord server](https://thinkanddev.com/discord).
-
-For security concerns, please visit [https://thinkanddev.com/security](https://thinkanddev.com/security) or email [security@thinkanddev.com](mailto:security@thinkanddev.com).
+For questions about interacting with rLending, please visit our [Telegram](https://t.me/rLendingCommunity).
 
 Contracts
 =========
@@ -199,8 +197,8 @@ In .buil/launch.json (create if is necesary) add the follow:
 Discussion
 ----------
 
-For any concerns with the protocol, open an issue or visit us on [Discord](https://thinkanddev.com/discord) to discuss.
+For any concerns with the protocol, open an issue or visit us on [Telegram](https://t.me/rLendingCommunity) to discuss.
 
-For security concerns, please email [security@thinkanddev.com](mailto:security@thinkanddev.com).
+For security concerns, please email [contact@rlending.app](mailto:contact@rlending.app).
 
-_© Copyright 2020, RIF Lending_
+_© Copyright 2021, rLending_
