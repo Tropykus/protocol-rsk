@@ -26,7 +26,7 @@ const config = {
       default: 0
     },
     rifOracle: {
-      30: '0x504EfCadfB020d6Bbaec8a5C5bb21453719d0e00',
+      30: '0x504efcadfb020d6bbaec8a5c5bb21453719d0e00',
       31: '0x9d4b2c05818a0086e641437fcb64ab6098c7bbec'
     },
     rbtcOracle: {
@@ -42,13 +42,11 @@ const config = {
       31: "0x19f64674d8a5b4e652319f5e239efd3bc969a1fe"
     },
     admin1: {
-      30: "0x8F63De841e7bccCe39FaA828128dA25f8A93411f",
-      31: "0x8F63De841e7bccCe39FaA828128dA25f8A93411f"
+      31: "0x8f63de841e7bccce39faa828128da25f8a93411f"
     },
     admin2: {
-      30: "0x170346689cC312D8E19959Bc68c3AD03E72C9850",
-      31: "0x170346689cC312D8E19959Bc68c3AD03E72C9850"
-    },
+      31: "0x170346689cc312d8e19959bc68c3ad03e72c9850"
+    }
   }
 };
 

@@ -1,7 +1,3 @@
-const {
-    etherMantissa,
-} = require('../tests/Utils/Ethereum');
-
 const chainName = (chainId) => {
     switch(chainId) {
       case 30: return 'Rsk Mainnet';
@@ -12,14 +8,12 @@ const chainName = (chainId) => {
       default: return 'Unknown';
     }
 }
-
+const parseEther = ethers.utils.parseEther;
 const config = {
-    initialExchangeRateMantissa:  ethers.utils.parseEther('2'),
-    liquidationIncentiveMantisa: ethers.utils.parseEther('1.08'),
-    closeFactorMantisa: etherMantissa(.051),
-    maxAssets: 20,
-    compRate: ethers.utils.parseEther('0'), //0 to not drip
-    compMarkets: [],
+    initialExchangeRateMantissa:  parseEther('2'),
+    liquidationIncentiveMantisa: parseEther('1.08'),
+    closeFactorMantisa: parseEther('0.5'),
+    compSpeed: parseEther('0'), //0 to not drip
 };
 
 module.exports = async (hardhat) => {
@@ -109,7 +103,7 @@ module.exports = async (hardhat) => {
     // USDT Oracle returns always 1
     console.log("\n 🔸 Deploying USDT Oracle...")
     const usdtOracleResult = await deploy("USDTOracle", {
-        args: [deployer, ethers.utils.parseEther('1')],
+        args: [multiSig, ethers.utils.parseEther('1')],
         contract: 'MockPriceProviderMoC',
         from: deployer,
         skipIfAlreadyDeployed: true
@@ -164,36 +158,27 @@ module.exports = async (hardhat) => {
 
     console.log("\n  Deploying RifPriceOracleAdapterMoc...")
     const rifPriceOracleAdapterResult = await deploy("RifPriceOracleAdapterMoc", {
-        args: [deployer, rifOracle],
+        args: [multiSig, rifOracle],
         contract: "PriceOracleAdapterMoc",
         from: deployer,
         skipIfAlreadyDeployed: true
     })
-    if(rifPriceOracleAdapterResult.newlyDeployed) {
-        await execute("RifPriceOracleAdapterMoc", {from: deployer}, "setGuardian", multiSig)
-    }
 
     console.log("\n  Deploying UsdtPriceOracleAdapterMoc...")
     const usdtPriceOracleAdapterResult = await deploy("UsdtPriceOracleAdapterMoc", {
-        args: [deployer, usdtOracle],
+        args: [multiSig, usdtOracle],
         contract: "PriceOracleAdapterMoc",
         from: deployer,
         skipIfAlreadyDeployed: true
     })
-    if(usdtPriceOracleAdapterResult.newlyDeployed) {
-        await execute("UsdtPriceOracleAdapterMoc", {from: deployer}, "setGuardian", multiSig)
-    }
 
     console.log("\n  Deploying RbtcPriceOracleAdapterMoc...")
     const rbtcPriceOracleAdapterResult = await deploy("RbtcPriceOracleAdapterMoc", {
-        args: [deployer, rbtcOracle],
+        args: [multiSig, rbtcOracle],
         contract: "PriceOracleAdapterMoc",
         from: deployer,
         skipIfAlreadyDeployed: true
     })
-    if(rbtcPriceOracleAdapterResult.newlyDeployed) {
-        await execute("RbtcPriceOracleAdapterMoc", {from: deployer}, "setGuardian", multiSig)
-    }
     // ----------- End deploying Oracles Adapters ------------ //
 
 
@@ -225,22 +210,12 @@ module.exports = async (hardhat) => {
         console.log("\n  _setPriceOracle new Unitroller...")
         await newUnitrollerContract._setPriceOracle(priceOracleProxyResult.address).then((tx) => tx.wait());
 
-        console.log("\n  _setMaxAssets new Unitroller...")
-        await newUnitrollerContract._setMaxAssets(config.maxAssets).then((tx) => tx.wait());
-
         console.log("\n  _setCloseFactor new Unitroller...")
         await newUnitrollerContract._setCloseFactor(config.closeFactorMantisa).then((tx) => tx.wait());
 
         console.log("\n  _setLiquidationIncentive new Unitroller...")
         await newUnitrollerContract._setLiquidationIncentive(config.liquidationIncentiveMantisa).then((tx) => tx.wait());
 
-        console.log("\n  _setCompRate new Unitroller...")
-        result = await newUnitrollerContract._setCompRate(config.compRate).then((tx) => tx.wait());
-
-        if(config.compMarkets.length > 0) {
-            console.log("\n  _addCompMarkets new Unitroller...")
-            await newUnitrollerContract._addCompMarkets(config.compMarkets).then((tx) => tx.wait());
-        }
     } else {
         console.log("\n  already setted up new Unitroller...")
     }
@@ -253,21 +228,21 @@ module.exports = async (hardhat) => {
     console.log("\n  USDT Deploy JumpRateModelV2...")
     const usdtJumpRateModelV2Result = await deploy("UsdtJumpRateModelV2", {
         // 0% base rate, 4% borrow rate at kink, 25% borrow rate at 100% utilization, Kink at 80% utilization
-        args: [etherMantissa(0).toString(), etherMantissa(0.04).toString(), etherMantissa(1.09).toString(), etherMantissa(0.8).toString(), deployer],
+        args: [parseEther('0'), parseEther('0.04'), parseEther('1.09'), parseEther('0.8'), multiSig],
         contract: "JumpRateModelV2",
         from: deployer,
         skipIfAlreadyDeployed: true
     })
     console.log("\n  Deploy BTC WhitePaperInterestRateModel...")
     const btcWhitePaperInterestRateModelResult = await deploy("BtcWhitePaperInterestRateModel", {
-        args: [etherMantissa(0.02).toString(), etherMantissa(0.3).toString()],
+        args: [parseEther('0.02'), parseEther('0.3')],
         contract: "WhitePaperInterestRateModel",
         from: deployer,
         skipIfAlreadyDeployed: true
     })
     console.log("\n  Deploy RIF WhitePaperInterestRateModel...")
     const rifWhitePaperInterestRateModelResult = await deploy("RifWhitePaperInterestRateModel", {
-        args: [etherMantissa(0.02).toString(), etherMantissa(0.3).toString()],
+        args: [parseEther('0.02'), parseEther('0.3')],
         contract: "WhitePaperInterestRateModel",
         from: deployer,
         skipIfAlreadyDeployed: true
@@ -297,10 +272,13 @@ module.exports = async (hardhat) => {
         await newUnitrollerContract._supportMarket(cUsdtResult.address).then((tx) => tx.wait())
 
         console.log("\n  _setCollateralFactor cUSDT...")
-        await newUnitrollerContract._setCollateralFactor(cUsdtResult.address, etherMantissa(0.75)).then((tx) => tx.wait())
+        await newUnitrollerContract._setCollateralFactor(cUsdtResult.address, parseEther('0.75')).then((tx) => tx.wait())
+
+        console.log("\n  _setCompSpeed new Unitroller...")
+        result = await newUnitrollerContract._setCompSpeed(cUsdtResult.address, config.compSpeed).then((tx) => tx.wait());
 
         console.log("\n  _setReserveFactor cUSDT...")
-        await cUsdtContract._setReserveFactor(etherMantissa(0.15)).then((tx) => tx.wait())
+        await cUsdtContract._setReserveFactor(parseEther('0.15')).then((tx) => tx.wait())
     } else {
         console.log("\n cUSDT already deployed...")
     }
@@ -326,10 +304,13 @@ module.exports = async (hardhat) => {
         await newUnitrollerContract._supportMarket(cRifResult.address).then((tx) => tx.wait())
 
         console.log("\n  _setCollateralFactor cRif...")
-        await newUnitrollerContract._setCollateralFactor(cRifResult.address, etherMantissa(0.5)).then((tx) => tx.wait())
+        await newUnitrollerContract._setCollateralFactor(cRifResult.address, parseEther('0.5')).then((tx) => tx.wait())
+
+        console.log("\n  _setCompSpeed new Unitroller...")
+        result = await newUnitrollerContract._setCompSpeed(cRifResult.address, config.compSpeed).then((tx) => tx.wait());
 
         console.log("\n  _setReserveFactor cRif...")
-        await cRifContract._setReserveFactor(etherMantissa(0.15)).then((tx) => tx.wait())
+        await cRifContract._setReserveFactor(parseEther('0.15')).then((tx) => tx.wait())
     } else {
         console.log("\n cRIF already deployed...")
     }
@@ -355,10 +336,13 @@ module.exports = async (hardhat) => {
         await newUnitrollerContract._supportMarket(cRbtcResult.address).then((tx) => tx.wait())
 
         console.log("\n  _setCollateralFactor cRbtc...")
-        await newUnitrollerContract._setCollateralFactor(cRbtcResult.address, etherMantissa(0.75)).then((tx) => tx.wait())
+        await newUnitrollerContract._setCollateralFactor(cRbtcResult.address, parseEther('0.75')).then((tx) => tx.wait())
+
+        console.log("\n  _setCompSpeed new Unitroller...")
+        result = await newUnitrollerContract._setCompSpeed(cRbtcResult.address, config.compSpeed).then((tx) => tx.wait());
 
         console.log("\n  _setReserveFactor cRbtc...")
-        await cRbtcContract._setReserveFactor(etherMantissa(0.2)).then((tx) => tx.wait())
+        await cRbtcContract._setReserveFactor(parseEther('0.2')).then((tx) => tx.wait())
     } else {
         console.log("\n cRBTC already deployed...")
     }
