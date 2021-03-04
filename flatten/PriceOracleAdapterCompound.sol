@@ -124,12 +124,87 @@ contract InterestRateModel {
 }
 
 
+// Dependency file: contracts/EIP20NonStandardInterface.sol
+
+// pragma solidity ^0.5.16;
+
+/**
+ * @title EIP20NonStandardInterface
+ * @dev Version of ERC20 with no return values for `transfer` and `transferFrom`
+ *  See https://medium.com/coinmonks/missing-return-value-bug-at-least-130-tokens-affected-d67bf08521ca
+ */
+interface EIP20NonStandardInterface {
+
+    /**
+     * @notice Get the total number of tokens in circulation
+     * @return The supply of tokens
+     */
+    function totalSupply() external view returns (uint256);
+
+    /**
+     * @notice Gets the balance of the specified address
+     * @param owner The address from which the balance will be retrieved
+     * @return The balance
+     */
+    function balanceOf(address owner) external view returns (uint256 balance);
+
+    ///
+    /// !!!!!!!!!!!!!!
+    /// !!! NOTICE !!! `transfer` does not return a value, in violation of the ERC-20 specification
+    /// !!!!!!!!!!!!!!
+    ///
+
+    /**
+      * @notice Transfer `amount` tokens from `msg.sender` to `dst`
+      * @param dst The address of the destination account
+      * @param amount The number of tokens to transfer
+      */
+    function transfer(address dst, uint256 amount) external;
+
+    ///
+    /// !!!!!!!!!!!!!!
+    /// !!! NOTICE !!! `transferFrom` does not return a value, in violation of the ERC-20 specification
+    /// !!!!!!!!!!!!!!
+    ///
+
+    /**
+      * @notice Transfer `amount` tokens from `src` to `dst`
+      * @param src The address of the source account
+      * @param dst The address of the destination account
+      * @param amount The number of tokens to transfer
+      */
+    function transferFrom(address src, address dst, uint256 amount) external;
+
+    /**
+      * @notice Approve `spender` to transfer up to `amount` from `src`
+      * @dev This will overwrite the approval amount for `spender`
+      *  and is subject to issues noted [here](https://eips.ethereum.org/EIPS/eip-20#approve)
+      * @param spender The address of the account which may transfer tokens
+      * @param amount The number of tokens that are approved
+      * @return Whether or not the approval succeeded
+      */
+    function approve(address spender, uint256 amount) external returns (bool success);
+
+    /**
+      * @notice Get the current allowance from `owner` for `spender`
+      * @param owner The address of the account which owns the tokens to be spent
+      * @param spender The address of the account which may transfer tokens
+      * @return The number of tokens allowed to be spent
+      */
+    function allowance(address owner, address spender) external view returns (uint256 remaining);
+
+    event Transfer(address indexed from, address indexed to, uint256 amount);
+    event Approval(address indexed owner, address indexed spender, uint256 amount);
+}
+
+
 // Dependency file: contracts/CTokenInterfaces.sol
 
 // pragma solidity ^0.5.16;
 
 // import "contracts/ComptrollerInterface.sol";
 // import "contracts/InterestRateModel.sol";
+// import "contracts/EIP20NonStandardInterface.sol";
 
 contract CTokenStorage {
     /**
@@ -386,6 +461,7 @@ contract CErc20Interface is CErc20Storage {
     function repayBorrow(uint repayAmount) external returns (uint);
     function repayBorrowBehalf(address borrower, uint repayAmount) external returns (uint);
     function liquidateBorrow(address borrower, uint repayAmount, CTokenInterface cTokenCollateral) external returns (uint);
+    function sweepToken(EIP20NonStandardInterface token) external;
 
 
     /*** Admin Functions ***/
@@ -1180,80 +1256,6 @@ interface EIP20Interface {
 }
 
 
-// Dependency file: contracts/EIP20NonStandardInterface.sol
-
-// pragma solidity ^0.5.16;
-
-/**
- * @title EIP20NonStandardInterface
- * @dev Version of ERC20 with no return values for `transfer` and `transferFrom`
- *  See https://medium.com/coinmonks/missing-return-value-bug-at-least-130-tokens-affected-d67bf08521ca
- */
-interface EIP20NonStandardInterface {
-
-    /**
-     * @notice Get the total number of tokens in circulation
-     * @return The supply of tokens
-     */
-    function totalSupply() external view returns (uint256);
-
-    /**
-     * @notice Gets the balance of the specified address
-     * @param owner The address from which the balance will be retrieved
-     * @return The balance
-     */
-    function balanceOf(address owner) external view returns (uint256 balance);
-
-    ///
-    /// !!!!!!!!!!!!!!
-    /// !!! NOTICE !!! `transfer` does not return a value, in violation of the ERC-20 specification
-    /// !!!!!!!!!!!!!!
-    ///
-
-    /**
-      * @notice Transfer `amount` tokens from `msg.sender` to `dst`
-      * @param dst The address of the destination account
-      * @param amount The number of tokens to transfer
-      */
-    function transfer(address dst, uint256 amount) external;
-
-    ///
-    /// !!!!!!!!!!!!!!
-    /// !!! NOTICE !!! `transferFrom` does not return a value, in violation of the ERC-20 specification
-    /// !!!!!!!!!!!!!!
-    ///
-
-    /**
-      * @notice Transfer `amount` tokens from `src` to `dst`
-      * @param src The address of the source account
-      * @param dst The address of the destination account
-      * @param amount The number of tokens to transfer
-      */
-    function transferFrom(address src, address dst, uint256 amount) external;
-
-    /**
-      * @notice Approve `spender` to transfer up to `amount` from `src`
-      * @dev This will overwrite the approval amount for `spender`
-      *  and is subject to issues noted [here](https://eips.ethereum.org/EIPS/eip-20#approve)
-      * @param spender The address of the account which may transfer tokens
-      * @param amount The number of tokens that are approved
-      * @return Whether or not the approval succeeded
-      */
-    function approve(address spender, uint256 amount) external returns (bool success);
-
-    /**
-      * @notice Get the current allowance from `owner` for `spender`
-      * @param owner The address of the account which owns the tokens to be spent
-      * @param spender The address of the account which may transfer tokens
-      * @return The number of tokens allowed to be spent
-      */
-    function allowance(address owner, address spender) external view returns (uint256 remaining);
-
-    event Transfer(address indexed from, address indexed to, uint256 amount);
-    event Approval(address indexed owner, address indexed spender, uint256 amount);
-}
-
-
 // Dependency file: contracts/CToken.sol
 
 // pragma solidity ^0.5.16;
@@ -1263,7 +1265,6 @@ interface EIP20NonStandardInterface {
 // import "contracts/ErrorReporter.sol";
 // import "contracts/Exponential.sol";
 // import "contracts/EIP20Interface.sol";
-// import "contracts/EIP20NonStandardInterface.sol";
 // import "contracts/InterestRateModel.sol";
 
 /**
@@ -1379,7 +1380,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         /* We emit a Transfer event */
         emit Transfer(src, dst, tokens);
 
-        comptroller.transferVerify(address(this), src, dst, tokens);
+        // unused function
+        // comptroller.transferVerify(address(this), src, dst, tokens);
 
         return uint(Error.NO_ERROR);
     }
@@ -1813,7 +1815,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         emit Transfer(address(this), minter, vars.mintTokens);
 
         /* We call the defense hook */
-        comptroller.mintVerify(address(this), minter, vars.actualMintAmount, vars.mintTokens);
+        // unused function
+        // comptroller.mintVerify(address(this), minter, vars.actualMintAmount, vars.mintTokens);
 
         return (uint(Error.NO_ERROR), vars.actualMintAmount);
     }
@@ -2051,7 +2054,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         emit Borrow(borrower, borrowAmount, vars.accountBorrowsNew, vars.totalBorrowsNew);
 
         /* We call the defense hook */
-        comptroller.borrowVerify(address(this), borrower, borrowAmount);
+        // unused function
+        // comptroller.borrowVerify(address(this), borrower, borrowAmount);
 
         return uint(Error.NO_ERROR);
     }
@@ -2168,7 +2172,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         emit RepayBorrow(payer, borrower, vars.actualRepayAmount, vars.accountBorrowsNew, vars.totalBorrowsNew);
 
         /* We call the defense hook */
-        comptroller.repayBorrowVerify(address(this), payer, borrower, vars.actualRepayAmount, vars.borrowerIndex);
+        // unused function
+        // comptroller.repayBorrowVerify(address(this), payer, borrower, vars.actualRepayAmount, vars.borrowerIndex);
 
         return (uint(Error.NO_ERROR), vars.actualRepayAmount);
     }
@@ -2272,7 +2277,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         emit LiquidateBorrow(liquidator, borrower, actualRepayAmount, address(cTokenCollateral), seizeTokens);
 
         /* We call the defense hook */
-        comptroller.liquidateBorrowVerify(address(this), address(cTokenCollateral), liquidator, borrower, actualRepayAmount, seizeTokens);
+        // unused function
+        // comptroller.liquidateBorrowVerify(address(this), address(cTokenCollateral), liquidator, borrower, actualRepayAmount, seizeTokens);
 
         return (uint(Error.NO_ERROR), actualRepayAmount);
     }
@@ -2343,7 +2349,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         emit Transfer(borrower, liquidator, seizeTokens);
 
         /* We call the defense hook */
-        comptroller.seizeVerify(address(this), seizerToken, liquidator, borrower, seizeTokens);
+        // unused function
+        // comptroller.seizeVerify(address(this), seizerToken, liquidator, borrower, seizeTokens);
 
         return uint(Error.NO_ERROR);
     }
@@ -2797,6 +2804,16 @@ contract CErc20 is CToken, CErc20Interface {
     function liquidateBorrow(address borrower, uint repayAmount, CTokenInterface cTokenCollateral) external returns (uint) {
         (uint err,) = liquidateBorrowInternal(borrower, repayAmount, cTokenCollateral);
         return err;
+    }
+
+    /**
+     * @notice A public function to sweep accidental ERC-20 transfers to this contract. Tokens are sent to admin (timelock)
+     * @param token The address of the ERC-20 token to sweep
+     */
+    function sweepToken(EIP20NonStandardInterface token) external {
+    	require(address(token) != underlying, "CErc20::sweepToken: can not sweep underlying token");
+    	uint256 balance = token.balanceOf(address(this));
+    	token.transfer(admin, balance);
     }
 
     /**
