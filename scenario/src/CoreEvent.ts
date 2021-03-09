@@ -40,7 +40,7 @@ import { loadContracts } from './Networks';
 import { fork } from './Hypothetical';
 import { buildContractEvent } from './EventBuilder';
 import { Counter } from './Contract/Counter';
-import { RlendingLens } from './Contract/RlendingLens';
+import { TropycoLens } from './Contract/TropycoLens';
 import { Reservoir } from './Contract/Reservoir';
 import Web3 from 'web3';
 
@@ -787,7 +787,7 @@ export const commands: (View<any> | ((world: World) => Promise<View<any>>))[] = 
       * "Comp ...event" - Runs given comp event
       * E.g. "Comp Deploy"
     `,
-    'RLEN',
+    'TROP',
     [new Arg('event', getEventV, { variadic: true })],
     (world, from, { event }) => {
       return processCompEvent(world, event.val, from);
@@ -811,7 +811,7 @@ export const commands: (View<any> | ((world: World) => Promise<View<any>>))[] = 
   ),
 
   buildContractEvent<Counter>("Counter", false),
-  buildContractEvent<RlendingLens>("RlendingLens", false),
+  buildContractEvent<TropycoLens>("TropycoLens", false),
   buildContractEvent<Reservoir>("Reservoir", true),
 
   new View<{ event: EventV }>(

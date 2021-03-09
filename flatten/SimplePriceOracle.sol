@@ -78,8 +78,8 @@ contract ComptrollerInterface {
 // pragma solidity ^0.5.16;
 
 /**
-  * @title rLending's InterestRateModel Interface
-  * @author rLending
+  * @title tropyco's InterestRateModel Interface
+  * @author tropyco
   */
 contract InterestRateModel {
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)
@@ -705,7 +705,7 @@ contract TokenErrorReporter {
 
 /**
   * @title Careful Math
-  * @author rLending
+  * @author tropyco
   * @notice Derived from OpenZeppelin's SafeMath library
   *         https://github.com/OpenZeppelin/openzeppelin-solidity/blob/master/contracts/math/SafeMath.sol
   */
@@ -793,7 +793,7 @@ contract CarefulMath {
 
 /**
  * @title Exponential module for storing fixed-precision decimals
- * @author rLending
+ * @author tropyco
  * @notice Exp is a struct which stores decimals with a fixed precision of 18 decimal places.
  *         Thus, if we wanted to store the 5.1, mantissa would store 5.1e18. That is:
  *         `Exp({mantissa: 5100000000000000000})`.
@@ -995,7 +995,7 @@ contract ExponentialNoError {
 
 /**
  * @title Exponential module for storing fixed-precision decimals
- * @author rLending
+ * @author tropyco
  * @dev Legacy contract for compatibility reasons with existing contracts that still use MathError
  * @notice Exp is a struct which stores decimals with a fixed precision of 18 decimal places.
  *         Thus, if we wanted to store the 5.1, mantissa would store 5.1e18. That is:
@@ -1251,9 +1251,9 @@ interface EIP20Interface {
 // import "contracts/InterestRateModel.sol";
 
 /**
- * @title rLending's CToken Contract
+ * @title tropyco's CToken Contract
  * @notice Abstract base for CTokens
- * @author rLending
+ * @author tropyco
  */
 contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     /**
@@ -2703,9 +2703,9 @@ contract PriceOracle {
 // import "contracts/CToken.sol";
 
 /**
- * @title rLending's CErc20 Contract
+ * @title tropyco's CErc20 Contract
  * @notice CTokens which wrap an EIP-20 underlying
- * @author rLending
+ * @author tropyco
  */
 contract CErc20 is CToken, CErc20Interface {
     /**
@@ -2917,7 +2917,7 @@ pragma solidity ^0.5.16;
 
 /**
   * @title Simplified Oracle for testing purposes.
-  * @author rLending
+  * @author tropyco
   * @notice This contract is meant for testing only.
   */
 contract SimplePriceOracle is PriceOracle {

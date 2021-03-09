@@ -7,11 +7,11 @@ import "./PriceOracle.sol";
 import "./ComptrollerInterface.sol";
 import "./ComptrollerStorage.sol";
 import "./Unitroller.sol";
-import "./Governance/RLEN.sol";
+import "./Governance/TROP.sol";
 
 /**
- * @title rLending's Comptroller Contract
- * @author rLending
+ * @title tropyco's Comptroller Contract
+ * @author tropyco
  */
 contract ComptrollerG4 is ComptrollerV3Storage, ComptrollerInterface, ComptrollerErrorReporter, Exponential {
     /// @notice Emitted when an admin supports a market
@@ -1225,18 +1225,18 @@ contract ComptrollerG4 is ComptrollerV3Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-     * @notice Transfer RLEN to the user, if they are above the threshold
-     * @dev Note: If there is not enough RLEN, we do not perform the transfer all.
-     * @param user The address of the user to transfer RLEN to
-     * @param userAccrued The amount of RLEN to (possibly) transfer
-     * @return The amount of RLEN which was NOT transferred to the user
+     * @notice Transfer TROP to the user, if they are above the threshold
+     * @dev Note: If there is not enough TROP, we do not perform the transfer all.
+     * @param user The address of the user to transfer TROP to
+     * @param userAccrued The amount of TROP to (possibly) transfer
+     * @return The amount of TROP which was NOT transferred to the user
      */
     function transferComp(address user, uint userAccrued, uint threshold) internal returns (uint) {
         if (userAccrued >= threshold && userAccrued > 0) {
-            RLEN rLen = RLEN(getCompAddress());
-            uint rLenRemaining = rLen.balanceOf(address(this));
-            if (userAccrued <= rLenRemaining) {
-                rLen.transfer(user, userAccrued);
+            TROP trop = TROP(getCompAddress());
+            uint tropRemaining = trop.balanceOf(address(this));
+            if (userAccrued <= tropRemaining) {
+                trop.transfer(user, userAccrued);
                 return 0;
             }
         }

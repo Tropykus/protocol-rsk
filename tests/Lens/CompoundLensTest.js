@@ -21,12 +21,12 @@ function cullTuple(tuple) {
   }, {});
 }
 
-describe('RlendingLens', () => {
-  let rLendingLens;
+describe('TropycoLens', () => {
+  let tropycoLens;
   let acct;
 
   beforeEach(async () => {
-    rLendingLens = await deploy('RlendingLens');
+    tropycoLens = await deploy('TropycoLens');
     acct = accounts[0];
   });
 
@@ -34,7 +34,7 @@ describe('RlendingLens', () => {
     it('is correct for a cErc20', async () => {
       let cErc20 = await makeCToken();
       expect(
-        cullTuple(await call(rLendingLens, 'cTokenMetadata', [cErc20._address]))
+        cullTuple(await call(tropycoLens, 'cTokenMetadata', [cErc20._address]))
       ).toEqual(
         {
           cToken: cErc20._address,
@@ -58,7 +58,7 @@ describe('RlendingLens', () => {
     it('is correct for cEth', async () => {
       let cEth = await makeCToken({ kind: 'crbtc' });
       expect(
-        cullTuple(await call(rLendingLens, 'cTokenMetadata', [cEth._address]))
+        cullTuple(await call(tropycoLens, 'cTokenMetadata', [cEth._address]))
       ).toEqual({
         borrowRatePerBlock: "0",
         cToken: cEth._address,
@@ -83,7 +83,7 @@ describe('RlendingLens', () => {
       let cErc20 = await makeCToken();
       let cEth = await makeCToken({ kind: 'crbtc' });
       expect(
-        (await call(rLendingLens, 'cTokenMetadataAll', [[cErc20._address, cEth._address]])).map(cullTuple)
+        (await call(tropycoLens, 'cTokenMetadataAll', [[cErc20._address, cEth._address]])).map(cullTuple)
       ).toEqual([
         {
           cToken: cErc20._address,
@@ -125,7 +125,7 @@ describe('RlendingLens', () => {
     it('is correct for cERC20', async () => {
       let cErc20 = await makeCToken();
       expect(
-        cullTuple(await call(rLendingLens, 'cTokenBalances', [cErc20._address, acct]))
+        cullTuple(await call(tropycoLens, 'cTokenBalances', [cErc20._address, acct]))
       ).toEqual(
         {
           balanceOf: "0",
@@ -142,7 +142,7 @@ describe('RlendingLens', () => {
       let cEth = await makeCToken({ kind: 'crbtc' });
       let ethBalance = await web3.eth.getBalance(acct);
       expect(
-        cullTuple(await call(rLendingLens, 'cTokenBalances', [cEth._address, acct], { gasPrice: '0' }))
+        cullTuple(await call(tropycoLens, 'cTokenBalances', [cEth._address, acct], { gasPrice: '0' }))
       ).toEqual(
         {
           balanceOf: "0",
@@ -163,7 +163,7 @@ describe('RlendingLens', () => {
       let ethBalance = await web3.eth.getBalance(acct);
 
       expect(
-        (await call(rLendingLens, 'cTokenBalancesAll', [[cErc20._address, cEth._address], acct], { gasPrice: '0' })).map(cullTuple)
+        (await call(tropycoLens, 'cTokenBalancesAll', [[cErc20._address, cEth._address], acct], { gasPrice: '0' })).map(cullTuple)
       ).toEqual([
         {
           balanceOf: "0",
@@ -189,7 +189,7 @@ describe('RlendingLens', () => {
     it('gets correct price for cErc20', async () => {
       let cErc20 = await makeCToken();
       expect(
-        cullTuple(await call(rLendingLens, 'cTokenUnderlyingPrice', [cErc20._address]))
+        cullTuple(await call(tropycoLens, 'cTokenUnderlyingPrice', [cErc20._address]))
       ).toEqual(
         {
           cToken: cErc20._address,
@@ -203,7 +203,7 @@ describe('RlendingLens', () => {
       //set price of cRBTC
       await send(cEth.comptroller.priceOracle, "setDirectPrice", [cEth._address, new BigNumber('1e18')]);
       expect(
-        cullTuple(await call(rLendingLens, 'cTokenUnderlyingPrice', [cEth._address]))
+        cullTuple(await call(tropycoLens, 'cTokenUnderlyingPrice', [cEth._address]))
       ).toEqual(
         {
           cToken: cEth._address,
@@ -220,7 +220,7 @@ describe('RlendingLens', () => {
       //set price of cRBTC
       await send(cEth.comptroller.priceOracle, "setDirectPrice", [cEth._address, new BigNumber('1e18')]);
       expect(
-        (await call(rLendingLens, 'cTokenUnderlyingPriceAll', [[cErc20._address, cEth._address]])).map(cullTuple)
+        (await call(tropycoLens, 'cTokenUnderlyingPriceAll', [[cErc20._address, cEth._address]])).map(cullTuple)
       ).toEqual([
         {
           cToken: cErc20._address,
@@ -239,7 +239,7 @@ describe('RlendingLens', () => {
       let comptroller = await makeComptroller();
 
       expect(
-        cullTuple(await call(rLendingLens, 'getAccountLimits', [comptroller._address, acct]))
+        cullTuple(await call(tropycoLens, 'getAccountLimits', [comptroller._address, acct]))
       ).toEqual({
         liquidity: "0",
         markets: [],
@@ -254,7 +254,7 @@ describe('RlendingLens', () => {
     let proposalBlock, proposalId;
 
     beforeEach(async () => {
-      comp = await deploy('RLEN', [acct]);
+      comp = await deploy('TROP', [acct]);
       gov = await deploy('GovernorAlpha', [address(0), comp._address, address(0)]);
       targets = [acct];
       values = ["0"];
@@ -269,7 +269,7 @@ describe('RlendingLens', () => {
     describe('getGovReceipts', () => {
       it('gets correct values', async () => {
         expect(
-          (await call(rLendingLens, 'getGovReceipts', [gov._address, acct, [proposalId]])).map(cullTuple)
+          (await call(tropycoLens, 'getGovReceipts', [gov._address, acct, [proposalId]])).map(cullTuple)
         ).toEqual([
           {
             hasVoted: false,
@@ -284,7 +284,7 @@ describe('RlendingLens', () => {
     describe('getGovProposals', () => {
       it('gets correct values', async () => {
         expect(
-          (await call(rLendingLens, 'getGovProposals', [gov._address, [proposalId]])).map(cullTuple)
+          (await call(tropycoLens, 'getGovProposals', [gov._address, [proposalId]])).map(cullTuple)
         ).toEqual([
           {
             againstVotes: "0",
@@ -310,13 +310,13 @@ describe('RlendingLens', () => {
 
     beforeEach(async () => {
       currentBlock = +(await web3.eth.getBlockNumber());
-      comp = await deploy('RLEN', [acct]);
+      comp = await deploy('TROP', [acct]);
     });
 
     describe('getCompBalanceMetadata', () => {
       it('gets correct values', async () => {
         expect(
-          cullTuple(await call(rLendingLens, 'getCompBalanceMetadata', [comp._address, acct]))
+          cullTuple(await call(tropycoLens, 'getCompBalanceMetadata', [comp._address, acct]))
         ).toEqual({
           balance: "10000000000000000000000000",
           delegate: "0x0000000000000000000000000000000000000000",
@@ -331,7 +331,7 @@ describe('RlendingLens', () => {
         await send(comptroller, 'setCompAccrued', [acct, 5]); // harness only
 
         expect(
-          cullTuple(await call(rLendingLens, 'getCompBalanceMetadataExt', [comp._address, comptroller._address, acct]))
+          cullTuple(await call(tropycoLens, 'getCompBalanceMetadataExt', [comp._address, comptroller._address, acct]))
         ).toEqual({
           balance: "10000000000000000000000000",
           delegate: "0x0000000000000000000000000000000000000000",
@@ -344,7 +344,7 @@ describe('RlendingLens', () => {
     describe('getCompVotes', () => {
       it('gets correct values', async () => {
         expect(
-          (await call(rLendingLens, 'getCompVotes', [comp._address, acct, [currentBlock, currentBlock - 1]])).map(cullTuple)
+          (await call(tropycoLens, 'getCompVotes', [comp._address, acct, [currentBlock, currentBlock - 1]])).map(cullTuple)
         ).toEqual([
           {
             blockNumber: currentBlock.toString(),
@@ -359,8 +359,8 @@ describe('RlendingLens', () => {
 
       it('reverts on future value', async () => {
         await expect(
-          call(rLendingLens, 'getCompVotes', [comp._address, acct, [currentBlock + 1]])
-        ).rejects.toRevert('revert RLEN::getPriorVotes: not yet determined')
+          call(tropycoLens, 'getCompVotes', [comp._address, acct, [currentBlock + 1]])
+        ).rejects.toRevert('revert TROP::getPriorVotes: not yet determined')
       });
     });
   });

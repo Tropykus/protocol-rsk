@@ -9,8 +9,8 @@ import "./ComptrollerStorage.sol";
 import "./Unitroller.sol";
 
 /**
- * @title rLending's Comptroller Contract
- * @author rLending
+ * @title tropyco's Comptroller Contract
+ * @author tropyco
  * @dev This was the first version of the Comptroller brains.
  *  We keep it so our tests can continue to do the real-life behavior of upgrading from this logic forward.
  */

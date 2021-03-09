@@ -1,6 +1,6 @@
 import { Event } from '../Event';
 import { addAction, World, describeUser } from '../World';
-import { RLEN, CompScenario } from '../Contract/RLEN';
+import { TROP, CompScenario } from '../Contract/TROP';
 import { buildComp } from '../Builder/CompBuilder';
 import { invoke } from '../Invokation';
 import {
@@ -27,14 +27,14 @@ async function genComp(world: World, from: string, params: Event): Promise<World
 
   world = addAction(
     world,
-    `Deployed RLEN (${comp.name}) to address ${comp._address}`,
+    `Deployed TROP (${comp.name}) to address ${comp._address}`,
     tokenData.invokation
   );
 
   return world;
 }
 
-async function verifyComp(world: World, comp: RLEN, apiKey: string, modelName: string, contractName: string): Promise<World> {
+async function verifyComp(world: World, comp: TROP, apiKey: string, modelName: string, contractName: string): Promise<World> {
   if (world.isLocalNetwork()) {
     world.printer.printLine(`Politely declining to verify on local network: ${world.network}.`);
   } else {
@@ -44,36 +44,36 @@ async function verifyComp(world: World, comp: RLEN, apiKey: string, modelName: s
   return world;
 }
 
-async function approve(world: World, from: string, comp: RLEN, address: string, amount: NumberV): Promise<World> {
+async function approve(world: World, from: string, comp: TROP, address: string, amount: NumberV): Promise<World> {
   let invokation = await invoke(world, comp.methods.approve(address, amount.encode()), from, NoErrorReporter);
 
   world = addAction(
     world,
-    `Approved RLEN token for ${from} of ${amount.show()}`,
+    `Approved TROP token for ${from} of ${amount.show()}`,
     invokation
   );
 
   return world;
 }
 
-async function transfer(world: World, from: string, comp: RLEN, address: string, amount: NumberV): Promise<World> {
+async function transfer(world: World, from: string, comp: TROP, address: string, amount: NumberV): Promise<World> {
   let invokation = await invoke(world, comp.methods.transfer(address, amount.encode()), from, NoErrorReporter);
 
   world = addAction(
     world,
-    `Transferred ${amount.show()} RLEN tokens from ${from} to ${address}`,
+    `Transferred ${amount.show()} TROP tokens from ${from} to ${address}`,
     invokation
   );
 
   return world;
 }
 
-async function transferFrom(world: World, from: string, comp: RLEN, owner: string, spender: string, amount: NumberV): Promise<World> {
+async function transferFrom(world: World, from: string, comp: TROP, owner: string, spender: string, amount: NumberV): Promise<World> {
   let invokation = await invoke(world, comp.methods.transferFrom(owner, spender, amount.encode()), from, NoErrorReporter);
 
   world = addAction(
     world,
-    `"Transferred from" ${amount.show()} RLEN tokens from ${owner} to ${spender}`,
+    `"Transferred from" ${amount.show()} TROP tokens from ${owner} to ${spender}`,
     invokation
   );
 
@@ -85,7 +85,7 @@ async function transferScenario(world: World, from: string, comp: CompScenario, 
 
   world = addAction(
     world,
-    `Transferred ${amount.show()} RLEN tokens from ${from} to ${addresses}`,
+    `Transferred ${amount.show()} TROP tokens from ${from} to ${addresses}`,
     invokation
   );
 
@@ -97,14 +97,14 @@ async function transferFromScenario(world: World, from: string, comp: CompScenar
 
   world = addAction(
     world,
-    `Transferred ${amount.show()} RLEN tokens from ${addresses} to ${from}`,
+    `Transferred ${amount.show()} TROP tokens from ${addresses} to ${from}`,
     invokation
   );
 
   return world;
 }
 
-async function delegate(world: World, from: string, comp: RLEN, account: string): Promise<World> {
+async function delegate(world: World, from: string, comp: TROP, account: string): Promise<World> {
   let invokation = await invoke(world, comp.methods.delegate(account), from, NoErrorReporter);
 
   world = addAction(
@@ -119,12 +119,12 @@ async function delegate(world: World, from: string, comp: RLEN, account: string)
 async function setBlockNumber(
   world: World,
   from: string,
-  comp: RLEN,
+  comp: TROP,
   blockNumber: NumberV
 ): Promise<World> {
   return addAction(
     world,
-    `Set RLEN blockNumber to ${blockNumber.show()}`,
+    `Set TROP blockNumber to ${blockNumber.show()}`,
     await invoke(world, comp.methods.setBlockNumber(blockNumber.encode()), from)
   );
 }
@@ -134,8 +134,8 @@ export function compCommands() {
     new Command<{ params: EventV }>(`
         #### Deploy
 
-        * "Deploy ...params" - Generates a new RLEN token
-          * E.g. "RLEN Deploy"
+        * "Deploy ...params" - Generates a new TROP token
+          * E.g. "TROP Deploy"
       `,
       "Deploy",
       [
@@ -144,28 +144,28 @@ export function compCommands() {
       (world, from, { params }) => genComp(world, from, params.val)
     ),
 
-    new View<{ comp: RLEN, apiKey: StringV, contractName: StringV }>(`
+    new View<{ comp: TROP, apiKey: StringV, contractName: StringV }>(`
         #### Verify
 
-        * "<RLEN> Verify apiKey:<String> contractName:<String>=RLEN" - Verifies RLEN token in Etherscan
-          * E.g. "RLEN Verify "myApiKey"
+        * "<TROP> Verify apiKey:<String> contractName:<String>=TROP" - Verifies TROP token in Etherscan
+          * E.g. "TROP Verify "myApiKey"
       `,
       "Verify",
       [
         new Arg("comp", getComp, { implicit: true }),
         new Arg("apiKey", getStringV),
-        new Arg("contractName", getStringV, { default: new StringV("RLEN") })
+        new Arg("contractName", getStringV, { default: new StringV("TROP") })
       ],
       async (world, { comp, apiKey, contractName }) => {
         return await verifyComp(world, comp, apiKey.val, comp.name, contractName.val)
       }
     ),
 
-    new Command<{ comp: RLEN, spender: AddressV, amount: NumberV }>(`
+    new Command<{ comp: TROP, spender: AddressV, amount: NumberV }>(`
         #### Approve
 
-        * "RLEN Approve spender:<Address> <Amount>" - Adds an allowance between user and address
-          * E.g. "RLEN Approve Geoff 1.0e18"
+        * "TROP Approve spender:<Address> <Amount>" - Adds an allowance between user and address
+          * E.g. "TROP Approve Geoff 1.0e18"
       `,
       "Approve",
       [
@@ -178,11 +178,11 @@ export function compCommands() {
       }
     ),
 
-    new Command<{ comp: RLEN, recipient: AddressV, amount: NumberV }>(`
+    new Command<{ comp: TROP, recipient: AddressV, amount: NumberV }>(`
         #### Transfer
 
-        * "RLEN Transfer recipient:<User> <Amount>" - Transfers a number of tokens via "transfer" as given user to recipient (this does not depend on allowance)
-          * E.g. "RLEN Transfer Torrey 1.0e18"
+        * "TROP Transfer recipient:<User> <Amount>" - Transfers a number of tokens via "transfer" as given user to recipient (this does not depend on allowance)
+          * E.g. "TROP Transfer Torrey 1.0e18"
       `,
       "Transfer",
       [
@@ -193,11 +193,11 @@ export function compCommands() {
       (world, from, { comp, recipient, amount }) => transfer(world, from, comp, recipient.val, amount)
     ),
 
-    new Command<{ comp: RLEN, owner: AddressV, spender: AddressV, amount: NumberV }>(`
+    new Command<{ comp: TROP, owner: AddressV, spender: AddressV, amount: NumberV }>(`
         #### TransferFrom
 
-        * "RLEN TransferFrom owner:<User> spender:<User> <Amount>" - Transfers a number of tokens via "transfeFrom" to recipient (this depends on allowances)
-          * E.g. "RLEN TransferFrom Geoff Torrey 1.0e18"
+        * "TROP TransferFrom owner:<User> spender:<User> <Amount>" - Transfers a number of tokens via "transfeFrom" to recipient (this depends on allowances)
+          * E.g. "TROP TransferFrom Geoff Torrey 1.0e18"
       `,
       "TransferFrom",
       [
@@ -212,8 +212,8 @@ export function compCommands() {
     new Command<{ comp: CompScenario, recipients: AddressV[], amount: NumberV }>(`
         #### TransferScenario
 
-        * "RLEN TransferScenario recipients:<User[]> <Amount>" - Transfers a number of tokens via "transfer" to the given recipients (this does not depend on allowance)
-          * E.g. "RLEN TransferScenario (Jared Torrey) 10"
+        * "TROP TransferScenario recipients:<User[]> <Amount>" - Transfers a number of tokens via "transfer" to the given recipients (this does not depend on allowance)
+          * E.g. "TROP TransferScenario (Jared Torrey) 10"
       `,
       "TransferScenario",
       [
@@ -227,8 +227,8 @@ export function compCommands() {
     new Command<{ comp: CompScenario, froms: AddressV[], amount: NumberV }>(`
         #### TransferFromScenario
 
-        * "RLEN TransferFromScenario froms:<User[]> <Amount>" - Transfers a number of tokens via "transferFrom" from the given users to msg.sender (this depends on allowance)
-          * E.g. "RLEN TransferFromScenario (Jared Torrey) 10"
+        * "TROP TransferFromScenario froms:<User[]> <Amount>" - Transfers a number of tokens via "transferFrom" from the given users to msg.sender (this depends on allowance)
+          * E.g. "TROP TransferFromScenario (Jared Torrey) 10"
       `,
       "TransferFromScenario",
       [
@@ -239,11 +239,11 @@ export function compCommands() {
       (world, from, { comp, froms, amount }) => transferFromScenario(world, from, comp, froms.map(_from => _from.val), amount)
     ),
 
-    new Command<{ comp: RLEN, account: AddressV }>(`
+    new Command<{ comp: TROP, account: AddressV }>(`
         #### Delegate
 
-        * "RLEN Delegate account:<Address>" - Delegates votes to a given account
-          * E.g. "RLEN Delegate Torrey"
+        * "TROP Delegate account:<Address>" - Delegates votes to a given account
+          * E.g. "TROP Delegate Torrey"
       `,
       "Delegate",
       [
@@ -252,11 +252,11 @@ export function compCommands() {
       ],
       (world, from, { comp, account }) => delegate(world, from, comp, account.val)
     ),
-    new Command<{ comp: RLEN, blockNumber: NumberV }>(`
+    new Command<{ comp: TROP, blockNumber: NumberV }>(`
       #### SetBlockNumber
 
-      * "SetBlockNumber <Seconds>" - Sets the blockTimestamp of the RLEN Harness
-      * E.g. "RLEN SetBlockNumber 500"
+      * "SetBlockNumber <Seconds>" - Sets the blockTimestamp of the TROP Harness
+      * E.g. "TROP SetBlockNumber 500"
       `,
         'SetBlockNumber',
         [new Arg('comp', getComp, { implicit: true }), new Arg('blockNumber', getNumberV)],
@@ -266,5 +266,5 @@ export function compCommands() {
 }
 
 export async function processCompEvent(world: World, event: Event, from: string | null): Promise<World> {
-  return await processCommandEvent<any>("RLEN", compCommands(), world, event, from);
+  return await processCommandEvent<any>("TROP", compCommands(), world, event, from);
 }

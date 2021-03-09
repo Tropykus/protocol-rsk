@@ -3,9 +3,9 @@ pragma solidity ^0.5.16;
 import "./CToken.sol";
 
 /**
- * @title rLending's CErc20 Contract
+ * @title tropyco's CErc20 Contract
  * @notice CTokens which wrap an EIP-20 underlying
- * @author rLending
+ * @author tropyco
  */
 contract CErc20 is CToken, CErc20Interface {
     /**

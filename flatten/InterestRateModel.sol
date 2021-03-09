@@ -3,8 +3,8 @@
 pragma solidity ^0.5.16;
 
 /**
-  * @title rLending's InterestRateModel Interface
-  * @author rLending
+  * @title tropyco's InterestRateModel Interface
+  * @author tropyco
   */
 contract InterestRateModel {
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)

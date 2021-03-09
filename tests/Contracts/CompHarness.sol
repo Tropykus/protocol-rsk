@@ -1,10 +1,10 @@
 pragma solidity ^0.5.16;
 pragma experimental ABIEncoderV2;
 
-import "../../contracts/Governance/RLEN.sol";
+import "../../contracts/Governance/TROP.sol";
 
-contract CompScenario is RLEN {
-    constructor(address account) RLEN(account) public {}
+contract CompScenario is TROP {
+    constructor(address account) TROP(account) public {}
 
     function transferScenario(address[] calldata destinations, uint256 amount) external returns (bool) {
         for (uint i = 0; i < destinations.length; i++) {

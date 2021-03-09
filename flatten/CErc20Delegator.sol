@@ -78,8 +78,8 @@ contract ComptrollerInterface {
 // pragma solidity ^0.5.16;
 
 /**
-  * @title rLending's InterestRateModel Interface
-  * @author rLending
+  * @title tropyco's InterestRateModel Interface
+  * @author tropyco
   */
 contract InterestRateModel {
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)
@@ -496,9 +496,9 @@ pragma solidity ^0.5.16;
 // import "contracts/CTokenInterfaces.sol";
 
 /**
- * @title rLending's CErc20Delegator Contract
+ * @title tropyco's CErc20Delegator Contract
  * @notice CTokens which wrap an EIP-20 underlying and delegate to an implementation
- * @author rLending
+ * @author tropyco
  */
 contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterface {
     /**

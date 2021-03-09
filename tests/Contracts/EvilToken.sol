@@ -4,7 +4,7 @@ import "./FaucetToken.sol";
 
 /**
   * @title The Compound Evil Test Token
-  * @author rLending
+  * @author tropyco
   * @notice A simple test token that fails certain operations
   */
 contract EvilToken is FaucetToken {

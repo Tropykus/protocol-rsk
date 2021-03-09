@@ -6,11 +6,11 @@ import "./PriceOracle.sol";
 import "./ComptrollerInterface.sol";
 import "./ComptrollerStorage.sol";
 import "./Unitroller.sol";
-import "./Governance/RLEN.sol";
+import "./Governance/TROP.sol";
 
 /**
- * @title rLending's Comptroller Contract
- * @author rLending
+ * @title tropyco's Comptroller Contract
+ * @author tropyco
  */
 contract ComptrollerG6 is ComptrollerV5Storage, ComptrollerInterface, ComptrollerErrorReporter, ExponentialNoError {
     /// @notice Emitted when an admin supports a market
@@ -957,7 +957,7 @@ contract ComptrollerG6 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
       * @param newBorrowCaps The new borrow cap values in underlying to be set. A value of 0 corresponds to unlimited borrowing.
       */
     function _setMarketBorrowCaps(CToken[] calldata cTokens, uint[] calldata newBorrowCaps) external {
-    	require(msg.sender == admin || msg.sender == borrowCapGuardian, "only admin or borrow cap guardian can set borrow caps"); 
+    	require(msg.sender == admin || msg.sender == borrowCapGuardian, "only admin or borrow cap guardian can set borrow caps");
 
         uint numMarkets = cTokens.length;
         uint numBorrowCaps = newBorrowCaps.length;
@@ -1199,7 +1199,7 @@ contract ComptrollerG6 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
      */
     function transferComp(address user, uint userAccrued, uint threshold) internal returns (uint) {
         if (userAccrued >= threshold && userAccrued > 0) {
-            RLEN comp = RLEN(getCompAddress());
+            TROP comp = TROP(getCompAddress());
             uint compRemaining = comp.balanceOf(address(this));
             if (userAccrued <= compRemaining) {
                 comp.transfer(user, userAccrued);
@@ -1280,7 +1280,7 @@ contract ComptrollerG6 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
      * @return The amount of COMP which was NOT transferred to the user
      */
     function grantCompInternal(address user, uint amount) internal returns (uint) {
-        RLEN comp = RLEN(getCompAddress());
+        TROP comp = TROP(getCompAddress());
         uint compRemaining = comp.balanceOf(address(this));
         if (amount <= compRemaining) {
             comp.transfer(user, amount);

@@ -47,7 +47,7 @@ module.exports = async (hardhat) => {
     Object.assign(signer.provider.formatter, { format: format })
 
     console.log("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-    console.log("rLending Contracts - Deploy Script")
+    console.log("tropyco Contracts - Deploy Script")
     console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 
     const locus = isLocal ? 'local' : 'remote'
@@ -253,7 +253,7 @@ module.exports = async (hardhat) => {
     // ### Deploy cUSDT ### //
     console.log("\n  Deploy cUSDT...", usdt)
     const cUsdtResult = await deploy("cUSDT", {
-        args: [usdt, newUnitrollerContract.address, usdtJumpRateModelV2Result.address, config.initialExchangeRateMantissa, "rLending cUSDT", "crUSDT", 8, deployer],
+        args: [usdt, newUnitrollerContract.address, usdtJumpRateModelV2Result.address, config.initialExchangeRateMantissa, "tropyco cUSDT", "crUSDT", 8, deployer],
         contract: "CErc20Immutable",
         from: deployer,
         skipIfAlreadyDeployed: true
@@ -286,7 +286,7 @@ module.exports = async (hardhat) => {
     // ### Deploy cRIF ### //
     console.log("\n  Deploy cRIF...")
     const cRifResult = await deploy("cRIF", {
-        args: [rif, newUnitrollerContract.address, rifWhitePaperInterestRateModelResult.address, config.initialExchangeRateMantissa, "rLending RIF", "cRIF", 8, deployer],
+        args: [rif, newUnitrollerContract.address, rifWhitePaperInterestRateModelResult.address, config.initialExchangeRateMantissa, "tropyco RIF", "cRIF", 8, deployer],
         contract: "CErc20Immutable",
         from: deployer,
         skipIfAlreadyDeployed: true
@@ -318,7 +318,7 @@ module.exports = async (hardhat) => {
     // ### Deploy cRBTC ### //
     console.log("\n  Deploy cRBTC...")
     const cRbtcResult = await deploy("CRBTC", {
-        args: [newUnitrollerContract.address, btcWhitePaperInterestRateModelResult.address, config.initialExchangeRateMantissa, "rLending RBTC", "cRBTC", 8, deployer],
+        args: [newUnitrollerContract.address, btcWhitePaperInterestRateModelResult.address, config.initialExchangeRateMantissa, "tropyco RBTC", "cRBTC", 8, deployer],
         contract: "CRBTC",
         from: deployer,
         skipIfAlreadyDeployed: true
@@ -348,21 +348,21 @@ module.exports = async (hardhat) => {
     }
     // -------------------------- End Deploy CTokerns ------------------------- //
 
-    // -------------------------- Deploy rLen ------------------------- //
-    console.log("\n  Deploy RLEN...")
-    const rLenResult = await deploy("RLEN", {
+    // -------------------------- Deploy trop ------------------------- //
+    console.log("\n  Deploy TROP...")
+    const tropResult = await deploy("TROP", {
         args: [multiSig],
-        contract: "RLEN",
+        contract: "TROP",
         from: deployer,
         skipIfAlreadyDeployed: true
     })
-    if (rLenResult.newlyDeployed) {
-        console.log("\n  setCompAddress RLEN...")
-        await newUnitrollerContract.setCompAddress(rLenResult.address).then((tx) => tx.wait());
+    if (tropResult.newlyDeployed) {
+        console.log("\n  setCompAddress TROP...")
+        await newUnitrollerContract.setCompAddress(tropResult.address).then((tx) => tx.wait());
     } else {
-        console.log("\n RLEN already deployed...")
+        console.log("\n TROP already deployed...")
     }
-    // -------------------------- End Deploy rLen ------------------------- //
+    // -------------------------- End Deploy trop ------------------------- //
 
     // -------------------------- Deploy Maximillion ------------------------- //
     console.log("\n  Deploy Maximillion...")
@@ -373,10 +373,10 @@ module.exports = async (hardhat) => {
         skipIfAlreadyDeployed: true
     })
 
-    // -------------------------- Deploy rLendingLens ------------------------- //
-    console.log("\n  Deploy RlendingLens...")
-    const rLedingLensResult = await deploy("RlendingLens", {
-        contract: "RlendingLens",
+    // -------------------------- Deploy tropycoLens ------------------------- //
+    console.log("\n  Deploy TropycoLens...")
+    const rLedingLensResult = await deploy("TropycoLens", {
+        contract: "TropycoLens",
         from: deployer,
         skipIfAlreadyDeployed: true
     })
@@ -416,9 +416,9 @@ module.exports = async (hardhat) => {
     console.log("  - crUSDT:                          ", cUsdtResult.address)
     console.log("  - cRIF:                            ", cRifResult.address)
     console.log("  - cRBTC:                           ", cRbtcResult.address)
-    console.log("  - RLEN:                            ", rLenResult.address)
+    console.log("  - TROP:                            ", tropResult.address)
     console.log("  - Maximillion:                     ", maximillionResult.address)
-    console.log("  - rLendingLens:                    ", rLedingLensResult.address)
+    console.log("  - tropycoLens:                    ", rLedingLensResult.address)
     console.log("  - Rbtc Oracle:                 ", rbtcOracle)
     console.log("  - Rif Oracle:                  ", rifOracle)
     console.log("  - rUSDT:                       ", usdt)

@@ -6,11 +6,11 @@ import "./PriceOracle.sol";
 import "./ComptrollerInterface.sol";
 import "./ComptrollerStorage.sol";
 import "./Unitroller.sol";
-import "./Governance/RLEN.sol";
+import "./Governance/TROP.sol";
 
 /**
- * @title rLending's Comptroller Contract
- * @author rLending
+ * @title tropyco's Comptroller Contract
+ * @author tropyco
  */
 contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerErrorReporter, ExponentialNoError {
     /// @notice Emitted when an admin supports a market
@@ -987,7 +987,7 @@ contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerE
         return msg.sender == admin || msg.sender == comptrollerImplementation;
     }
 
-    /*** RLEN Distribution ***/
+    /*** TROP Distribution ***/
 
     /**
      * @notice Set COMP speed for a single market
@@ -1184,14 +1184,14 @@ contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerE
     }
 
     /**
-     * @notice Transfer RLEN to the user
+     * @notice Transfer TROP to the user
      * @dev Note: If there is not enough COMP, we do not perform the transfer all.
      * @param user The address of the user to transfer COMP to
      * @param amount The amount of COMP to (possibly) transfer
      * @return The amount of COMP which was NOT transferred to the user
      */
     function grantCompInternal(address user, uint amount) internal returns (uint) {
-        RLEN comp = RLEN(getCompAddress());
+        TROP comp = TROP(getCompAddress());
         uint compRemaining = comp.balanceOf(address(this));
         if (amount > 0 && amount <= compRemaining) {
             comp.transfer(user, amount);
@@ -1200,7 +1200,7 @@ contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerE
         return amount;
     }
 
-    /*** RLEN Distribution Admin ***/
+    /*** TROP Distribution Admin ***/
 
     /**
      * @notice Transfer COMP to the recipient
@@ -1260,18 +1260,18 @@ contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerE
     }
 
     /**
-     * @notice Set the address of the RLEN token
+     * @notice Set the address of the TROP token
      */
-    function setCompAddress(address rLenAddress_) public {
-        require(msg.sender == admin, "only admin can set rLEN");
-        rLenAddress = rLenAddress_;
+    function setCompAddress(address tropAddress_) public {
+        require(msg.sender == admin, "only admin can set TROP");
+        tropAddress = tropAddress_;
     }
 
     /**
-     * @notice Return the address of the RLEN token
-     * @return The address of RLEN
+     * @notice Return the address of the TROP token
+     * @return The address of TROP
      */
     function getCompAddress() public view returns (address) {
-        return rLenAddress;
+        return tropAddress;
     }
 }

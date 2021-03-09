@@ -1,7 +1,7 @@
 {
-  "name": "rlending-protocol",
+  "name": "tropyco-protocol",
   "version": "0.2.1",
-  "description": "The rLending Money Market",
+  "description": "The tropyco Money Market",
   "main": "index.js",
   "scripts": {
     "compile": "./script/compile",
@@ -19,7 +19,7 @@
     "test:prepare": "NO_RUN=true ./script/test",
     "checksize": "npx run ./script/saddle/comptrollerSize.js"
   },
-  "repository": "git@github.com:riflending/rlending-protocol.git",
+  "repository": "git@github.com:riflending/tropyco-protocol.git",
   "author": "rLeding",
   "license": "UNLICENSED",
   "devDependencies": {

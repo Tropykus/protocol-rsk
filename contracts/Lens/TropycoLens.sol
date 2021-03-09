@@ -6,7 +6,7 @@ import "../CToken.sol";
 import "../PriceOracle.sol";
 import "../EIP20Interface.sol";
 import "../Governance/GovernorAlpha.sol";
-import "../Governance/RLEN.sol";
+import "../Governance/TROP.sol";
 
 interface ComptrollerLensInterface {
     function markets(address) external view returns (bool, uint);
@@ -19,10 +19,10 @@ interface ComptrollerLensInterface {
 
 /**
   * @title Helper contract to get information of the protocol .
-  * @author rLending
-  * @notice RlendingLens allows to make obtain global information with a single call.
+  * @author tropyco
+  * @notice TropycoLens allows to make obtain global information with a single call.
   */
-contract RlendingLens {
+contract TropycoLens {
     struct CTokenMetadata {
         address cToken;
         uint exchangeRateCurrent;
@@ -265,7 +265,7 @@ contract RlendingLens {
         address delegate;
     }
 
-    function getCompBalanceMetadata(RLEN comp, address account) external view returns (CompBalanceMetadata memory) {
+    function getCompBalanceMetadata(TROP comp, address account) external view returns (CompBalanceMetadata memory) {
         return CompBalanceMetadata({
             balance: comp.balanceOf(account),
             votes: uint256(comp.getCurrentVotes(account)),
@@ -280,7 +280,7 @@ contract RlendingLens {
         uint allocated;
     }
 
-    function getCompBalanceMetadataExt(RLEN comp, ComptrollerLensInterface comptroller, address account) external returns (CompBalanceMetadataExt memory) {
+    function getCompBalanceMetadataExt(TROP comp, ComptrollerLensInterface comptroller, address account) external returns (CompBalanceMetadataExt memory) {
         uint balance = comp.balanceOf(account);
         comptroller.claimComp(account);
         uint newBalance = comp.balanceOf(account);
@@ -301,7 +301,7 @@ contract RlendingLens {
         uint votes;
     }
 
-    function getCompVotes(RLEN comp, address account, uint32[] calldata blockNumbers) external view returns (CompVotes[] memory) {
+    function getCompVotes(TROP comp, address account, uint32[] calldata blockNumbers) external view returns (CompVotes[] memory) {
         CompVotes[] memory res = new CompVotes[](blockNumbers.length);
         for (uint i = 0; i < blockNumbers.length; i++) {
             res[i] = CompVotes({

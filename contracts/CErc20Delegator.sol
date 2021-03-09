@@ -3,9 +3,9 @@ pragma solidity ^0.5.16;
 import "./CTokenInterfaces.sol";
 
 /**
- * @title rLending's CErc20Delegator Contract
+ * @title tropyco's CErc20Delegator Contract
  * @notice CTokens which wrap an EIP-20 underlying and delegate to an implementation
- * @author rLending
+ * @author tropyco
  */
 contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterface {
     /**

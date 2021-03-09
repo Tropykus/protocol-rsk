@@ -78,8 +78,8 @@ contract ComptrollerInterface {
 // pragma solidity ^0.5.16;
 
 /**
-  * @title rLending's InterestRateModel Interface
-  * @author rLending
+  * @title tropyco's InterestRateModel Interface
+  * @author tropyco
   */
 contract InterestRateModel {
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)
@@ -705,7 +705,7 @@ contract TokenErrorReporter {
 
 /**
   * @title Careful Math
-  * @author rLending
+  * @author tropyco
   * @notice Derived from OpenZeppelin's SafeMath library
   *         https://github.com/OpenZeppelin/openzeppelin-solidity/blob/master/contracts/math/SafeMath.sol
   */
@@ -793,7 +793,7 @@ contract CarefulMath {
 
 /**
  * @title Exponential module for storing fixed-precision decimals
- * @author rLending
+ * @author tropyco
  * @notice Exp is a struct which stores decimals with a fixed precision of 18 decimal places.
  *         Thus, if we wanted to store the 5.1, mantissa would store 5.1e18. That is:
  *         `Exp({mantissa: 5100000000000000000})`.
@@ -995,7 +995,7 @@ contract ExponentialNoError {
 
 /**
  * @title Exponential module for storing fixed-precision decimals
- * @author rLending
+ * @author tropyco
  * @dev Legacy contract for compatibility reasons with existing contracts that still use MathError
  * @notice Exp is a struct which stores decimals with a fixed precision of 18 decimal places.
  *         Thus, if we wanted to store the 5.1, mantissa would store 5.1e18. That is:
@@ -1251,9 +1251,9 @@ interface EIP20Interface {
 // import "contracts/InterestRateModel.sol";
 
 /**
- * @title rLending's CToken Contract
+ * @title tropyco's CToken Contract
  * @notice Abstract base for CTokens
- * @author rLending
+ * @author tropyco
  */
 contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     /**
@@ -2835,8 +2835,8 @@ contract ComptrollerV4Storage is ComptrollerV3Storage {
     // @notice Borrow caps enforced by borrowAllowed for each cToken address. Defaults to zero which corresponds to unlimited borrowing.
     mapping(address => uint) public borrowCaps;
 
-    // @notice address of the rLEN token
-    address public rLenAddress;
+    // @notice address of the TROP token
+    address public tropAddress;
 }
 
 contract ComptrollerV5Storage is ComptrollerV4Storage {
@@ -3000,28 +3000,28 @@ contract Unitroller is UnitrollerAdminStorage, ComptrollerErrorReporter {
 }
 
 
-// Dependency file: contracts/Governance/RLEN.sol
+// Dependency file: contracts/Governance/TROP.sol
 
 // pragma solidity ^0.5.16;
 pragma experimental ABIEncoderV2;
 
 /**
-  * @title RLEN ERC20 tokens.
-  * @author rLending
+  * @title TROP ERC20 tokens.
+  * @author tropyco
   * @notice Yield farming tokens that allow to  propose and vote for protocol changes using the governance system.
   */
-contract RLEN {
+contract TROP {
     /// @notice EIP-20 token name for this token
-    string public constant name = "rLending";
+    string public constant name = "tropyco";
 
     /// @notice EIP-20 token symbol for this token
-    string public constant symbol = "rLEN";
+    string public constant symbol = "TROP";
 
     /// @notice EIP-20 token decimals for this token
     uint8 public constant decimals = 18;
 
     /// @notice Total number of tokens in circulation
-    uint public constant totalSupply = 10000000e18; // 10 million RLEN
+    uint public constant totalSupply = 10000000e18; // 10 million TROP
 
     /// @notice Allowance amounts on behalf of others
     mapping (address => mapping (address => uint96)) internal allowances;
@@ -3066,7 +3066,7 @@ contract RLEN {
     event Approval(address indexed owner, address indexed spender, uint256 amount);
 
     /**
-     * @notice Construct a new rLEN token
+     * @notice Construct a new TROP token
      * @param account The initial account to grant all the tokens
      */
     constructor(address account) public {
@@ -3097,7 +3097,7 @@ contract RLEN {
         if (rawAmount == uint(-1)) {
             amount = uint96(-1);
         } else {
-            amount = safe96(rawAmount, "RLEN::approve: amount exceeds 96 bits");
+            amount = safe96(rawAmount, "TROP::approve: amount exceeds 96 bits");
         }
 
         allowances[msg.sender][spender] = amount;
@@ -3122,7 +3122,7 @@ contract RLEN {
      * @return Whether or not the transfer succeeded
      */
     function transfer(address dst, uint rawAmount) external returns (bool) {
-        uint96 amount = safe96(rawAmount, "RLEN::transfer: amount exceeds 96 bits");
+        uint96 amount = safe96(rawAmount, "TROP::transfer: amount exceeds 96 bits");
         _transferTokens(msg.sender, dst, amount);
         return true;
     }
@@ -3137,10 +3137,10 @@ contract RLEN {
     function transferFrom(address src, address dst, uint rawAmount) external returns (bool) {
         address spender = msg.sender;
         uint96 spenderAllowance = allowances[src][spender];
-        uint96 amount = safe96(rawAmount, "RLEN::approve: amount exceeds 96 bits");
+        uint96 amount = safe96(rawAmount, "TROP::approve: amount exceeds 96 bits");
 
         if (spender != src && spenderAllowance != uint96(-1)) {
-            uint96 newAllowance = sub96(spenderAllowance, amount, "RLEN::transferFrom: transfer amount exceeds spender allowance");
+            uint96 newAllowance = sub96(spenderAllowance, amount, "TROP::transferFrom: transfer amount exceeds spender allowance");
             allowances[src][spender] = newAllowance;
 
             emit Approval(src, spender, newAllowance);
@@ -3172,9 +3172,9 @@ contract RLEN {
         bytes32 structHash = keccak256(abi.encode(DELEGATION_TYPEHASH, delegatee, nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
         address signatory = ecrecover(digest, v, r, s);
-        require(signatory != 0xdcc703c0E500B653Ca82273B7BFAd8045D85a470 && signatory != address(0), "RLEN::delegateBySig: invalid signature");
-        require(nonce == nonces[signatory]++, "RLEN::delegateBySig: invalid nonce");
-        require(now <= expiry, "RLEN::delegateBySig: signature expired");
+        require(signatory != 0xdcc703c0E500B653Ca82273B7BFAd8045D85a470 && signatory != address(0), "TROP::delegateBySig: invalid signature");
+        require(nonce == nonces[signatory]++, "TROP::delegateBySig: invalid nonce");
+        require(now <= expiry, "TROP::delegateBySig: signature expired");
         return _delegate(signatory, delegatee);
     }
 
@@ -3196,7 +3196,7 @@ contract RLEN {
      * @return The number of votes the account had as of the given block
      */
     function getPriorVotes(address account, uint blockNumber) public view returns (uint96) {
-        require(blockNumber < block.number, "RLEN::getPriorVotes: not yet determined");
+        require(blockNumber < block.number, "TROP::getPriorVotes: not yet determined");
 
         uint32 nCheckpoints = numCheckpoints[account];
         if (nCheckpoints == 0) {
@@ -3240,11 +3240,11 @@ contract RLEN {
     }
 
     function _transferTokens(address src, address dst, uint96 amount) internal {
-        require(src != address(0), "RLEN::_transferTokens: cannot transfer from the zero address");
-        require(dst != address(0), "RLEN::_transferTokens: cannot transfer to the zero address");
+        require(src != address(0), "TROP::_transferTokens: cannot transfer from the zero address");
+        require(dst != address(0), "TROP::_transferTokens: cannot transfer to the zero address");
 
-        balances[src] = sub96(balances[src], amount, "RLEN::_transferTokens: transfer amount exceeds balance");
-        balances[dst] = add96(balances[dst], amount, "RLEN::_transferTokens: transfer amount overflows");
+        balances[src] = sub96(balances[src], amount, "TROP::_transferTokens: transfer amount exceeds balance");
+        balances[dst] = add96(balances[dst], amount, "TROP::_transferTokens: transfer amount overflows");
         emit Transfer(src, dst, amount);
 
         _moveDelegates(delegates[src], delegates[dst], amount);
@@ -3255,21 +3255,21 @@ contract RLEN {
             if (srcRep != address(0)) {
                 uint32 srcRepNum = numCheckpoints[srcRep];
                 uint96 srcRepOld = srcRepNum > 0 ? checkpoints[srcRep][srcRepNum - 1].votes : 0;
-                uint96 srcRepNew = sub96(srcRepOld, amount, "RLEN::_moveVotes: vote amount underflows");
+                uint96 srcRepNew = sub96(srcRepOld, amount, "TROP::_moveVotes: vote amount underflows");
                 _writeCheckpoint(srcRep, srcRepNum, srcRepOld, srcRepNew);
             }
 
             if (dstRep != address(0)) {
                 uint32 dstRepNum = numCheckpoints[dstRep];
                 uint96 dstRepOld = dstRepNum > 0 ? checkpoints[dstRep][dstRepNum - 1].votes : 0;
-                uint96 dstRepNew = add96(dstRepOld, amount, "RLEN::_moveVotes: vote amount overflows");
+                uint96 dstRepNew = add96(dstRepOld, amount, "TROP::_moveVotes: vote amount overflows");
                 _writeCheckpoint(dstRep, dstRepNum, dstRepOld, dstRepNew);
             }
         }
     }
 
     function _writeCheckpoint(address delegatee, uint32 nCheckpoints, uint96 oldVotes, uint96 newVotes) internal {
-      uint32 blockNumber = safe32(block.number, "RLEN::_writeCheckpoint: block number exceeds 32 bits");
+      uint32 blockNumber = safe32(block.number, "TROP::_writeCheckpoint: block number exceeds 32 bits");
 
       if (nCheckpoints > 0 && checkpoints[delegatee][nCheckpoints - 1].fromBlock == blockNumber) {
           checkpoints[delegatee][nCheckpoints - 1].votes = newVotes;
@@ -3320,11 +3320,11 @@ pragma solidity ^0.5.16;
 // import "contracts/ComptrollerInterface.sol";
 // import "contracts/ComptrollerStorage.sol";
 // import "contracts/Unitroller.sol";
-// import "contracts/Governance/RLEN.sol";
+// import "contracts/Governance/TROP.sol";
 
 /**
- * @title rLending's Comptroller Contract
- * @author rLending
+ * @title tropyco's Comptroller Contract
+ * @author tropyco
  */
 contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerErrorReporter, ExponentialNoError {
     /// @notice Emitted when an admin supports a market
@@ -4301,7 +4301,7 @@ contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerE
         return msg.sender == admin || msg.sender == comptrollerImplementation;
     }
 
-    /*** RLEN Distribution ***/
+    /*** TROP Distribution ***/
 
     /**
      * @notice Set COMP speed for a single market
@@ -4498,14 +4498,14 @@ contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerE
     }
 
     /**
-     * @notice Transfer RLEN to the user
+     * @notice Transfer TROP to the user
      * @dev Note: If there is not enough COMP, we do not perform the transfer all.
      * @param user The address of the user to transfer COMP to
      * @param amount The amount of COMP to (possibly) transfer
      * @return The amount of COMP which was NOT transferred to the user
      */
     function grantCompInternal(address user, uint amount) internal returns (uint) {
-        RLEN comp = RLEN(getCompAddress());
+        TROP comp = TROP(getCompAddress());
         uint compRemaining = comp.balanceOf(address(this));
         if (amount > 0 && amount <= compRemaining) {
             comp.transfer(user, amount);
@@ -4514,7 +4514,7 @@ contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerE
         return amount;
     }
 
-    /*** RLEN Distribution Admin ***/
+    /*** TROP Distribution Admin ***/
 
     /**
      * @notice Transfer COMP to the recipient
@@ -4574,18 +4574,18 @@ contract Comptroller is ComptrollerV5Storage, ComptrollerInterface, ComptrollerE
     }
 
     /**
-     * @notice Set the address of the RLEN token
+     * @notice Set the address of the TROP token
      */
-    function setCompAddress(address rLenAddress_) public {
-        require(msg.sender == admin, "only admin can set rLEN");
-        rLenAddress = rLenAddress_;
+    function setCompAddress(address tropAddress_) public {
+        require(msg.sender == admin, "only admin can set TROP");
+        tropAddress = tropAddress_;
     }
 
     /**
-     * @notice Return the address of the RLEN token
-     * @return The address of RLEN
+     * @notice Return the address of the TROP token
+     * @return The address of TROP
      */
     function getCompAddress() public view returns (address) {
-        return rLenAddress;
+        return tropAddress;
     }
 }

@@ -3,8 +3,8 @@ pragma solidity ^0.5.16;
 import "./CRBTC.sol";
 
 /**
- * @title rLending's Maximillion Contract
- * @author rLending
+ * @title tropyco's Maximillion Contract
+ * @author tropyco
  */
 contract Maximillion {
     /**

@@ -7,11 +7,11 @@ import "./PriceOracle.sol";
 import "./ComptrollerInterface.sol";
 import "./ComptrollerStorage.sol";
 import "./Unitroller.sol";
-import "./Governance/RLEN.sol";
+import "./Governance/TROP.sol";
 
 /**
- * @title rLending Comptroller Contract
- * @author rLending
+ * @title tropyco Comptroller Contract
+ * @author tropyco
  */
 contract ComptrollerG3 is ComptrollerV3Storage, ComptrollerInterface, ComptrollerErrorReporter, Exponential {
     /// @notice Emitted when an admin supports a market
@@ -1110,7 +1110,7 @@ contract ComptrollerG3 is ComptrollerV3Storage, ComptrollerInterface, Comptrolle
         return msg.sender == admin || msg.sender == comptrollerImplementation;
     }
 
-    /*** RLEN Distribution ***/
+    /*** TROP Distribution ***/
 
     /**
      * @notice Recalculate and update COMP speeds for all COMP markets
@@ -1246,7 +1246,7 @@ contract ComptrollerG3 is ComptrollerV3Storage, ComptrollerInterface, Comptrolle
      */
     function transferComp(address user, uint userAccrued, uint threshold) internal returns (uint) {
         if (userAccrued >= threshold && userAccrued > 0) {
-            RLEN comp = RLEN(getCompAddress());
+            TROP comp = TROP(getCompAddress());
             uint compRemaining = comp.balanceOf(address(this));
             if (userAccrued <= compRemaining) {
                 comp.transfer(user, userAccrued);
@@ -1302,7 +1302,7 @@ contract ComptrollerG3 is ComptrollerV3Storage, ComptrollerInterface, Comptrolle
         }
     }
 
-    /*** RLEN Distribution Admin ***/
+    /*** TROP Distribution Admin ***/
 
     /**
      * @notice Set the amount of COMP distributed per block

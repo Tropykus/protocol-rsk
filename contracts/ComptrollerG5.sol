@@ -7,11 +7,11 @@ import "./PriceOracle.sol";
 import "./ComptrollerInterface.sol";
 import "./ComptrollerStorage.sol";
 import "./Unitroller.sol";
-import "./Governance/RLEN.sol";
+import "./Governance/TROP.sol";
 
 /**
- * @title rLending's Comptroller Contract
- * @author rLending
+ * @title tropyco's Comptroller Contract
+ * @author tropyco
  */
 contract ComptrollerG5 is ComptrollerV4Storage, ComptrollerInterface, ComptrollerErrorReporter, Exponential {
     /// @notice Emitted when an admin supports a market
@@ -1045,7 +1045,7 @@ contract ComptrollerG5 is ComptrollerV4Storage, ComptrollerInterface, Comptrolle
       * @param newBorrowCaps The new borrow cap values in underlying to be set. A value of 0 corresponds to unlimited borrowing.
       */
     function _setMarketBorrowCaps(CToken[] calldata cTokens, uint[] calldata newBorrowCaps) external {
-    	require(msg.sender == admin || msg.sender == borrowCapGuardian, "only admin or borrow cap guardian can set borrow caps"); 
+    	require(msg.sender == admin || msg.sender == borrowCapGuardian, "only admin or borrow cap guardian can set borrow caps");
 
         uint numMarkets = cTokens.length;
         uint numBorrowCaps = newBorrowCaps.length;
@@ -1287,7 +1287,7 @@ contract ComptrollerG5 is ComptrollerV4Storage, ComptrollerInterface, Comptrolle
      */
     function transferComp(address user, uint userAccrued, uint threshold) internal returns (uint) {
         if (userAccrued >= threshold && userAccrued > 0) {
-            RLEN comp = RLEN(getCompAddress());
+            TROP comp = TROP(getCompAddress());
             uint compRemaining = comp.balanceOf(address(this));
             if (userAccrued <= compRemaining) {
                 comp.transfer(user, userAccrued);

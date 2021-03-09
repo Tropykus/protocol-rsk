@@ -1,9 +1,9 @@
 
 Macro GivenProposal
     Counter Deploy
-    RLEN Deploy Bank
+    TROP Deploy Bank
     Timelock Deploy Jared 604800
-    Governor Deploy Alpha LegitGov (Address Timelock) (Address RLEN) Guardian
+    Governor Deploy Alpha LegitGov (Address Timelock) (Address TROP) Guardian
     Timelock SetAdmin (Address LegitGov)
     Enfranchise Root 100001e18
     Enfranchise Geoff 100
@@ -11,8 +11,8 @@ Macro GivenProposal
     MineBlock
 
 Macro Enfranchise user amount
-    From Bank (RLEN Transfer user amount)
-    From user (RLEN Delegate user)
+    From Bank (TROP Transfer user amount)
+    From user (TROP Delegate user)
 
 Test "Successfully Cast For Vote"
     GivenProposal

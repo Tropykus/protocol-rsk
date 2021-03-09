@@ -3,8 +3,8 @@
 // pragma solidity ^0.5.16;
 
 /**
-  * @title rLending's InterestRateModel Interface
-  * @author rLending
+  * @title tropyco's InterestRateModel Interface
+  * @author tropyco
   */
 contract InterestRateModel {
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)
@@ -230,9 +230,9 @@ pragma solidity ^0.5.16;
 // import "contracts/SafeMath.sol";
 
 /**
-  * @title rLending's WhitePaperInterestRateModel Contract
-  * @author rLending
-  * @notice The parameterized model described in section 2.4 of the original rLending Protocol whitepaper
+  * @title tropyco's WhitePaperInterestRateModel Contract
+  * @author tropyco
+  * @notice The parameterized model described in section 2.4 of the original tropyco Protocol whitepaper
   */
 contract WhitePaperInterestRateModel is InterestRateModel {
     using SafeMath for uint;

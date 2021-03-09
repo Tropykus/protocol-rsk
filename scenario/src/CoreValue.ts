@@ -949,7 +949,7 @@ const fetchers = [
 
       * "Comp ...compArgs" - Returns Comp value
     `,
-    'RLEN',
+    'TROP',
     [new Arg('res', getCompValue, { variadic: true })],
     async (world, { res }) => res,
     { subExpressions: compFetchers() }
@@ -969,7 +969,7 @@ const fetchers = [
 
 let contractFetchers = [
   { contract: "Counter", implicit: false },
-  { contract: "RlendingLens", implicit: false },
+  { contract: "TropycoLens", implicit: false },
   { contract: "Reservoir", implicit: true }
 ];
 

@@ -2,9 +2,9 @@ pragma solidity ^0.5.16;
 pragma experimental ABIEncoderV2;
 
 /**
-  * @title Governor contract to vote on rLending platform using RLEN tokens.
-  * @author rLending
-  * @notice This contract allows to propose and vote for protocol changes using the RLEN tokens.
+  * @title Governor contract to vote on tropyco platform using TROP tokens.
+  * @author tropyco
+  * @notice This contract allows to propose and vote for protocol changes using the TROP tokens.
   */
 contract GovernorAlpha {
     /// @notice The name of this contract

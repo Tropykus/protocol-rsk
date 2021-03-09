@@ -1,14 +1,14 @@
 
 Macro DeployGov
-    RLEN Deploy Bank
+    TROP Deploy Bank
     Timelock Deploy Jared 604800
-    Governor Deploy Alpha LegitGov (Address Timelock) (Address RLEN) Guardian
+    Governor Deploy Alpha LegitGov (Address Timelock) (Address TROP) Guardian
     Timelock SetAdmin (Address LegitGov)
     Enfranchise Root 100001e18
 
 Macro Enfranchise user amount
-    From Bank (RLEN Transfer user amount)
-    From user (RLEN Delegate user)
+    From Bank (TROP Transfer user amount)
+    From user (TROP Delegate user)
 
 Test "Propose 💍 [1 Action]"
     DeployGov
@@ -102,8 +102,8 @@ Test "Can re-propose after vote is canceled"
     Counter Deploy
     Governor LegitGov Propose "Add 5" [(Address Counter)] [1] ["increment(uint256)"] [["5"]]
     Assert Equal (Governor LegitGov Proposal (ActiveProposal Root) Id) 1
-    From Root (RLEN Delegate Geoff)
+    From Root (TROP Delegate Geoff)
     Governor LegitGov Proposal (ActiveProposal Root) Cancel
-    From Root (RLEN Delegate Root)
+    From Root (TROP Delegate Root)
     Governor LegitGov Propose "Add 7" [(Address Counter)] [1] ["increment(uint256)"] [["7"]]
     Assert Equal (Governor LegitGov Proposal (ActiveProposal Root) Id) 2
