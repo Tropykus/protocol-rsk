@@ -3,9 +3,9 @@ pragma solidity ^0.5.16;
 import "./CToken.sol";
 
 /**
- * @title tropyco's CRBTC Contract
+ * @title tropykus CRBTC Contract
  * @notice CToken which wraps Ether
- * @author tropyco
+ * @author tropykus
  */
 contract CRBTC is CToken {
     /**

@@ -5,8 +5,8 @@ import "./InterestRateModel.sol";
 
 
 /**
-  * @title tropyco's JumpRateModel Contract V2 for V2 cTokens
-  * @author tropyco
+  * @title tropykus JumpRateModel Contract V2 for V2 cTokens
+  * @author tropykus
   * @notice Supports only for V2 cTokens
   */
 contract JumpRateModelV2 is InterestRateModel, BaseJumpRateModelV2  {

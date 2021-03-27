@@ -78,8 +78,8 @@ contract ComptrollerInterface {
 // pragma solidity ^0.5.16;
 
 /**
-  * @title tropyco's InterestRateModel Interface
-  * @author tropyco
+  * @title tropykus InterestRateModel Interface
+  * @author tropykus
   */
 contract InterestRateModel {
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)

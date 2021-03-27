@@ -47,7 +47,7 @@ module.exports = async (hardhat) => {
     Object.assign(signer.provider.formatter, { format: format })
 
     console.log("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-    console.log("tropyco Contracts - Deploy Script")
+    console.log("tropykus Contracts - Deploy Script")
     console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 
     const locus = isLocal ? 'local' : 'remote'
@@ -253,7 +253,7 @@ module.exports = async (hardhat) => {
     // ### Deploy cUSDT ### //
     console.log("\n  Deploy cUSDT...", usdt)
     const cUsdtResult = await deploy("cUSDT", {
-        args: [usdt, newUnitrollerContract.address, usdtJumpRateModelV2Result.address, config.initialExchangeRateMantissa, "tropyco cUSDT", "crUSDT", 8, deployer],
+        args: [usdt, newUnitrollerContract.address, usdtJumpRateModelV2Result.address, config.initialExchangeRateMantissa, "tropykus cUSDT", "crUSDT", 8, deployer],
         contract: "CErc20Immutable",
         from: deployer,
         skipIfAlreadyDeployed: true
@@ -286,7 +286,7 @@ module.exports = async (hardhat) => {
     // ### Deploy cRIF ### //
     console.log("\n  Deploy cRIF...")
     const cRifResult = await deploy("cRIF", {
-        args: [rif, newUnitrollerContract.address, rifWhitePaperInterestRateModelResult.address, config.initialExchangeRateMantissa, "tropyco RIF", "cRIF", 8, deployer],
+        args: [rif, newUnitrollerContract.address, rifWhitePaperInterestRateModelResult.address, config.initialExchangeRateMantissa, "tropykus RIF", "cRIF", 8, deployer],
         contract: "CErc20Immutable",
         from: deployer,
         skipIfAlreadyDeployed: true
@@ -318,7 +318,7 @@ module.exports = async (hardhat) => {
     // ### Deploy cRBTC ### //
     console.log("\n  Deploy cRBTC...")
     const cRbtcResult = await deploy("CRBTC", {
-        args: [newUnitrollerContract.address, btcWhitePaperInterestRateModelResult.address, config.initialExchangeRateMantissa, "tropyco RBTC", "cRBTC", 8, deployer],
+        args: [newUnitrollerContract.address, btcWhitePaperInterestRateModelResult.address, config.initialExchangeRateMantissa, "tropykus RBTC", "cRBTC", 8, deployer],
         contract: "CRBTC",
         from: deployer,
         skipIfAlreadyDeployed: true
@@ -373,10 +373,10 @@ module.exports = async (hardhat) => {
         skipIfAlreadyDeployed: true
     })
 
-    // -------------------------- Deploy tropycoLens ------------------------- //
-    console.log("\n  Deploy TropycoLens...")
-    const rLedingLensResult = await deploy("TropycoLens", {
-        contract: "TropycoLens",
+    // -------------------------- Deploy tropykusLens ------------------------- //
+    console.log("\n  Deploy TropykusLens...")
+    const rLedingLensResult = await deploy("TropykusLens", {
+        contract: "TropykusLens",
         from: deployer,
         skipIfAlreadyDeployed: true
     })
@@ -418,7 +418,7 @@ module.exports = async (hardhat) => {
     console.log("  - cRBTC:                           ", cRbtcResult.address)
     console.log("  - TROP:                            ", tropResult.address)
     console.log("  - Maximillion:                     ", maximillionResult.address)
-    console.log("  - tropycoLens:                    ", rLedingLensResult.address)
+    console.log("  - tropykusLens:                    ", rLedingLensResult.address)
     console.log("  - Rbtc Oracle:                 ", rbtcOracle)
     console.log("  - Rif Oracle:                  ", rifOracle)
     console.log("  - rUSDT:                       ", usdt)

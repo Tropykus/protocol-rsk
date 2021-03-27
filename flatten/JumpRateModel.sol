@@ -3,8 +3,8 @@
 // pragma solidity ^0.5.16;
 
 /**
-  * @title tropyco's InterestRateModel Interface
-  * @author tropyco
+  * @title tropykus InterestRateModel Interface
+  * @author tropykus
   */
 contract InterestRateModel {
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)
@@ -230,8 +230,8 @@ pragma solidity ^0.5.16;
 // import "contracts/SafeMath.sol";
 
 /**
-  * @title tropyco's JumpRateModel Contract
-  * @author tropyco
+  * @title tropykus JumpRateModel Contract
+  * @author tropykus
   */
 contract JumpRateModel is InterestRateModel {
     using SafeMath for uint;

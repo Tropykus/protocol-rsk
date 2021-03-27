@@ -19,10 +19,10 @@ interface ComptrollerLensInterface {
 
 /**
   * @title Helper contract to get information of the protocol .
-  * @author tropyco
-  * @notice TropycoLens allows to make obtain global information with a single call.
+  * @author tropykus
+  * @notice TropykusLens allows to make obtain global information with a single call.
   */
-contract TropycoLens {
+contract TropykusLens {
     struct CTokenMetadata {
         address cToken;
         uint exchangeRateCurrent;

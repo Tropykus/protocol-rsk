@@ -3,8 +3,8 @@
 pragma solidity ^0.5.16;
 
 /**
-  * @title tropyco's Legacy InterestRateModel Interface
-  * @author tropyco (modified by Arr00)
+  * @title tropykus Legacy InterestRateModel Interface
+  * @author tropykus (modified by Arr00)
   */
 contract LegacyInterestRateModel {
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)

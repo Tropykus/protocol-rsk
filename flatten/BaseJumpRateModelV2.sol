@@ -195,8 +195,8 @@ pragma solidity ^0.5.16;
 // import "contracts/SafeMath.sol";
 
 /**
-  * @title Logic for rLeding's JumpRateModel Contract V2.
-  * @author tropyco
+  * @title Logic for tropykus JumpRateModel Contract V2.
+  * @author tropykus
   * @notice Version 2 modifies Version 1 by enabling updateable parameters.
   */
 contract BaseJumpRateModelV2 {

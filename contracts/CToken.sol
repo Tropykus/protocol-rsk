@@ -8,9 +8,9 @@ import "./EIP20Interface.sol";
 import "./InterestRateModel.sol";
 
 /**
- * @title tropyco's CToken Contract
+ * @title tropykus CToken Contract
  * @notice Abstract base for CTokens
- * @author tropyco
+ * @author tropykus
  */
 contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     /**

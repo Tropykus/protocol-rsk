@@ -3,12 +3,12 @@ pragma experimental ABIEncoderV2;
 
 /**
   * @title TROP ERC20 tokens.
-  * @author tropyco
+  * @author tropykus
   * @notice Yield farming tokens that allow to  propose and vote for protocol changes using the governance system.
   */
 contract TROP {
     /// @notice EIP-20 token name for this token
-    string public constant name = "tropyco";
+    string public constant name = "tropykus";
 
     /// @notice EIP-20 token symbol for this token
     string public constant symbol = "TROP";

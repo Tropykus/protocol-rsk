@@ -9,8 +9,8 @@ import "./ComptrollerStorage.sol";
 import "./Unitroller.sol";
 
 /**
- * @title tropyco's Comptroller Contract
- * @author tropyco
+ * @title tropykus Comptroller Contract
+ * @author tropykus
  */
 contract ComptrollerG2 is ComptrollerV2Storage, ComptrollerInterface, ComptrollerErrorReporter, Exponential {
     /**

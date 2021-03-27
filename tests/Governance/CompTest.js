@@ -9,7 +9,7 @@ const {
 const EIP712 = require('../Utils/EIP712');
 
 describe('TROP', () => {
-  const name = 'tropyco';
+  const name = 'tropykus';
   const symbol = 'TROP';
 
   let root, a1, a2, accounts, chainId;

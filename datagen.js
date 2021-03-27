@@ -8,8 +8,8 @@ if (fs.existsSync("./.build/contracts.json")) {
     process.exit()
 }
 
-fs.writeFileSync('./abis/TropycoLens.json', contracts.contracts['contracts/Lens/TropycoLens.sol:TropycoLens'].abi);
-console.log('TropycoLens.json created');
+fs.writeFileSync('./abis/TropykusLens.json', contracts.contracts['contracts/Lens/TropykusLens.sol:TropykusLens'].abi);
+console.log('TropykusLens.json created');
 fs.writeFileSync('./abis/Unitroller.json', contracts.contracts['contracts/Unitroller.sol:Unitroller'].abi);
 console.log('Unitroller.json created');
 fs.writeFileSync('./abis/Comptroller.json', contracts.contracts['contracts/Comptroller.sol:Comptroller'].abi);

@@ -95,8 +95,8 @@ contract ComptrollerInterface {
 // pragma solidity ^0.5.16;
 
 /**
-  * @title tropyco's InterestRateModel Interface
-  * @author tropyco
+  * @title tropykus InterestRateModel Interface
+  * @author tropykus
   */
 contract InterestRateModel {
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)
@@ -722,7 +722,7 @@ contract TokenErrorReporter {
 
 /**
   * @title Careful Math
-  * @author tropyco
+  * @author tropykus
   * @notice Derived from OpenZeppelin's SafeMath library
   *         https://github.com/OpenZeppelin/openzeppelin-solidity/blob/master/contracts/math/SafeMath.sol
   */
@@ -810,7 +810,7 @@ contract CarefulMath {
 
 /**
  * @title Exponential module for storing fixed-precision decimals
- * @author tropyco
+ * @author tropykus
  * @notice Exp is a struct which stores decimals with a fixed precision of 18 decimal places.
  *         Thus, if we wanted to store the 5.1, mantissa would store 5.1e18. That is:
  *         `Exp({mantissa: 5100000000000000000})`.
@@ -1012,7 +1012,7 @@ contract ExponentialNoError {
 
 /**
  * @title Exponential module for storing fixed-precision decimals
- * @author tropyco
+ * @author tropykus
  * @dev Legacy contract for compatibility reasons with existing contracts that still use MathError
  * @notice Exp is a struct which stores decimals with a fixed precision of 18 decimal places.
  *         Thus, if we wanted to store the 5.1, mantissa would store 5.1e18. That is:
@@ -1268,9 +1268,9 @@ interface EIP20Interface {
 // import "contracts/InterestRateModel.sol";
 
 /**
- * @title tropyco's CToken Contract
+ * @title tropykus CToken Contract
  * @notice Abstract base for CTokens
- * @author tropyco
+ * @author tropykus
  */
 contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     /**
@@ -2700,9 +2700,9 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 // import "contracts/CToken.sol";
 
 /**
- * @title tropyco's CErc20 Contract
+ * @title tropykus CErc20 Contract
  * @notice CTokens which wrap an EIP-20 underlying
- * @author tropyco
+ * @author tropykus
  */
 contract CErc20 is CToken, CErc20Interface {
     /**

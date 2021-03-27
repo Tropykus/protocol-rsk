@@ -2,8 +2,8 @@ pragma solidity ^0.5.16;
 pragma experimental ABIEncoderV2;
 
 /**
-  * @title Governor contract to vote on tropyco platform using TROP tokens.
-  * @author tropyco
+  * @title Governor contract to vote on tropykus platform using TROP tokens.
+  * @author tropykus
   * @notice This contract allows to propose and vote for protocol changes using the TROP tokens.
   */
 contract GovernorAlpha {

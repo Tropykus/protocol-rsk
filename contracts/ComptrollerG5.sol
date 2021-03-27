@@ -10,8 +10,8 @@ import "./Unitroller.sol";
 import "./Governance/TROP.sol";
 
 /**
- * @title tropyco's Comptroller Contract
- * @author tropyco
+ * @title tropykus Comptroller Contract
+ * @author tropykus
  */
 contract ComptrollerG5 is ComptrollerV4Storage, ComptrollerInterface, ComptrollerErrorReporter, Exponential {
     /// @notice Emitted when an admin supports a market

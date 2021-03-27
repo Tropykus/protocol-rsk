@@ -1,7 +1,7 @@
 
 Test "Check Name"
     TROP Deploy Geoff
-    Assert Equal (TROP Name) "tropyco"
+    Assert Equal (TROP Name) "tropykus"
 
 Test "Check Symbol"
     TROP Deploy Geoff

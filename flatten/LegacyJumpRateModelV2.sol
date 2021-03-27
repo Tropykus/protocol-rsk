@@ -195,8 +195,8 @@ library SafeMath {
 // import "contracts/SafeMath.sol";
 
 /**
-  * @title Logic for rLeding's JumpRateModel Contract V2.
-  * @author tropyco
+  * @title Logic for tropykus JumpRateModel Contract V2.
+  * @author tropykus
   * @notice Version 2 modifies Version 1 by enabling updateable parameters.
   */
 contract BaseJumpRateModelV2 {
@@ -356,8 +356,8 @@ contract BaseJumpRateModelV2 {
 // pragma solidity ^0.5.16;
 
 /**
-  * @title tropyco's Legacy InterestRateModel Interface
-  * @author tropyco (modified by Arr00)
+  * @title tropykus Legacy InterestRateModel Interface
+  * @author tropykus (modified by Arr00)
   */
 contract LegacyInterestRateModel {
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)
@@ -394,8 +394,8 @@ pragma solidity ^0.5.16;
 
 
 /**
-  * @title tropyco's JumpRateModel Contract V2 for legacy cTokens
-  * @author tropyco
+  * @title tropykus JumpRateModel Contract V2 for legacy cTokens
+  * @author tropykus
   * @notice Supports only legacy cTokens
   */
 contract LegacyJumpRateModelV2 is LegacyInterestRateModel, BaseJumpRateModelV2  {

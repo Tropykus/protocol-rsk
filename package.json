@@ -1,7 +1,7 @@
 {
-  "name": "tropyco-protocol",
+  "name": "tropykus-protocol",
   "version": "0.2.1",
-  "description": "The tropyco Money Market",
+  "description": "The tropykus Money Market",
   "main": "index.js",
   "scripts": {
     "compile": "./script/compile",
@@ -19,8 +19,8 @@
     "test:prepare": "NO_RUN=true ./script/test",
     "checksize": "npx run ./script/saddle/comptrollerSize.js"
   },
-  "repository": "git@github.com:riflending/tropyco-protocol.git",
-  "author": "rLeding",
+  "repository": "git@github.com:TruStartUp/tropykus-protocol.git",
+  "author": "TRU",
   "license": "UNLICENSED",
   "devDependencies": {
     "bignumber.js": "9.0.0",

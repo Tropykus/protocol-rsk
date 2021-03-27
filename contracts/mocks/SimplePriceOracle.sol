@@ -5,7 +5,7 @@ import "../CErc20.sol";
 
 /**
   * @title Simplified Oracle for testing purposes.
-  * @author tropyco
+  * @author tropykus
   * @notice This contract is meant for testing only.
   */
 contract SimplePriceOracle is PriceOracle {

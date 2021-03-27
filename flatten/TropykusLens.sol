@@ -78,8 +78,8 @@ contract ComptrollerInterface {
 // pragma solidity ^0.5.16;
 
 /**
-  * @title tropyco's InterestRateModel Interface
-  * @author tropyco
+  * @title tropykus InterestRateModel Interface
+  * @author tropykus
   */
 contract InterestRateModel {
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)
@@ -705,7 +705,7 @@ contract TokenErrorReporter {
 
 /**
   * @title Careful Math
-  * @author tropyco
+  * @author tropykus
   * @notice Derived from OpenZeppelin's SafeMath library
   *         https://github.com/OpenZeppelin/openzeppelin-solidity/blob/master/contracts/math/SafeMath.sol
   */
@@ -793,7 +793,7 @@ contract CarefulMath {
 
 /**
  * @title Exponential module for storing fixed-precision decimals
- * @author tropyco
+ * @author tropykus
  * @notice Exp is a struct which stores decimals with a fixed precision of 18 decimal places.
  *         Thus, if we wanted to store the 5.1, mantissa would store 5.1e18. That is:
  *         `Exp({mantissa: 5100000000000000000})`.
@@ -995,7 +995,7 @@ contract ExponentialNoError {
 
 /**
  * @title Exponential module for storing fixed-precision decimals
- * @author tropyco
+ * @author tropykus
  * @dev Legacy contract for compatibility reasons with existing contracts that still use MathError
  * @notice Exp is a struct which stores decimals with a fixed precision of 18 decimal places.
  *         Thus, if we wanted to store the 5.1, mantissa would store 5.1e18. That is:
@@ -1251,9 +1251,9 @@ interface EIP20Interface {
 // import "contracts/InterestRateModel.sol";
 
 /**
- * @title tropyco's CToken Contract
+ * @title tropykus CToken Contract
  * @notice Abstract base for CTokens
- * @author tropyco
+ * @author tropykus
  */
 contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     /**
@@ -2683,9 +2683,9 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 // import "contracts/CToken.sol";
 
 /**
- * @title tropyco's CErc20 Contract
+ * @title tropykus CErc20 Contract
  * @notice CTokens which wrap an EIP-20 underlying
- * @author tropyco
+ * @author tropykus
  */
 contract CErc20 is CToken, CErc20Interface {
     /**
@@ -2914,8 +2914,8 @@ contract PriceOracle {
 // pragma experimental ABIEncoderV2;
 
 /**
-  * @title Governor contract to vote on tropyco platform using TROP tokens.
-  * @author tropyco
+  * @title Governor contract to vote on tropykus platform using TROP tokens.
+  * @author tropykus
   * @notice This contract allows to propose and vote for protocol changes using the TROP tokens.
   */
 contract GovernorAlpha {
@@ -3255,12 +3255,12 @@ interface CompInterface {
 
 /**
   * @title TROP ERC20 tokens.
-  * @author tropyco
+  * @author tropykus
   * @notice Yield farming tokens that allow to  propose and vote for protocol changes using the governance system.
   */
 contract TROP {
     /// @notice EIP-20 token name for this token
-    string public constant name = "tropyco";
+    string public constant name = "tropykus";
 
     /// @notice EIP-20 token symbol for this token
     string public constant symbol = "TROP";
@@ -3558,7 +3558,7 @@ contract TROP {
 }
 
 
-// Root file: contracts/Lens/TropycoLens.sol
+// Root file: contracts/Lens/TropykusLens.sol
 
 pragma solidity ^0.5.16;
 pragma experimental ABIEncoderV2;
@@ -3581,10 +3581,10 @@ interface ComptrollerLensInterface {
 
 /**
   * @title Helper contract to get information of the protocol .
-  * @author tropyco
-  * @notice TropycoLens allows to make obtain global information with a single call.
+  * @author tropykus
+  * @notice TropykusLens allows to make obtain global information with a single call.
   */
-contract TropycoLens {
+contract TropykusLens {
     struct CTokenMetadata {
         address cToken;
         uint exchangeRateCurrent;
