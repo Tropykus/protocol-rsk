@@ -4,6 +4,11 @@ const networks = {
     allowUnlimitedContractSize: true,
     chainId: 31337
   },
+  // hardhaty: {
+  //   forking: {
+  //     url: 'http://18.222.5.236',
+  //   }
+  // },
   ganache: {
     url: 'http://127.0.0.1:8545',
     blockGasLimit: 200000000,

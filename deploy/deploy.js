@@ -30,6 +30,11 @@ module.exports = async (hardhat) => {
       admin1,
       admin2
     } = await getNamedAccounts()
+    console.log(`deployer: ${deployer}`)
+    console.log(`rifOracle: ${rifOracle}`)
+    console.log(`rbtcOracle: ${rbtcOracle}`)
+    console.log(`usdt: ${usdt}`)
+    console.log(`rif: ${rif}`)
 
     const chainId = parseInt(await getChainId(), 10)
     console.log('ChainID', chainId);
@@ -45,6 +50,8 @@ module.exports = async (hardhat) => {
 
     const signer = await ethers.provider.getSigner(deployer)
     Object.assign(signer.provider.formatter, { format: format })
+
+    console.log(`signer: ${JSON.stringify(signer)}`);
 
     console.log("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     console.log("tropykus Contracts - Deploy Script")
@@ -98,7 +105,26 @@ module.exports = async (hardhat) => {
       console.log("  - Rif:              ", rifResult.address)
     } // ----------- End if local ------------- //
 
+    // if not set by named config
+    if (!multiSig || chainId === 1337) {
+        console.log("\n  Deploying MultiSigWallet...")
+        const owners =  isLocal ? [deployer] : [deployer, admin1, admin2]
+        console.log(owners)
+        const multiSigResult = await deploy("MultiSigWallet", {
+            args: [owners, 1],
+            contract: "MultiSigWallet",
+            from: deployer,
+            skipIfAlreadyDeployed: true
+        })
+        multiSig = multiSigResult.address
+    }
+    console.log(`multiSig: ${multiSig}`)
 
+    const multiSigContract = await ethers.getContractAt(
+        "MultiSigWallet",
+        multiSig,
+        signer
+    )
 
     // USDT Oracle returns always 1
     console.log("\n 🔸 Deploying USDT Oracle...")
@@ -109,24 +135,7 @@ module.exports = async (hardhat) => {
         skipIfAlreadyDeployed: true
     });
     usdtOracle = usdtOracleResult.address
-
-    // if not set by named config
-    if (!multiSig) {
-        console.log("\n  Deploying MultiSigWallet...")
-        const owners =  isLocal ? [deployer] : [deployer, admin1, admin2]
-        const multiSigResult = await deploy("MultiSigWallet", {
-            args: [owners, 1],
-            contract: "MultiSigWallet",
-            from: deployer,
-            skipIfAlreadyDeployed: true
-        })
-        multiSig = multiSigResult.address
-    }
-    const multiSigContract = await ethers.getContractAt(
-        "MultiSigWallet",
-        multiSig,
-        signer
-    )
+    console.log('\n USDT Ora culo des ple ga do');
 
     console.log("\n  Deploying Unitroller...")
     const unitrollerResult = await deploy("Unitroller", {
@@ -202,7 +211,7 @@ module.exports = async (hardhat) => {
 
     const newUnitrollerContract = await ethers.getContractAt(
         "Comptroller",
-        unitrollerContract.address,
+        comptrollerResult.address,
         signer
     )
 
@@ -249,7 +258,7 @@ module.exports = async (hardhat) => {
     })
     // --------------------- End Deploy InterestRateModel ----------------- //
 
-    // -------------------------- Deploy CTokerns ------------------------- //
+    // -------------------------- Deploy CTokens ------------------------- //
     // ### Deploy cUSDT ### //
     console.log("\n  Deploy cUSDT...", usdt)
     const cUsdtResult = await deploy("cUSDT", {
@@ -258,6 +267,8 @@ module.exports = async (hardhat) => {
         from: deployer,
         skipIfAlreadyDeployed: true
     })
+
+    console.log(`============================cUSDT Newly deployed: ${cUsdtResult.newlyDeployed}`)
 
     const cUsdtContract = await ethers.getContractAt(
         "CErc20Immutable",
@@ -410,6 +421,7 @@ module.exports = async (hardhat) => {
     console.log("  - USDT PriceOracleAdapter:         ", usdtPriceOracleAdapterResult.address)
     console.log("  - RBTC PriceOracleAdapter:         ", rbtcPriceOracleAdapterResult.address)
     console.log("  - Comptroller (Logic):             ", comptrollerResult.address)
+    console.log("  - Comptroller (Tha only one):      ", newUnitrollerContract.address)
     console.log("  - USDT JumpRateModelV2:            ", usdtJumpRateModelV2Result.address)
     console.log("  - RIF WhitePaperInterestRateModel: ", rifWhitePaperInterestRateModelResult.address)
     console.log("  - BTC WhitePaperInterestRateModel: ", btcWhitePaperInterestRateModelResult.address)
@@ -419,10 +431,10 @@ module.exports = async (hardhat) => {
     console.log("  - TROP:                            ", tropResult.address)
     console.log("  - Maximillion:                     ", maximillionResult.address)
     console.log("  - tropykusLens:                    ", rLedingLensResult.address)
-    console.log("  - Rbtc Oracle:                 ", rbtcOracle)
-    console.log("  - Rif Oracle:                  ", rifOracle)
-    console.log("  - rUSDT:                       ", usdt)
-    console.log("  - Rif:                         ", rif)
+    console.log("  - Rbtc Oracle:                     ", rbtcOracle)
+    console.log("  - Rif Oracle:                      ", rifOracle)
+    console.log("  - rUSDT:                           ", usdt)
+    console.log("  - Rif:                             ", rif)
     console.log("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 
     console.log('\n \x1b[32m%s\x1b[0m', "All contracts are deployed..", "🌱\n");
