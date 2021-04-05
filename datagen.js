@@ -30,3 +30,7 @@ fs.writeFileSync('./abis/PriceProviderMoC.json', contracts.contracts['contracts/
 console.log('PriceProviderMoC.json created');
 fs.writeFileSync('./abis/TropykusLens.json', contracts.contracts['contracts/Lens/TropykusLens.sol:TropykusLens'].abi);
 console.log('TropykusLens.json created');
+fs.writeFileSync('./abis/StandardToken.json', contracts.contracts['contracts/ERC20.sol:StandardToken'].abi);
+console.log('StandardToken.json created');
+fs.writeFileSync('./abis/CErc20Immutable.json', contracts.contracts['contracts/CErc20Immutable.sol:CErc20Immutable'].abi);
+console.log('CErc20Immutable.json created');

@@ -135,7 +135,6 @@ module.exports = async (hardhat) => {
         skipIfAlreadyDeployed: true
     });
     usdtOracle = usdtOracleResult.address
-    console.log('\n USDT Ora culo des ple ga do');
 
     console.log("\n  Deploying Unitroller...")
     const unitrollerResult = await deploy("Unitroller", {

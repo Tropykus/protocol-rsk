@@ -1,6 +1,7 @@
 pragma solidity ^0.5.16;
 
 import "./CToken.sol";
+import "./CTokenInterfaces.sol";
 
 /**
  * @title tropykus CErc20 Contract
