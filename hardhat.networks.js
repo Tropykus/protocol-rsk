@@ -3,7 +3,7 @@ const networks = {
     blockGasLimit: 200000000,
     gas: 6800000,
     allowUnlimitedContractSize: true,
-    chainId: 31337
+    chainId: 1337
   },
   // hardhaty: {
   //   forking: {
