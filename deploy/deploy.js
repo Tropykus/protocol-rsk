@@ -41,6 +41,7 @@ module.exports = async (hardhat) => {
     const isLocal = [30, 31].indexOf(chainId) == -1
     // 31337 is unit testing, 1337 is for coverage, 33 is rsk regtest
     const isTestEnvironment = chainId === 31337 || chainId === 1337 || chainId === 33
+    console.log('isLocal', isLocal);
     console.log('isTestEnvironment', isTestEnvironment);
     // Fix transaction format  error from etherjs getTransactionReceipt as transactionReceipt format
     // checks root to be a 32 bytes hash when on RSK its 0x01
@@ -260,6 +261,10 @@ module.exports = async (hardhat) => {
     // -------------------------- Deploy CTokens ------------------------- //
     // ### Deploy cUSDT ### //
     console.log("\n  Deploy cUSDT...", usdt)
+    console.log("\n Comptroller address...", newUnitrollerContract.address)
+    console.log("\n Rate model at...", usdtJumpRateModelV2Result.address)
+    console.log("\n The initial exchange rate...", Number(config.initialExchangeRateMantissa)/1e18)
+    console.log("\n deployer...", deployer)
     const cUsdtResult = await deploy("cUSDT", {
         args: [usdt, newUnitrollerContract.address, usdtJumpRateModelV2Result.address, config.initialExchangeRateMantissa, "tropykus cUSDT", "crUSDT", 8, deployer],
         contract: "CErc20Immutable",

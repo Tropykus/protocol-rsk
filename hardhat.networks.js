@@ -1,6 +1,7 @@
 const networks = {
   hardhat: {
     blockGasLimit: 200000000,
+    gas: 6800000,
     allowUnlimitedContractSize: true,
     chainId: 31337
   },
@@ -22,7 +23,7 @@ const networks = {
     chainId: 33
   }
 }
-
+console.log(process.env.HDWALLET_MNEMONIC)
 if (process.env.HDWALLET_MNEMONIC) {
   networks.rsktestnet = {
     url: 'https://public-node.testnet.rsk.co',
