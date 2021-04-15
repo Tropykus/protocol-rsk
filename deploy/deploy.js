@@ -10,7 +10,7 @@ const chainName = (chainId) => {
 }
 const parseEther = ethers.utils.parseEther;
 const config = {
-    initialExchangeRateMantissa:  parseEther('2'),
+    initialExchangeRateMantissa:  parseEther('0.02'),
     liquidationIncentiveMantisa: parseEther('1.08'),
     closeFactorMantisa: parseEther('0.5'),
     compSpeed: parseEther('0'), //0 to not drip
@@ -266,7 +266,7 @@ module.exports = async (hardhat) => {
     console.log("\n The initial exchange rate...", Number(config.initialExchangeRateMantissa)/1e18)
     console.log("\n deployer...", deployer)
     const cUsdtResult = await deploy("cUSDT", {
-        args: [usdt, newUnitrollerContract.address, usdtJumpRateModelV2Result.address, config.initialExchangeRateMantissa, "tropykus cUSDT", "crUSDT", 8, deployer],
+        args: [usdt, newUnitrollerContract.address, usdtJumpRateModelV2Result.address, config.initialExchangeRateMantissa, "tropykus cUSDT", "crUSDT", 18, deployer],
         contract: "CErc20Immutable",
         from: deployer,
         skipIfAlreadyDeployed: true
@@ -301,7 +301,7 @@ module.exports = async (hardhat) => {
     // ### Deploy cRIF ### //
     console.log("\n  Deploy cRIF...")
     const cRifResult = await deploy("cRIF", {
-        args: [rif, newUnitrollerContract.address, rifWhitePaperInterestRateModelResult.address, config.initialExchangeRateMantissa, "tropykus RIF", "cRIF", 8, deployer],
+        args: [rif, newUnitrollerContract.address, rifWhitePaperInterestRateModelResult.address, config.initialExchangeRateMantissa, "tropykus RIF", "cRIF", 18, deployer],
         contract: "CErc20Immutable",
         from: deployer,
         skipIfAlreadyDeployed: true
@@ -333,7 +333,7 @@ module.exports = async (hardhat) => {
     // ### Deploy cRBTC ### //
     console.log("\n  Deploy cRBTC...")
     const cRbtcResult = await deploy("CRBTC", {
-        args: [newUnitrollerContract.address, btcWhitePaperInterestRateModelResult.address, config.initialExchangeRateMantissa, "tropykus RBTC", "cRBTC", 8, deployer],
+        args: [newUnitrollerContract.address, btcWhitePaperInterestRateModelResult.address, config.initialExchangeRateMantissa, "tropykus RBTC", "cRBTC", 18, deployer],
         contract: "CRBTC",
         from: deployer,
         skipIfAlreadyDeployed: true
