@@ -11,7 +11,7 @@ const chainName = (chainId) => {
 const parseEther = ethers.utils.parseEther;
 const config = {
     initialExchangeRateMantissa:  parseEther('0.02'),
-    liquidationIncentiveMantisa: parseEther('1.08'),
+    liquidationIncentiveMantisa: parseEther('0.07'),
     closeFactorMantisa: parseEther('0.5'),
     compSpeed: parseEther('0'), //0 to not drip
 };
