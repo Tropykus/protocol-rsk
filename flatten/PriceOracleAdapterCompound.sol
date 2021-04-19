@@ -336,27 +336,27 @@ contract CTokenInterface is CTokenStorage {
     /**
      * @notice Event emitted when tokens are minted
      */
-    event Mint(address minter, uint mintAmount, uint mintTokens);
+    event Mint(address indexed minter, uint mintAmount, uint mintTokens);
 
     /**
      * @notice Event emitted when tokens are redeemed
      */
-    event Redeem(address redeemer, uint redeemAmount, uint redeemTokens);
+    event Redeem(address indexed redeemer, uint redeemAmount, uint redeemTokens);
 
     /**
      * @notice Event emitted when underlying is borrowed
      */
-    event Borrow(address borrower, uint borrowAmount, uint accountBorrows, uint totalBorrows);
+    event Borrow(address indexed borrower, uint borrowAmount, uint accountBorrows, uint totalBorrows);
 
     /**
      * @notice Event emitted when a borrow is repaid
      */
-    event RepayBorrow(address payer, address borrower, uint repayAmount, uint accountBorrows, uint totalBorrows);
+    event RepayBorrow(address indexed payer, address indexed borrower, uint repayAmount, uint accountBorrows, uint totalBorrows);
 
     /**
      * @notice Event emitted when a borrow is liquidated
      */
-    event LiquidateBorrow(address liquidator, address borrower, uint repayAmount, address cTokenCollateral, uint seizeTokens);
+    event LiquidateBorrow(address indexed liquidator, address indexed borrower, uint repayAmount, address indexed cTokenCollateral, uint seizeTokens);
 
 
     /*** Admin Events ***/
