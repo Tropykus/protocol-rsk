@@ -354,7 +354,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 totalCash,
                 totalBorrows,
                 totalReserves,
-                totalSupply
+                totalSupply,
+                reserveFactorMantissa
             );
         }
     }

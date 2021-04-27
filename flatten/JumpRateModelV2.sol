@@ -217,11 +217,6 @@ contract BaseJumpRateModelV2 {
     address public pendingAdmin;
 
     /**
-     * @notice The approximate number of blocks per year that is assumed by the interest rate model
-     */
-    uint public constant blocksPerYear = 1051200;
-
-    /**
      * @notice The multiplier of utilization rate that gives the slope of the interest rate
      */
     uint public multiplierPerBlock;

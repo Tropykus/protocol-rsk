@@ -239,11 +239,6 @@ contract JumpRateModel is InterestRateModel {
     event NewInterestParams(uint baseRatePerBlock, uint multiplierPerBlock, uint jumpMultiplierPerBlock, uint kink);
 
     /**
-     * @notice The approximate number of blocks per year that is assumed by the interest rate model
-     */
-    uint public constant blocksPerYear = 1051200;
-
-    /**
      * @notice The multiplier of utilization rate that gives the slope of the interest rate
      */
     uint public multiplierPerBlock;

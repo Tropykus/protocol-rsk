@@ -1,14 +1,42 @@
 pragma solidity ^0.5.16;
 
 import "./Exponential.sol";
+import "./SafeMath.sol";
 
 /**
  * @title tropykus InterestRateModel Interface
  * @author tropykus
  */
 contract InterestRateModel is Exponential {
+    using SafeMath for uint;
+  
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)
     bool public constant isInterestRateModel = true;
+
+    /**
+     * @notice The approximate number of blocks per year that is assumed by the interest rate model
+     */
+    uint256 public constant blocksPerYear = 1051200;
+
+    /**
+     * @notice Calculates the utilization rate of the market: `borrows / (cash + borrows - reserves)`
+     * @param cash The amount of cash in the market
+     * @param borrows The amount of borrows in the market
+     * @param reserves The amount of reserves in the market (currently unused)
+     * @return The utilization rate as a mantissa between [0, 1e18]
+     */
+    function utilizationRate(
+        uint256 cash,
+        uint256 borrows,
+        uint256 reserves
+    ) public pure returns (uint256) {
+        // Utilization rate is 0 when there are no borrows
+        if (borrows == 0) {
+            return 0;
+        }
+
+        return borrows.mul(1e18).div(cash.add(borrows).sub(reserves));
+    }
 
     /**
      * @notice Calculates the current borrow interest rate per block
@@ -42,7 +70,8 @@ contract InterestRateModel is Exponential {
         uint256 _totalCash,
         uint256 _totalBorrows,
         uint256 _totalReserves,
-        uint256 _totalSupply
+        uint256 _totalSupply,
+        uint256 _reserveFactorMantissa
     ) public view returns (MathError, uint256) {
         /*
          * exchangeRate = (totalCash + totalBorrows - totalReserves) / totalSupply

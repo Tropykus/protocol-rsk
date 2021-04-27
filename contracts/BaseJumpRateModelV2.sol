@@ -1,15 +1,13 @@
 pragma solidity ^0.5.16;
 
-import "./SafeMath.sol";
+import "./InterestRateModel.sol";
 
 /**
   * @title Logic for tropykus JumpRateModel Contract V2.
   * @author tropykus
   * @notice Version 2 modifies Version 1 by enabling updateable parameters.
   */
-contract BaseJumpRateModelV2 {
-    using SafeMath for uint;
-
+contract BaseJumpRateModelV2 is InterestRateModel {
     event NewInterestParams(uint baseRatePerBlock, uint multiplierPerBlock, uint jumpMultiplierPerBlock, uint kink);
     event NewAdmin(address indexed newAdmin);
     event NewPendingAdmin(address indexed newPendingAdmin);
@@ -23,11 +21,6 @@ contract BaseJumpRateModelV2 {
      * @notice The address of the owner, i.e. the Timelock contract, which can update parameters directly
      */
     address public pendingAdmin;
-
-    /**
-     * @notice The approximate number of blocks per year that is assumed by the interest rate model
-     */
-    uint public constant blocksPerYear = 1051200;
 
     /**
      * @notice The multiplier of utilization rate that gives the slope of the interest rate
@@ -77,19 +70,14 @@ contract BaseJumpRateModelV2 {
     }
 
     /**
-     * @notice Calculates the utilization rate of the market: `borrows / (cash + borrows - reserves)`
+     * @notice Calculates the current borrow rate per block
      * @param cash The amount of cash in the market
      * @param borrows The amount of borrows in the market
-     * @param reserves The amount of reserves in the market (currently unused)
-     * @return The utilization rate as a mantissa between [0, 1e18]
+     * @param reserves The amount of reserves in the market
+     * @return The borrow rate percentage per block as a mantissa (scaled by 1e18)
      */
-    function utilizationRate(uint cash, uint borrows, uint reserves) public pure returns (uint) {
-        // Utilization rate is 0 when there are no borrows
-        if (borrows == 0) {
-            return 0;
-        }
-
-        return borrows.mul(1e18).div(cash.add(borrows).sub(reserves));
+    function getBorrowRate(uint cash, uint borrows, uint reserves) external view returns (uint) {
+        return getBorrowRateInternal(cash, borrows, reserves);
     }
 
     /**
