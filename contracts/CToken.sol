@@ -347,24 +347,15 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         } else {
             /*
              * Otherwise:
-             *  exchangeRate = (totalCash + totalBorrows - totalReserves) / totalSupply
+             *  exchangeRate from the interest rate model;
              */
             uint totalCash = getCashPrior();
-            uint cashPlusBorrowsMinusReserves;
-            Exp memory exchangeRate;
-            MathError mathErr;
-
-            (mathErr, cashPlusBorrowsMinusReserves) = addThenSubUInt(totalCash, totalBorrows, totalReserves);
-            if (mathErr != MathError.NO_ERROR) {
-                return (mathErr, 0);
-            }
-
-            (mathErr, exchangeRate) = getExp(cashPlusBorrowsMinusReserves, _totalSupply);
-            if (mathErr != MathError.NO_ERROR) {
-                return (mathErr, 0);
-            }
-
-            return (MathError.NO_ERROR, exchangeRate.mantissa);
+            return interestRateModel.getExchangeRate(
+                totalCash,
+                totalBorrows,
+                totalReserves,
+                totalSupply
+            );
         }
     }
 

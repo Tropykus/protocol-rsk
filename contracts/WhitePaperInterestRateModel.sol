@@ -4,36 +4,39 @@ import "./InterestRateModel.sol";
 import "./SafeMath.sol";
 
 /**
-  * @title tropykus WhitePaperInterestRateModel Contract
-  * @author tropykus
-  * @notice The parameterized model described in section 2.4 of the original tropykus Protocol whitepaper
-  */
+ * @title tropykus WhitePaperInterestRateModel Contract
+ * @author tropykus
+ * @notice The parameterized model described in section 2.4 of the original tropykus Protocol whitepaper
+ */
 contract WhitePaperInterestRateModel is InterestRateModel {
-    using SafeMath for uint;
+    using SafeMath for uint256;
 
-    event NewInterestParams(uint baseRatePerBlock, uint multiplierPerBlock);
+    event NewInterestParams(
+        uint256 baseRatePerBlock,
+        uint256 multiplierPerBlock
+    );
 
     /**
      * @notice The approximate number of blocks per year that is assumed by the interest rate model
      */
-    uint public constant blocksPerYear = 1051200;
+    uint256 public constant blocksPerYear = 1051200;
 
     /**
      * @notice The multiplier of utilization rate that gives the slope of the interest rate
      */
-    uint public multiplierPerBlock;
+    uint256 public multiplierPerBlock;
 
     /**
      * @notice The base interest rate which is the y-intercept when utilization rate is 0
      */
-    uint public baseRatePerBlock;
+    uint256 public baseRatePerBlock;
 
     /**
      * @notice Construct an interest rate model
      * @param baseRatePerYear The approximate target base APR, as a mantissa (scaled by 1e18)
      * @param multiplierPerYear The rate of increase in interest rate wrt utilization (scaled by 1e18)
      */
-    constructor(uint baseRatePerYear, uint multiplierPerYear) public {
+    constructor(uint256 baseRatePerYear, uint256 multiplierPerYear) public {
         baseRatePerBlock = baseRatePerYear.div(blocksPerYear);
         multiplierPerBlock = multiplierPerYear.div(blocksPerYear);
 
@@ -47,7 +50,11 @@ contract WhitePaperInterestRateModel is InterestRateModel {
      * @param reserves The amount of reserves in the market (currently unused)
      * @return The utilization rate as a mantissa between [0, 1e18]
      */
-    function utilizationRate(uint cash, uint borrows, uint reserves) public pure returns (uint) {
+    function utilizationRate(
+        uint256 cash,
+        uint256 borrows,
+        uint256 reserves
+    ) public pure returns (uint256) {
         // Utilization rate is 0 when there are no borrows
         if (borrows == 0) {
             return 0;
@@ -63,8 +70,12 @@ contract WhitePaperInterestRateModel is InterestRateModel {
      * @param reserves The amount of reserves in the market
      * @return The borrow rate percentage per block as a mantissa (scaled by 1e18)
      */
-    function getBorrowRate(uint cash, uint borrows, uint reserves) public view returns (uint) {
-        uint ur = utilizationRate(cash, borrows, reserves);
+    function getBorrowRate(
+        uint256 cash,
+        uint256 borrows,
+        uint256 reserves
+    ) public view returns (uint256) {
+        uint256 ur = utilizationRate(cash, borrows, reserves);
         return ur.mul(multiplierPerBlock).div(1e18).add(baseRatePerBlock);
     }
 
@@ -76,10 +87,17 @@ contract WhitePaperInterestRateModel is InterestRateModel {
      * @param reserveFactorMantissa The current reserve factor for the market
      * @return The supply rate percentage per block as a mantissa (scaled by 1e18)
      */
-    function getSupplyRate(uint cash, uint borrows, uint reserves, uint reserveFactorMantissa) public view returns (uint) {
-        uint oneMinusReserveFactor = uint(1e18).sub(reserveFactorMantissa);
-        uint borrowRate = getBorrowRate(cash, borrows, reserves);
-        uint rateToPool = borrowRate.mul(oneMinusReserveFactor).div(1e18);
-        return utilizationRate(cash, borrows, reserves).mul(rateToPool).div(1e18);
+    function getSupplyRate(
+        uint256 cash,
+        uint256 borrows,
+        uint256 reserves,
+        uint256 reserveFactorMantissa
+    ) public view returns (uint256) {
+        uint256 oneMinusReserveFactor =
+            uint256(1e18).sub(reserveFactorMantissa);
+        uint256 borrowRate = getBorrowRate(cash, borrows, reserves);
+        uint256 rateToPool = borrowRate.mul(oneMinusReserveFactor).div(1e18);
+        return
+            utilizationRate(cash, borrows, reserves).mul(rateToPool).div(1e18);
     }
 }

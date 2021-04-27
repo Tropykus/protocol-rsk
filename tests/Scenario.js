@@ -22,7 +22,7 @@ function loadScenario(file) {
 
   // Check if directory, and if so, recurse
   if (stat && stat.isDirectory()) {
-    loadScenarios(fullPath);
+    loadScenario(fullPath);
   } else {
     // Ignore files if they don't match `.scen`
     if (file.match(/\.scen$/)) {
