@@ -1,7 +1,6 @@
 pragma solidity ^0.5.16;
 
 import "./InterestRateModel.sol";
-import "./SafeMath.sol";
 
 /**
  * @title tropykus WhitePaperInterestRateModel Contract
@@ -9,7 +8,6 @@ import "./SafeMath.sol";
  * @notice The parameterized model described in section 2.4 of the original tropykus Protocol whitepaper
  */
 contract WhitePaperInterestRateModel is InterestRateModel {
-    using SafeMath for uint256;
 
     event NewInterestParams(
         uint256 baseRatePerBlock,
