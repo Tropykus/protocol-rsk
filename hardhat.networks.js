@@ -26,11 +26,12 @@ const networks = {
 console.log(process.env.HDWALLET_MNEMONIC)
 if (process.env.HDWALLET_MNEMONIC) {
   networks.rsktestnet = {
-    url: 'https://public-node.testnet.rsk.co',
+    url: 'https://node-rbank.testnet.rsk.co/',
     blockGasLimit: 6800000,
     gas: 6800000,
     allowUnlimitedContractSize: false,
     chainId: 31,
+    timeout: 300000,
     accounts: {
       mnemonic: process.env.HDWALLET_MNEMONIC
     }
