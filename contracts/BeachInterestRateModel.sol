@@ -63,11 +63,13 @@ contract BeachInterestRateModel is InterestRateModel {
                 baseBorrowRate
             );
         else
-            borrowRate = slope2
-                .mul(utilizationRate)
-                .div(FACTOR)
-                .add(baseBorrowRate)
-                .add(slope1.mul(optimalUtilizationRate).div(FACTOR));
+            borroRate = baseBorrowRate
+                .add(slope1.mul(optimalUtilizationRate).div(FACTOR))
+                .add(
+                    slope2.mul(utilizationRate.sub(optimalUtilizationRate)).div(
+                        FACTOR
+                    )
+                );
         borrowRate = borrowRate.div(blocksPerYear);
     }
 
