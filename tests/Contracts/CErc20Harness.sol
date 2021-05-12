@@ -63,7 +63,7 @@ contract CErc20Harness is CErc20Immutable {
     }
 
     function harnessSetBalance(address account, uint amount) external {
-        accountTokens[account] = amount;
+        accountTokens[account].tokens = amount;
     }
 
     function harnessSetTotalSupply(uint totalSupply_) public {
@@ -278,7 +278,7 @@ contract CErc20DelegateHarness is CErc20Delegate {
     }
 
     function harnessSetBalance(address account, uint amount) external {
-        accountTokens[account] = amount;
+        accountTokens[account].tokens = amount;
     }
 
     function harnessSetAccrualBlockNumber(uint _accrualblockNumber) public {

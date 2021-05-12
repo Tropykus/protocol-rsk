@@ -13,6 +13,7 @@ contract HurricaneInterestRateModel is InterestRateModel {
     uint256 public supplyRateSlope;
 
     uint256 constant FACTOR = 1e18;
+    bool public constant isTropykusInterestRateModel = true;
 
     constructor(
         uint256 _baseBorrowRate,
