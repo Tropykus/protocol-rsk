@@ -6,11 +6,11 @@ contract HurricaneInterestRateModel is InterestRateModel {
     using SafeMath for uint256;
 
     address public owner;
-    uint256 public baseBorrowRate;
-    uint256 public promisedBaseReturnRate;
+    uint256 public baseBorrowRatePerBlock;
+    uint256 public promisedBaseReturnRatePerBlock;
     uint256 public optimalUtilizationRate;
-    uint256 public borrowRateSlope;
-    uint256 public supplyRateSlope;
+    uint256 public borrowRateSlopePerBlock;
+    uint256 public supplyRateSlopePerBlock;
 
     uint256 constant FACTOR = 1e18;
     bool public constant isTropykusInterestRateModel = true;
@@ -22,11 +22,11 @@ contract HurricaneInterestRateModel is InterestRateModel {
         uint256 _borrowRateSlope,
         uint256 _supplyRateSlope
     ) public {
-        baseBorrowRate = _baseBorrowRate;
-        promisedBaseReturnRate = _promisedBaseReturnRate;
+        baseBorrowRatePerBlock = _baseBorrowRate.div(blocksPerYear);
+        promisedBaseReturnRatePerBlock = _promisedBaseReturnRate.div(blocksPerYear);
         optimalUtilizationRate = _optimalUtilizationRate;
-        borrowRateSlope = _borrowRateSlope;
-        supplyRateSlope = _supplyRateSlope;
+        borrowRateSlopePerBlock = _borrowRateSlope.div(blocksPerYear);
+        supplyRateSlopePerBlock = _supplyRateSlope.div(blocksPerYear);
         owner = msg.sender;
     }
 
@@ -46,8 +46,8 @@ contract HurricaneInterestRateModel is InterestRateModel {
     ) public view returns (uint256) {
         uint256 utilizationRate = utilizationRate(cash, borrows, reserves);
         return
-            utilizationRate.mul(supplyRateSlope).div(FACTOR).add(
-                promisedBaseReturnRate
+            utilizationRate.mul(supplyRateSlopePerBlock).div(FACTOR).add(
+                promisedBaseReturnRatePerBlock
             );
     }
 
@@ -57,8 +57,8 @@ contract HurricaneInterestRateModel is InterestRateModel {
         uint256 reserves
     ) public view returns (uint256 borrowRate) {
         uint256 utilizationRate = utilizationRate(cash, borrows, reserves);
-        borrowRate = utilizationRate.mul(borrowRateSlope).div(FACTOR).add(
-            baseBorrowRate
+        borrowRate = utilizationRate.mul(borrowRateSlopePerBlock).div(FACTOR).add(
+            baseBorrowRatePerBlock
         );
     }
 }
