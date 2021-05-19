@@ -749,18 +749,22 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             "MINT_NEW_ACCOUNT_BALANCE_CALCULATION_FAILED"
         );
 
+        uint256 currentSupplyRate =
+            InterestRateModel(interestRateModel).getSupplyRate(
+                getCashPrior(),
+                totalBorrows,
+                totalReserves,
+                reserveFactorMantissa
+            );
+
+        bool isTropykusInterestRateModel =
+            InterestRateModel(interestRateModel).isTropykusInterestRateModel();
+
         if (accountTokens[minter].tokens > 0) {
-            if (
-                InterestRateModel(interestRateModel)
-                    .isTropykusInterestRateModel()
-            ) {
-                (, Exp memory promisedSupplyRatePerBlock) =
-                    divScalar(
-                        Exp({
-                            mantissa: accountTokens[minter].promisedSupplyRate
-                        }),
-                        InterestRateModel(interestRateModel).blocksPerYear()
-                    );
+            Exp memory updatedUnderlying;
+            if (isTropykusInterestRateModel) {
+                Exp memory promisedSupplyRatePerBlock =
+                    Exp({mantissa: accountTokens[minter].promisedSupplyRate});
                 (, uint256 delta) =
                     subUInt(
                         accrualBlockNumber,
@@ -775,11 +779,11 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                     );
                 uint256 currentUnderlyingAmount =
                     accountTokens[minter].underlyingAmount;
-                (MathError mErrorNewAmount, Exp memory newAmount) =
-                    mulExp(
-                        Exp({mantissa: currentUnderlyingAmount}),
-                        interestFactor
-                    );
+                MathError mErrorNewAmount;
+                (mErrorNewAmount, updatedUnderlying) = mulExp(
+                    Exp({mantissa: currentUnderlyingAmount}),
+                    interestFactor
+                );
                 if (mErrorNewAmount != MathError.NO_ERROR) {
                     return (
                         failOpaque(
@@ -790,17 +794,13 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                         0
                     );
                 }
-                (, mintAmount) = addUInt(newAmount.mantissa, mintAmount);
             } else {
                 uint256 currentTokens = accountTokens[minter].tokens;
-                (
-                    MathError mErrorUpdatedUnderlying,
-                    Exp memory updatedUnderlying
-                ) =
-                    mulExp(
-                        Exp({mantissa: currentTokens}),
-                        Exp({mantissa: vars.exchangeRateMantissa})
-                    );
+                MathError mErrorUpdatedUnderlying;
+                (mErrorUpdatedUnderlying, updatedUnderlying) = mulExp(
+                    Exp({mantissa: currentTokens}),
+                    Exp({mantissa: vars.exchangeRateMantissa})
+                );
                 if (mErrorUpdatedUnderlying != MathError.NO_ERROR) {
                     return (
                         failOpaque(
@@ -811,20 +811,9 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                         0
                     );
                 }
-                (, mintAmount) = addUInt(
-                    updatedUnderlying.mantissa,
-                    mintAmount
-                );
             }
+            (, mintAmount) = addUInt(updatedUnderlying.mantissa, mintAmount);
         }
-
-        uint256 currentSupplyRate =
-            InterestRateModel(interestRateModel).getSupplyRate(
-                getCashPrior(),
-                totalBorrows,
-                totalReserves,
-                reserveFactorMantissa
-            );
 
         /* We write previously calculated values into storage */
         totalSupply = vars.totalSupplyNew;
