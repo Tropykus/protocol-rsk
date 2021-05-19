@@ -750,7 +750,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         );
 
         uint256 currentSupplyRate =
-            InterestRateModel(interestRateModel).getSupplyRate(
+            interestRateModel.getSupplyRate(
                 getCashPrior(),
                 totalBorrows,
                 totalReserves,
@@ -758,7 +758,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             );
 
         bool isTropykusInterestRateModel =
-            InterestRateModel(interestRateModel).isTropykusInterestRateModel();
+            interestRateModel.isTropykusInterestRateModel();
 
         if (accountTokens[minter].tokens > 0) {
             Exp memory updatedUnderlying;
@@ -907,6 +907,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         RedeemLocalVars memory vars;
 
+        SupplySnapshot storage supplySnapshot = accountTokens[redeemer];
+
         /* exchangeRate = invoke Exchange Rate Stored() */
         (
             vars.mathErr,
@@ -922,17 +924,13 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
 
         bool isTropykusInterestRateModel =
-            InterestRateModel(interestRateModel).isTropykusInterestRateModel();
+            interestRateModel.isTropykusInterestRateModel();
         if (isTropykusInterestRateModel) {
-            uint256 promisedSupplyRate =
-                accountTokens[redeemer].promisedSupplyRate;
-            (, Exp memory expectedSupplyRatePerBlock) =
-                divScalar(
-                    Exp({mantissa: promisedSupplyRate}),
-                    InterestRateModel(interestRateModel).blocksPerYear()
-                );
+            uint256 promisedSupplyRate = supplySnapshot.promisedSupplyRate;
+            Exp memory expectedSupplyRatePerBlock =
+                Exp({mantissa: promisedSupplyRate});
             (, uint256 delta) =
-                subUInt(accrualBlockNumber, accountTokens[redeemer].suppliedAt);
+                subUInt(accrualBlockNumber, supplySnapshot.suppliedAt);
             (, Exp memory expectedSupplyRatePerBlockWithDelta) =
                 mulScalar(expectedSupplyRatePerBlock, delta);
             (, Exp memory interestFactor) =
@@ -940,17 +938,15 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                     Exp({mantissa: 1e18}),
                     expectedSupplyRatePerBlockWithDelta
                 );
-            Exp memory redeemerUnderlying =
-                Exp({mantissa: accountTokens[redeemer].underlyingAmount});
+            uint256 currentUnderlying =
+                accountTokens[redeemer].underlyingAmount;
+            Exp memory redeemerUnderlying = Exp({mantissa: currentUnderlying});
             (, Exp memory realAmount) =
                 mulExp(interestFactor, redeemerUnderlying);
-            accountTokens[redeemer].underlyingAmount = realAmount.mantissa;
+            supplySnapshot.underlyingAmount = realAmount.mantissa;
         }
-        accountTokens[redeemer].suppliedAt = accrualBlockNumber;
-        accountTokens[redeemer].promisedSupplyRate = InterestRateModel(
-            interestRateModel
-        )
-            .getSupplyRate(
+        supplySnapshot.suppliedAt = accrualBlockNumber;
+        supplySnapshot.promisedSupplyRate = interestRateModel.getSupplyRate(
             getCashPrior(),
             totalBorrows,
             totalReserves,
@@ -962,12 +958,9 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             vars.redeemTokens = redeemTokensIn;
             if (isTropykusInterestRateModel) {
                 (, Exp memory num) =
-                    mulExp(
-                        vars.redeemTokens,
-                        accountTokens[redeemer].underlyingAmount
-                    );
+                    mulExp(vars.redeemTokens, supplySnapshot.underlyingAmount);
                 (, Exp memory realUnderlyingWithdrawAmount) =
-                    divScalar(num, accountTokens[redeemer].tokens);
+                    divScalar(num, supplySnapshot.tokens);
                 vars.redeemAmount = realUnderlyingWithdrawAmount.mantissa;
             } else {
                 /*
@@ -994,9 +987,9 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
             if (isTropykusInterestRateModel) {
                 (, Exp memory num) =
-                    mulExp(vars.redeemAmount, accountTokens[redeemer].tokens);
+                    mulExp(vars.redeemAmount, supplySnapshot.tokens);
                 (, Exp memory realTokensWithdrawAmount) =
-                    divScalar(num, accountTokens[redeemer].underlyingAmount);
+                    divScalar(num, supplySnapshot.underlyingAmount);
                 vars.redeemTokens = realTokensWithdrawAmount.mantissa;
             } else {
                 /*
@@ -1065,7 +1058,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
 
         (vars.mathErr, vars.accountTokensNew) = subUInt(
-            accountTokens[redeemer].tokens,
+            supplySnapshot.tokens,
             vars.redeemTokens
         );
         if (vars.mathErr != MathError.NO_ERROR) {
@@ -1100,8 +1093,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         /* We write previously calculated values into storage */
         totalSupply = vars.totalSupplyNew;
-        accountTokens[redeemer].tokens = vars.accountTokensNew;
-        accountTokens[redeemer].suppliedAt = accrualBlockNumber;
+        supplySnapshot.tokens = vars.accountTokensNew;
+        supplySnapshot.suppliedAt = accrualBlockNumber;
 
         /* We emit a Transfer event, and a Redeem event */
         emit Transfer(redeemer, address(this), vars.redeemTokens);
