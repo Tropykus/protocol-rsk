@@ -91,6 +91,8 @@ contract CTokenStorage {
      */
     uint256 public totalSupply;
 
+    uint256 public subsidyFund;
+
     struct SupplySnapshot {
         uint256 tokens;
         uint256 underlyingAmount;
