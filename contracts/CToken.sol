@@ -2086,6 +2086,82 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         return (uint256(Error.NO_ERROR), actualAddAmount);
     }
 
+    function _addSubsidyInternal(uint256 addAmount)
+        internal
+        nonReentrant
+        returns (uint256)
+    {
+        uint256 error = accrueInterest();
+        if (error != uint256(Error.NO_ERROR)) {
+            // accrueInterest emits logs on errors, but on top of that we want to log the fact that an attempted reduce reserves failed.
+            return
+                fail(
+                    Error(error),
+                    FailureInfo.ADD_SUBSIDY_FUND_FAILED
+                );
+        }
+
+        (error, ) = _addSubsidyFresh(addAmount);
+        return error;
+    }
+
+    /**
+     * @notice Add reserves by transferring from caller
+     * @dev Requires fresh interest accrual
+     * @param addAmount Amount of addition to reserves
+     * @return (uint, uint) An error code (0=success, otherwise a failure (see ErrorReporter.sol for details)) and the actual amount added, net token fees
+     */
+    function _addSubsidyFresh(uint256 addAmount)
+        internal
+        returns (uint256, uint256)
+    {
+        // subsidyFund + actualAddAmount
+        uint256 subsidyFundNew;
+        uint256 actualAddAmount;
+
+        // We fail gracefully unless market's block number equals current block number
+        if (accrualBlockNumber != getBlockNumber()) {
+            return (
+                fail(
+                    Error.MARKET_NOT_FRESH,
+                    FailureInfo.ADD_SUBSIDY_FUND_FRESH_CHECK
+                ),
+                actualAddAmount
+            );
+        }
+
+        /////////////////////////
+        // EFFECTS & INTERACTIONS
+        // (No safe failures beyond this point)
+
+        /*
+         * We call doTransferIn for the caller and the addAmount
+         *  Note: The cToken must handle variations between ERC-20 and ETH underlying.
+         *  On success, the cToken holds an additional addAmount of cash.
+         *  doTransferIn reverts if anything goes wrong, since we can't be sure if side effects occurred.
+         *  it returns the amount actually transferred, in case of a fee.
+         */
+
+        actualAddAmount = doTransferIn(msg.sender, addAmount);
+
+        subsidyFundNew = subsidyFund + actualAddAmount;
+
+        /* Revert on overflow */
+        require(
+            subsidyFundNew >= subsidyFund,
+            "add reserves unexpected overflow"
+        );
+
+        // Store reserves[n+1] = reserves[n] + actualAddAmount
+        subsidyFund = subsidyFundNew;
+
+        /* Emit NewReserves(admin, actualAddAmount, reserves[n+1]) */
+        emit SubsidyAdded(msg.sender, actualAddAmount, subsidyFundNew);
+
+        /* Return (NO_ERROR, actualAddAmount) */
+        return (uint256(Error.NO_ERROR), actualAddAmount);
+    }
+
     /**
      * @notice Accrues interest and reduces reserves by transferring to admin
      * @param reduceAmount Amount of reduction to reserves

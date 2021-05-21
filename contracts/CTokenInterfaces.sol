@@ -235,6 +235,12 @@ contract CTokenInterface is CTokenStorage {
         uint256 newTotalReserves
     );
 
+    event SubsidyAdded(
+        address benefactor,
+        uint256 addAmount,
+        uint256 newSubsidyFund
+    );
+
     /**
      * @notice Event emitted when the reserves are reduced
      */
