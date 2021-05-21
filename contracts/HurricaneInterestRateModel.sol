@@ -23,7 +23,9 @@ contract HurricaneInterestRateModel is InterestRateModel {
         uint256 _supplyRateSlope
     ) public {
         baseBorrowRatePerBlock = _baseBorrowRate.div(blocksPerYear);
-        promisedBaseReturnRatePerBlock = _promisedBaseReturnRate.div(blocksPerYear);
+        promisedBaseReturnRatePerBlock = _promisedBaseReturnRate.div(
+            blocksPerYear
+        );
         optimalUtilizationRate = _optimalUtilizationRate;
         borrowRateSlopePerBlock = _borrowRateSlope.div(blocksPerYear);
         supplyRateSlopePerBlock = _supplyRateSlope.div(blocksPerYear);
@@ -44,6 +46,7 @@ contract HurricaneInterestRateModel is InterestRateModel {
         uint256 reserves,
         uint256 reserveFactorMantissa
     ) public view returns (uint256) {
+        reserveFactorMantissa;
         uint256 utilizationRate = utilizationRate(cash, borrows, reserves);
         return
             utilizationRate.mul(supplyRateSlopePerBlock).div(FACTOR).add(
@@ -57,8 +60,18 @@ contract HurricaneInterestRateModel is InterestRateModel {
         uint256 reserves
     ) public view returns (uint256 borrowRate) {
         uint256 utilizationRate = utilizationRate(cash, borrows, reserves);
-        borrowRate = utilizationRate.mul(borrowRateSlopePerBlock).div(FACTOR).add(
-            baseBorrowRatePerBlock
-        );
+        borrowRate = utilizationRate
+            .mul(borrowRateSlopePerBlock)
+            .div(FACTOR)
+            .add(baseBorrowRatePerBlock);
+    }
+
+    function isAboveOptimal(
+        uint256 cash,
+        uint256 borrows,
+        uint256 reserves
+    ) public view returns (bool) {
+        uint256 utilizationRate = utilizationRate(cash, borrows, reserves);
+        return utilizationRate > optimalUtilizationRate;
     }
 }

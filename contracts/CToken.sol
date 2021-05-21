@@ -579,6 +579,25 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 );
         }
 
+        if (interestRateModel.isTropykusInterestRateModel()) {
+            (mathErr, totalReservesNew) = newReserves(
+                borrowRateMantissa,
+                cashPrior,
+                borrowsPrior,
+                reservesPrior,
+                interestAccumulated
+            );
+            if (mathErr != MathError.NO_ERROR) {
+                return
+                    failOpaque(
+                        Error.MATH_ERROR,
+                        FailureInfo
+                            .ACCRUE_INTEREST_NEW_TOTAL_RESERVES_CALCULATION_FAILED,
+                        uint256(mathErr)
+                    );
+            }
+        }
+
         (mathErr, borrowIndexNew) = mulScalarTruncateAddUInt(
             simpleInterestFactor,
             borrowIndexPrior,
@@ -613,6 +632,62 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         );
 
         return uint256(Error.NO_ERROR);
+    }
+
+    function newReserves(
+        uint256 borrowRateMantissa,
+        uint256 cashPrior,
+        uint256 borrowsPrior,
+        uint256 reservesPrior,
+        uint256 interestAccumulated
+    ) internal view returns (MathError mathErr, uint256 totalReservesNew) {
+        uint256 newReserveFactorMantissa;
+        uint256 utilizationRate =
+            interestRateModel.utilizationRate(
+                cashPrior,
+                borrowsPrior,
+                reservesPrior
+            );
+        uint256 expectedSupplyRate =
+            interestRateModel.getSupplyRate(
+                cashPrior,
+                borrowsPrior,
+                reservesPrior,
+                reserveFactorMantissa
+            );
+        if (
+            interestRateModel.isAboveOptimal(
+                cashPrior,
+                borrowsPrior,
+                reservesPrior
+            )
+        ) {
+            (mathErr, newReserveFactorMantissa) = mulScalarTruncate(
+                Exp({mantissa: utilizationRate}),
+                borrowRateMantissa
+            );
+            if (mathErr != MathError.NO_ERROR) {
+                return (mathErr, 0);
+            }
+            (mathErr, newReserveFactorMantissa) = subUInt(
+                newReserveFactorMantissa,
+                expectedSupplyRate
+            );
+            if (mathErr != MathError.NO_ERROR) {
+                return (mathErr, 0);
+            }
+            (mathErr, totalReservesNew) = mulScalarTruncateAddUInt(
+                Exp({mantissa: newReserveFactorMantissa}),
+                interestAccumulated,
+                reservesPrior
+            );
+            if (mathErr != MathError.NO_ERROR) {
+                return (mathErr, 0);
+            }
+        } else {
+            mathErr = MathError.NO_ERROR;
+            totalReservesNew = reservesPrior;
+        }
     }
 
     /**
@@ -938,8 +1013,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                     Exp({mantissa: 1e18}),
                     expectedSupplyRatePerBlockWithDelta
                 );
-            uint256 currentUnderlying =
-                accountTokens[redeemer].underlyingAmount;
+            uint256 currentUnderlying = supplySnapshot.underlyingAmount;
             Exp memory redeemerUnderlying = Exp({mantissa: currentUnderlying});
             (, Exp memory realAmount) =
                 mulExp(interestFactor, redeemerUnderlying);

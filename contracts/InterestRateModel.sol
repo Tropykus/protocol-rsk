@@ -8,8 +8,8 @@ import "./SafeMath.sol";
  * @author tropykus
  */
 contract InterestRateModel is Exponential {
-    using SafeMath for uint;
-  
+    using SafeMath for uint256;
+
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)
     bool public constant isInterestRateModel = true;
 
@@ -97,5 +97,16 @@ contract InterestRateModel is Exponential {
         }
 
         return (MathError.NO_ERROR, exchangeRate.mantissa);
+    }
+
+    function isAboveOptimal(
+        uint256 cash,
+        uint256 borrows,
+        uint256 reserves
+    ) public view returns (bool) {
+        cash;
+        borrows;
+        reserves;
+        return false;
     }
 }
