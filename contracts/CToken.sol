@@ -960,6 +960,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         uint256 redeemAmount;
         uint256 totalSupplyNew;
         uint256 accountTokensNew;
+        uint256 newSubsidyFund;
     }
 
     /**
@@ -998,6 +999,9 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 );
         }
 
+        uint256 interestEarned;
+        uint256 subsidyFundPortion;
+
         bool isTropykusInterestRateModel =
             interestRateModel.isTropykusInterestRateModel();
         if (isTropykusInterestRateModel) {
@@ -1018,6 +1022,10 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             (, Exp memory realAmount) =
                 mulExp(interestFactor, redeemerUnderlying);
             supplySnapshot.underlyingAmount = realAmount.mantissa;
+            (, interestEarned) = subUInt(
+                realAmount.mantissa,
+                currentUnderlying
+            );
         }
         supplySnapshot.suppliedAt = accrualBlockNumber;
         supplySnapshot.promisedSupplyRate = interestRateModel.getSupplyRate(
@@ -1026,6 +1034,43 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             totalReserves,
             reserveFactorMantissa
         );
+
+        if (
+            isTropykusInterestRateModel &&
+            !interestRateModel.isAboveOptimal(
+                getCashPrior(),
+                totalBorrows,
+                totalReserves
+            )
+        ) {
+            uint256 borrowRate =
+                interestRateModel.getBorrowRate(
+                    getCashPrior(),
+                    totalBorrows,
+                    totalReserves
+                );
+
+            uint256 utilizationRate =
+                interestRateModel.utilizationRate(
+                    getCashPrior(),
+                    totalBorrows,
+                    totalReserves
+                );
+
+            (, uint256 estimatedEarning) =
+                mulScalarTruncate(Exp({mantissa: borrowRate}), utilizationRate);
+
+            (, subsidyFundPortion) = subUInt(
+                supplySnapshot.promisedSupplyRate,
+                estimatedEarning
+            );
+            (, Exp memory subsidyFactor) =
+                getExp(subsidyFundPortion, supplySnapshot.promisedSupplyRate);
+            (, subsidyFundPortion) = mulScalarTruncate(
+                subsidyFactor,
+                interestEarned
+            );
+        }
 
         /* If redeemTokensIn > 0: */
         if (redeemTokensIn > 0) {
@@ -1131,6 +1176,11 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 );
         }
 
+        (, vars.newSubsidyFund) = subUInt(
+            subsidyFund,
+            subsidyFundPortion
+        );
+
         (vars.mathErr, vars.accountTokensNew) = subUInt(
             supplySnapshot.tokens,
             vars.redeemTokens
@@ -1167,6 +1217,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         /* We write previously calculated values into storage */
         totalSupply = vars.totalSupplyNew;
+        subsidyFund = vars.newSubsidyFund;
         supplySnapshot.tokens = vars.accountTokensNew;
         supplySnapshot.suppliedAt = accrualBlockNumber;
 
@@ -2094,11 +2145,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         uint256 error = accrueInterest();
         if (error != uint256(Error.NO_ERROR)) {
             // accrueInterest emits logs on errors, but on top of that we want to log the fact that an attempted reduce reserves failed.
-            return
-                fail(
-                    Error(error),
-                    FailureInfo.ADD_SUBSIDY_FUND_FAILED
-                );
+            return fail(Error(error), FailureInfo.ADD_SUBSIDY_FUND_FAILED);
         }
 
         (error, ) = _addSubsidyFresh(addAmount);
