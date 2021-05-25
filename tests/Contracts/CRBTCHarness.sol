@@ -50,7 +50,7 @@ contract CRBTCHarness is CRBTC {
     }
 
     function harnessSetBalance(address account, uint amount) external {
-        accountTokens[account] = amount;
+        accountTokens[account].tokens = amount;
     }
 
     function harnessSetAccrualBlockNumber(uint _accrualblockNumber) public {

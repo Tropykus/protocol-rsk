@@ -8,10 +8,12 @@ import "./SafeMath.sol";
  * @author tropykus
  */
 contract InterestRateModel is Exponential {
-    using SafeMath for uint;
-  
+    using SafeMath for uint256;
+
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)
     bool public constant isInterestRateModel = true;
+
+    bool public constant isTropykusInterestRateModel = false;
 
     /**
      * @notice The approximate number of blocks per year that is assumed by the interest rate model
@@ -70,9 +72,8 @@ contract InterestRateModel is Exponential {
         uint256 _totalCash,
         uint256 _totalBorrows,
         uint256 _totalReserves,
-        uint256 _totalSupply,
-        uint256 _reserveFactorMantissa
-    ) public view returns (MathError, uint256) {
+        uint256 _totalSupply
+    ) public pure returns (MathError, uint256) {
         /*
          * exchangeRate = (totalCash + totalBorrows - totalReserves) / totalSupply
          */
@@ -96,5 +97,16 @@ contract InterestRateModel is Exponential {
         }
 
         return (MathError.NO_ERROR, exchangeRate.mantissa);
+    }
+
+    function isAboveOptimal(
+        uint256 cash,
+        uint256 borrows,
+        uint256 reserves
+    ) public view returns (bool) {
+        cash;
+        borrows;
+        reserves;
+        return false;
     }
 }
