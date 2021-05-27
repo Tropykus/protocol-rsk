@@ -70,7 +70,7 @@ module.exports = async (hardhat) => {
   console.log(`  Deploying to Network: ${chainName(chainId)} (${locus})`);
 
   if (isLocal) { // ----------- Start if local ------------- //
-    console.log('\n  Deploying DOC Oracle...');
+    console.log('\n  Deploying RIF Oracle...');
     const rifOracleResult = await deploy('RifOracle', {
       args: [deployer, parseEther('0.33')],
       contract: 'MockPriceProviderMoC',
@@ -80,8 +80,8 @@ module.exports = async (hardhat) => {
     rifOracle = rifOracleResult.address;
 
     console.log('\n  Deploying DOC Oracle...');
-    const docOracleResult = await deploy('RifOracle', {
-      args: [deployer, parseEther('1.5')],
+    const docOracleResult = await deploy('DocOracle', {
+      args: [deployer, parseEther('1.1')],
       contract: 'MockPriceProviderMoC',
       from: deployer,
       skipIfAlreadyDeployed: true,
@@ -158,15 +158,7 @@ module.exports = async (hardhat) => {
   // USDT Oracle returns always 1
   console.log('\n 🔸 Deploying USDT Oracle...');
   const usdtOracleResult = await deploy('USDTOracle', {
-    args: [multiSig, parseEther('1')],
-    contract: 'MockPriceProviderMoC',
-    from: deployer,
-    skipIfAlreadyDeployed: true,
-  });
-
-  console.log('\n 🔸 Deploying Doc Oracle...');
-  const docOracleResult = await deploy('DOCOracle', {
-    args: [multiSig, parseEther('0.9997')],
+    args: [multiSig, parseEther('1.05')],
     contract: 'MockPriceProviderMoC',
     from: deployer,
     skipIfAlreadyDeployed: true,
@@ -277,28 +269,28 @@ module.exports = async (hardhat) => {
   console.log('\n  USDT Deploy JumpRateModelV2...');
   const usdtJumpRateModelV2Result = await deploy('UsdtJumpRateModelV2', {
     // 0% base rate, 4% borrow rate at kink, 25% borrow rate at 100% utilization, Kink at 80% utilization
-    args: [parseEther('0'), parseEther('0.04'), parseEther('1.09'), parseEther('0.8'), multiSig],
+    args: [parseEther('0.08'), parseEther('0.015'), parseEther('1'), parseEther('0.85'), multiSig],
     contract: 'JumpRateModelV2',
     from: deployer,
     skipIfAlreadyDeployed: true,
   });
   console.log('\n  DOC Deploy JumpRateModelV2...');
   const docJumpRateModelV2Result = await deploy('DocJumpRateModelV2', {
-    args: [parseEther('0'), parseEther('0.04'), parseEther('1.09'), parseEther('0.8'), multiSig],
+    args: [parseEther('0.08'), parseEther('0.015'), parseEther('1'), parseEther('0.85'), multiSig],
     contract: 'JumpRateModelV2',
     from: deployer,
     skipIfAlreadyDeployed: true,
   });
   console.log('\n  Deploy BTC WhitePaperInterestRateModel...');
   const btcWhitePaperInterestRateModelResult = await deploy('BtcWhitePaperInterestRateModel', {
-    args: [parseEther('0.02'), parseEther('0.3')],
+    args: [parseEther('0.08'), parseEther('0.04')],
     contract: 'WhitePaperInterestRateModel',
     from: deployer,
     skipIfAlreadyDeployed: true,
   });
   console.log('\n  Deploy RIF WhitePaperInterestRateModel...');
   const rifWhitePaperInterestRateModelResult = await deploy('RifWhitePaperInterestRateModel', {
-    args: [parseEther('0.02'), parseEther('0.3')],
+    args: [parseEther('0.07'), parseEther('0.3')],
     contract: 'WhitePaperInterestRateModel',
     from: deployer,
     skipIfAlreadyDeployed: true,
@@ -366,13 +358,13 @@ module.exports = async (hardhat) => {
     await newUnitrollerContract._supportMarket(cRifResult.address).then((tx) => tx.wait());
 
     console.log('\n  _setCollateralFactor cRif...');
-    await newUnitrollerContract._setCollateralFactor(cRifResult.address, parseEther('0.5')).then((tx) => tx.wait());
+    await newUnitrollerContract._setCollateralFactor(cRifResult.address, parseEther('0.65')).then((tx) => tx.wait());
 
     console.log('\n  _setCompSpeed new Unitroller...');
     result = await newUnitrollerContract._setCompSpeed(cRifResult.address, config.compSpeed).then((tx) => tx.wait());
 
     console.log('\n  _setReserveFactor cRif...');
-    await cRifContract._setReserveFactor(parseEther('0.15')).then((tx) => tx.wait());
+    await cRifContract._setReserveFactor(parseEther('0.2')).then((tx) => tx.wait());
   } else {
     console.log('\n cRIF already deployed...');
   }
@@ -398,13 +390,13 @@ module.exports = async (hardhat) => {
     await newUnitrollerContract._supportMarket(cRbtcResult.address).then((tx) => tx.wait());
 
     console.log('\n  _setCollateralFactor cRbtc...');
-    await newUnitrollerContract._setCollateralFactor(cRbtcResult.address, parseEther('0.75')).then((tx) => tx.wait());
+    await newUnitrollerContract._setCollateralFactor(cRbtcResult.address, parseEther('0.5')).then((tx) => tx.wait());
 
     console.log('\n  _setCompSpeed new Unitroller...');
     await newUnitrollerContract._setCompSpeed(cRbtcResult.address, config.compSpeed).then((tx) => tx.wait());
 
     console.log('\n  _setReserveFactor cRbtc...');
-    await cRbtcContract._setReserveFactor(parseEther('0.2')).then((tx) => tx.wait());
+    await cRbtcContract._setReserveFactor(parseEther('0.3')).then((tx) => tx.wait());
   } else {
     console.log('\n cRBTC already deployed...');
   }
@@ -430,7 +422,7 @@ module.exports = async (hardhat) => {
     await newUnitrollerContract._supportMarket(cDocResult.address).then((tx) => tx.wait());
 
     console.log('\n  _setCollateralFactor cDoc...');
-    await newUnitrollerContract._setCollateralFactor(cDocResult.address, parseEther('0.75')).then((tx) => tx.wait());
+    await newUnitrollerContract._setCollateralFactor(cDocResult.address, parseEther('0.7')).then((tx) => tx.wait());
 
     console.log('\n  _setCompSpeed new Unitroller...');
     await newUnitrollerContract._setCompSpeed(cDocResult.address, config.compSpeed).then((tx) => tx.wait());
