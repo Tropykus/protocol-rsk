@@ -63,7 +63,7 @@ contract BeachInterestRateModel is InterestRateModel {
                 baseBorrowRate
             );
         else
-            borroRate = baseBorrowRate
+            borrowRate = baseBorrowRate
                 .add(slope1.mul(optimalUtilizationRate).div(FACTOR))
                 .add(
                     slope2.mul(utilizationRate.sub(optimalUtilizationRate)).div(
