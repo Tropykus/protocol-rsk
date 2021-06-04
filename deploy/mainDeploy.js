@@ -29,19 +29,19 @@ async function main() {
       rif: {
         reserveFactor: parseEther('0.25'),
         collateralFactor: parseEther('0.65'),
-        baseBorrowRate: parseEther('0.07'),
+        baseBorrowRate: parseEther('0.08'),
         multiplier: parseEther('0.03'),
       },
       doc: {
-        reserveFactor: parseEther('0.20'),
+        reserveFactor: parseEther('0.30'),
         collateralFactor: parseEther('0.70'),
         baseBorrowRate: parseEther('0.08'),
         multiplier: parseEther('0.018'),
-        jumpMultiplier: parseEther('0.75'),
+        jumpMultiplier: parseEther('0.80'),
         kink: parseEther('0.85'),
       },
       usdt: {
-        reserveFactor: parseEther('0.15'),
+        reserveFactor: parseEther('0.30'),
         collateralFactor: parseEther('0.75'),
         baseBorrowRate: parseEther('0.1'),
         multiplier: parseEther('0.015'),
@@ -53,13 +53,12 @@ async function main() {
         collateralFactor: parseEther('0.50'),
         baseBorrowRate: parseEther('0.08'),
         promisedBaseReturnRate: parseEther('0.05'),
-        optimal: parseEther('0.65'),
-        borrowRateSlope: parseEther('0.015'),
-        supplyRateSlope: parseEther('0.018'),
+        optimal: parseEther('0.5962912017836259'),
+        borrowRateSlope: parseEther('0.04'),
+        supplyRateSlope: parseEther('0.02'),
       },
     },
   };
-
   console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
   console.log('Tropykus Contracts - Deploy Script');
   console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n');
@@ -71,10 +70,16 @@ async function main() {
   const multiSig = await multiSigWalletContract.deploy([deployer.address], 1);
   console.log(`MultiSig: ${multiSig.address}`);
   const priceOracleProxyContract = await ethers.getContractFactory('PriceOracleProxy');
-  const priceOracleProxy = await priceOracleProxyContract.deploy(deployer.address);
-  console.log(`PriceOracleProxy: ${priceOracleProxy.address}`);
-  console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~ TOKENS ~~~~~~~~~~~~~~~~~~~~~~~~');
+  const priceOracleProxyDeploy = await priceOracleProxyContract.deploy(deployer.address);
+  console.log(`PriceOracleProxy: ${priceOracleProxyDeploy.address}`);
+  const unitrollerContract = await ethers.getContractFactory('Unitroller');
+  const unitrollerDeployed = await unitrollerContract.deploy();
+  console.log(`Unitroller: ${unitrollerDeployed.address}`);
+  const comptrollerContract = await ethers.getContractFactory('ComptrollerG5');
+  const comptrollerDeployed = await comptrollerContract.deploy();
+  console.log(`Comptroller: ${comptrollerDeployed.address}`);
 
+  console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~ TOKENS ~~~~~~~~~~~~~~~~~~~~~~~~');
   const standardTokenContract = await ethers.getContractFactory('StandardToken');
   let rifToken = {
     address: namedAccounts.rif[chainId],
@@ -85,11 +90,11 @@ async function main() {
   let usdtToken = {
     address: namedAccounts.usdt[chainId],
   };
-  if (chainId !== 31 || chainId !== 30) {
+  if (chainId !== 31 && chainId !== 30) {
     rifToken = await standardTokenContract.deploy(parseEther('2000000'), 'Test RIF Tropykus', 18, 'tRIF');
-    docToken = await standardTokenContract.deploy(parseEther('2000000'), 'Test DOC Tropykus', 18, 'tDOC');
-    usdtToken = await standardTokenContract.deploy(parseEther('2000000'), 'Test rUSDT Tropykus', 18, 'trUSDT');
   }
+  docToken = await standardTokenContract.deploy(parseEther('2000000'), 'Test DOC Tropykus', 18, 'tDOC');
+  usdtToken = await standardTokenContract.deploy(parseEther('2000000'), 'Test rUSDT Tropykus', 18, 'trUSDT');
   console.log(`RIF: ${rifToken.address}`);
   console.log(`DOC: ${docToken.address}`);
   console.log(`USDT: ${usdtToken.address}`);
@@ -104,7 +109,7 @@ async function main() {
   let rbtcOracle = {
     address: namedAccounts.rbtcOracle[chainId],
   };
-  if (chainId !== 31 || chainId !== 30) {
+  if (chainId !== 31 && chainId !== 30) {
     rifOracle = await mockPriceProviderMoC.deploy(deployer.address, parseEther('0.33'));
     rbtcOracle = await mockPriceProviderMoC.deploy(deployer.address, parseEther('34000'));
   }
@@ -115,8 +120,8 @@ async function main() {
   const usdtOracle = await mockPriceProviderMoC.deploy(deployer.address, parseEther('1.05'));
   console.log(`USDT Oracle: ${usdtOracle.address}`);
   console.log('~~~~~~~~~~~~~~~~~~~~~~~~ /ORACLES ~~~~~~~~~~~~~~~~~~~~~~~~\n');
-  console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~ ADAPTERS ~~~~~~~~~~~~~~~~~~~~~~~~');
 
+  console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~ ADAPTERS ~~~~~~~~~~~~~~~~~~~~~~~~');
   const priceOracleAdapterMoc = await ethers.getContractFactory('PriceOracleAdapterMoc');
   const rbtcPriceOracleAdapterMoC = await priceOracleAdapterMoc.deploy(deployer.address, rbtcOracle.address);
   console.log(`RBTC Adapter: ${rbtcPriceOracleAdapterMoC.address}`);
@@ -127,22 +132,8 @@ async function main() {
   const usdtPriceOracleAdapterMoC = await priceOracleAdapterMoc.deploy(deployer.address, usdtOracle.address);
   console.log(`USDT Adapter: ${usdtPriceOracleAdapterMoC.address}`);
   console.log('~~~~~~~~~~~~~~~~~~~~~~~~ /ADAPTERS ~~~~~~~~~~~~~~~~~~~~~~~~\n');
-  console.log('\n~~~~~~~~~~~~~~~~~ UNITROLLER & COMPTROLLER ~~~~~~~~~~~~~~~~');
 
-  const unitrollerContract = await ethers.getContractFactory('Unitroller');
-  const unitroller = await unitrollerContract.deploy();
-  console.log(`Unitroller: ${unitroller.address}`);
-  const comptrollerContract = await ethers.getContractFactory('Comptroller');
-  const comptroller = await comptrollerContract.deploy();
-  console.log(`Comptroller: ${comptroller.address}`);
-  await unitroller._setPendingImplementation(comptroller.address);
-  await comptroller._become(unitroller.address);
-  await comptroller._setPriceOracle(priceOracleProxy.address);
-  await comptroller._setCloseFactor(config.closeFactorMantissa);
-  await comptroller._setLiquidationIncentive(config.liquidationIncentiveMantissa);
-  console.log('~~~~~~~~~~~~~~~~~ /UNITROLLER & COMPTROLLER ~~~~~~~~~~~~~~~~\n');
   console.log('\n~~~~~~~~~~~~~~~~~~ INTEREST RATE MODELS ~~~~~~~~~~~~~~~~~~');
-
   const whitePaperInterestRateModel = await ethers.getContractFactory('WhitePaperInterestRateModel');
   const jumpInterestRateModelV2 = await ethers.getContractFactory('JumpRateModelV2');
   const hurricaneInterestRateModel = await ethers.getContractFactory('HurricaneInterestRateModel');
@@ -160,64 +151,84 @@ async function main() {
     .deploy(rbtc.baseBorrowRate, rbtc.promisedBaseReturnRate, rbtc.optimal, rbtc.borrowRateSlope, rbtc.supplyRateSlope);
   console.log(`RBTC Interest Rate Model: ${rbtcInterestRateModel.address}`);
   console.log('~~~~~~~~~~~~~~~~~~ /INTEREST RATE MODELS ~~~~~~~~~~~~~~~~~\n');
-  console.log('\n~~~~~~~~~~~~~~~~~~~~ MARKETS cTOKENS ~~~~~~~~~~~~~~~~~~~');
 
+  console.log('\n~~~~~~~~~~~~~~~~~ UNITROLLER & COMPTROLLER ~~~~~~~~~~~~~~~~');
+  const unitroller = await ethers.getContractAt('Unitroller', unitrollerDeployed.address, deployer);
+  console.log(`Unitroller: ${unitroller.address}`);
+  const comptroller = await ethers.getContractAt('ComptrollerG5', comptrollerDeployed.address, deployer);
+  console.log(`Comptroller: ${comptroller.address}`);
+  await unitroller._setPendingImplementation(comptroller.address, {from: deployer.address});
+  console.log('Unitroller _setPendingImplementation done...');
+  await comptroller._become(unitroller.address);
+  console.log('Comptroller _become done...');
+  await comptroller._setPriceOracle(priceOracleProxyDeploy.address);
+  console.log('Comptroller _setPriceOracle done...');
+  await comptroller._setCloseFactor(config.closeFactorMantissa);
+  console.log('Comptroller _setCloseFactor done...');
+  await comptroller._setLiquidationIncentive(config.liquidationIncentiveMantissa);
+  console.log('Comptroller _setLiquidationIncentive done...');
+  console.log('~~~~~~~~~~~~~~~~~ /UNITROLLER & COMPTROLLER ~~~~~~~~~~~~~~~~\n');
+
+  console.log('\n~~~~~~~~~~~~~~~~~~~~ MARKETS cTOKENS ~~~~~~~~~~~~~~~~~~~');
   const cErc20Immutable = await ethers.getContractFactory('CErc20Immutable');
   const cRBTCContract = await ethers.getContractFactory('CRBTC');
-  const cRIF = await cErc20Immutable
-    .deploy(rifToken.address, comptroller.address, rifInterestRateModel.address, config.initialExchangeRateMantissa, 'Tropykus cRIF', 'cRIF', 18, deployer.address);
-  console.log(`cRIF: ${cRIF.address}`);
-  const cDOC = await cErc20Immutable
-    .deploy(docToken.address, comptroller.address, docInterestRateModel.address, config.initialExchangeRateMantissa, 'Tropykus cDOC', 'cDOC', 18, deployer.address);
-  console.log(`cDOC: ${cDOC.address}`);
-  const cUSDT = await cErc20Immutable
-    .deploy(usdtToken.address, comptroller.address, usdtInterestRateModel.address, config.initialExchangeRateMantissa, 'Tropykus cUSDT', 'cUSDT', 18, deployer.address);
-  console.log(`cUSDT: ${cUSDT.address}`);
-  const cRBTC = await cRBTCContract
-    .deploy(comptroller.address, rbtcInterestRateModel.address, config.initialExchangeRateMantissa, 'Tropykus cRBTC', 'cRBTC', 18, deployer.address);
-  console.log(`cRBTC: ${cRBTC.address}\n`);
-  await priceOracleProxy
-    .setAdapterToToken(cRIF.address, rifPriceOracleAdapterMoC.address);
+  const cRIFdeployed = await cErc20Immutable
+    .deploy(rifToken.address, comptrollerDeployed.address, rifInterestRateModel.address, config.initialExchangeRateMantissa, 'Tropykus cRIF', 'cRIF', 18, deployer.address);
+  console.log(`cRIF: ${cRIFdeployed.address}`);
+  const cDOCdeployed = await cErc20Immutable
+    .deploy(docToken.address, comptrollerDeployed.address, docInterestRateModel.address, config.initialExchangeRateMantissa, 'Tropykus cDOC', 'cDOC', 18, deployer.address);
+  console.log(`cDOC: ${cDOCdeployed.address}`);
+  const cUSDTdeployed = await cErc20Immutable
+    .deploy(usdtToken.address, comptrollerDeployed.address, usdtInterestRateModel.address, config.initialExchangeRateMantissa, 'Tropykus cUSDT', 'cUSDT', 18, deployer.address);
+  console.log(`cUSDT: ${cUSDTdeployed.address}`);
+  const cRBTCdeployed = await cRBTCContract
+    .deploy(comptrollerDeployed.address, rbtcInterestRateModel.address, config.initialExchangeRateMantissa, 'Tropykus cRBTC', 'cRBTC', 18, deployer.address);
+  console.log(`cRBTC: ${cRBTCdeployed.address}`);
+  console.log('~~~~~~~~~~~~~~~~~~~~ /MARKETS cTOKENS ~~~~~~~~~~~~~~~~~~~~\n');
 
+  const maximillionContract = await ethers.getContractFactory('Maximillion');
+  const maximillion = await maximillionContract.deploy(cRBTCdeployed.address);
+  console.log(`Maximillion: ${maximillion.address}`);
+  const tropykusLensContract = await ethers.getContractFactory('TropykusLens');
+  const tropykusLens = await tropykusLensContract.deploy();
+  console.log(`TropykusLens: ${tropykusLens.address}`);
+
+  const priceOracleProxy = await ethers.getContractAt('PriceOracleProxy', priceOracleProxyDeploy.address, deployer);
+  await priceOracleProxy.setAdapterToToken(cRIFdeployed.address, rifPriceOracleAdapterMoC.address);
   console.log('cRIF adapter setted...');
-  await priceOracleProxy
-    .setAdapterToToken(cDOC.address, docPriceOracleAdapterMoC.address);
+  await priceOracleProxy.setAdapterToToken(cDOCdeployed.address, docPriceOracleAdapterMoC.address);
   console.log('cDOC adapter setted...');
-  await priceOracleProxy
-    .setAdapterToToken(cUSDT.address, docPriceOracleAdapterMoC.address);
+  await priceOracleProxy.setAdapterToToken(cUSDTdeployed.address, usdtPriceOracleAdapterMoC.address);
   console.log('cUSDT adapter setted...');
-  await priceOracleProxy
-    .setAdapterToToken(cRBTC.address, docPriceOracleAdapterMoC.address);
+  await priceOracleProxy.setAdapterToToken(cRBTCdeployed.address, rbtcPriceOracleAdapterMoC.address);
   console.log('cRBTC adapter setted...\n');
-  await comptroller._supportMarket(cRIF.address);
 
+  await comptroller._supportMarket(cRIFdeployed.address);
   console.log('cRIF market supported...');
-  await comptroller._supportMarket(cDOC.address);
+  await comptroller._supportMarket(cDOCdeployed.address);
   console.log('cDOC market supported...');
-  await comptroller._supportMarket(cUSDT.address);
+  await comptroller._supportMarket(cUSDTdeployed.address);
   console.log('cUSDT market supported...');
-  await comptroller._supportMarket(cRBTC.address);
+  await comptroller._supportMarket(cRBTCdeployed.address);
   console.log('cRBTC market supported...\n');
-  await comptroller._setCollateralFactor(cRIF.address, rif.collateralFactor);
 
+  await comptroller._setCollateralFactor(cRIFdeployed.address, rif.collateralFactor);
   console.log(`cRIF collateral factor: ${Number(rif.collateralFactor) / 1e18}`);
-  await comptroller._setCollateralFactor(cDOC.address, doc.collateralFactor);
+  await comptroller._setCollateralFactor(cDOCdeployed.address, doc.collateralFactor);
   console.log(`cDOC collateral factor: ${Number(doc.collateralFactor) / 1e18}`);
-  await comptroller._setCollateralFactor(cUSDT.address, usdt.collateralFactor);
+  await comptroller._setCollateralFactor(cUSDTdeployed.address, usdt.collateralFactor);
   console.log(`cUSDT collateral factor: ${Number(usdt.collateralFactor) / 1e18}`);
-  await comptroller._setCollateralFactor(cRBTC.address, rbtc.collateralFactor);
+  await comptroller._setCollateralFactor(cRBTCdeployed.address, rbtc.collateralFactor);
   console.log(`cRBTC collateral factor: ${Number(rbtc.collateralFactor) / 1e18}\n`);
-  await comptroller._setCompSpeed(cRIF.address, config.compSpeed);
 
-  console.log(`cRIF Comp Speed: ${config.compSpeed}`);
-  await comptroller._setCompSpeed(cDOC.address, config.compSpeed);
-  console.log(`cDOC Comp Speed: ${config.compSpeed}`);
-  await comptroller._setCompSpeed(cUSDT.address, config.compSpeed);
-  console.log(`cUSDT Comp Speed: ${config.compSpeed}`);
-  await comptroller._setCompSpeed(cRBTC.address, config.compSpeed);
-  console.log(`cRBTC Comp Speed: ${config.compSpeed}\n`);
+  await comptroller._setCompRate(config.compSpeed);
+  console.log(`Comp Rate: ${config.compSpeed}`);
+
+  const cRIF = await ethers.getContractAt('CErc20Immutable', cRIFdeployed.address, deployer);
+  const cDOC = await ethers.getContractAt('CErc20Immutable', cDOCdeployed.address, deployer);
+  const cUSDT = await ethers.getContractAt('CErc20Immutable', cUSDTdeployed.address, deployer);
+  const cRBTC = await ethers.getContractAt('CRBTC', cRBTCdeployed.address, deployer);
   await cRIF._setReserveFactor(rif.reserveFactor);
-
   console.log(`cRIF reserveFactor: ${Number(rif.reserveFactor) / 1e18}`);
   await cDOC._setReserveFactor(doc.reserveFactor);
   console.log(`cDOC reserveFactor: ${Number(doc.reserveFactor) / 1e18}`);
@@ -225,14 +236,6 @@ async function main() {
   console.log(`cUSDT reserveFactor: ${Number(usdt.reserveFactor) / 1e18}`);
   await cRBTC._setReserveFactor(rbtc.reserveFactor);
   console.log(`cRBTC reserveFactor: ${Number(rbtc.reserveFactor) / 1e18}`);
-  console.log('~~~~~~~~~~~~~~~~~~~~ /MARKETS cTOKENS ~~~~~~~~~~~~~~~~~~~~\n');
-
-  const maximillionContract = await ethers.getContractFactory('Maximillion');
-  const maximillion = await maximillionContract.deploy(cRBTC.address);
-  console.log(`Maximillion: ${maximillion.address}`);
-  const tropykusLensContract = await ethers.getContractFactory('TropykusLens');
-  const tropykusLens = await tropykusLensContract.deploy();
-  console.log(`TropykusLens: ${tropykusLens.address}`);
 }
 
 main()
