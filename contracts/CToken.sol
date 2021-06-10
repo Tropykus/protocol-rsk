@@ -260,7 +260,13 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             return (uint256(Error.MATH_ERROR), 0, 0, 0);
         }
 
-        (mErr, exchangeRateMantissa) = exchangeRateStoredInternal();
+        if (interestRateModel.isTropykusInterestRateModel()) {
+            (mErr, exchangeRateMantissa) = tropykusExchangeRateStoredInternal(
+                account
+            );
+        } else {
+            (mErr, exchangeRateMantissa) = exchangeRateStoredInternal();
+        }
         if (mErr != MathError.NO_ERROR) {
             return (uint256(Error.MATH_ERROR), 0, 0, 0);
         }
@@ -458,6 +464,37 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                     totalReserves,
                     totalSupply
                 );
+        }
+    }
+
+    function tropykusExchangeRateStoredInternal(address redeemer)
+        internal
+        view
+        returns (MathError, uint256)
+    {
+        if (totalSupply == 0) {
+            return (MathError.NO_ERROR, initialExchangeRateMantissa);
+        } else {
+            SupplySnapshot storage supplySnapshot = accountTokens[redeemer];
+            uint256 promisedSupplyRate = supplySnapshot.promisedSupplyRate;
+            Exp memory expectedSupplyRatePerBlock =
+                Exp({mantissa: promisedSupplyRate});
+            (, uint256 delta) =
+                subUInt(accrualBlockNumber, supplySnapshot.suppliedAt);
+            (, Exp memory expectedSupplyRatePerBlockWithDelta) =
+                mulScalar(expectedSupplyRatePerBlock, delta);
+            (, Exp memory interestFactor) =
+                addExp(
+                    Exp({mantissa: 1e18}),
+                    expectedSupplyRatePerBlockWithDelta
+                );
+            uint256 currentUnderlying = supplySnapshot.underlyingAmount;
+            Exp memory redeemerUnderlying = Exp({mantissa: currentUnderlying});
+            (, Exp memory realAmount) =
+                mulExp(interestFactor, redeemerUnderlying);
+            (, Exp memory exchangeRate) =
+                getExp(realAmount.mantissa, supplySnapshot.tokens);
+            return (MathError.NO_ERROR, exchangeRate.mantissa);
         }
     }
 
@@ -1176,10 +1213,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 );
         }
 
-        (, vars.newSubsidyFund) = subUInt(
-            subsidyFund,
-            subsidyFundPortion
-        );
+        (, vars.newSubsidyFund) = subUInt(subsidyFund, subsidyFundPortion);
 
         (vars.mathErr, vars.accountTokensNew) = subUInt(
             supplySnapshot.tokens,
