@@ -10,8 +10,8 @@ if (fs.existsSync("./.build/contracts.json")) {
 
 fs.writeFileSync('./abis/Unitroller.json', contracts.contracts['contracts/Unitroller.sol:Unitroller'].abi);
 console.log('Unitroller.json created');
-fs.writeFileSync('./abis/Comptroller.json', contracts.contracts['contracts/Comptroller.sol:Comptroller'].abi);
-console.log('Comptroller.json created');
+fs.writeFileSync('./abis/ComptrollerG6.json', contracts.contracts['contracts/ComptrollerG6.sol:ComptrollerG6'].abi);
+console.log('ComptrollerG6.json created');
 fs.writeFileSync('./abis/JumpRateModelV2.json', contracts.contracts['contracts/JumpRateModelV2.sol:JumpRateModelV2'].abi);
 console.log('JumpRateModelV2.json created');
 fs.writeFileSync('./abis/CToken.json', contracts.contracts['contracts/CErc20Immutable.sol:CErc20Immutable'].abi);
@@ -20,6 +20,8 @@ fs.writeFileSync('./abis/CRBTC.json', contracts.contracts['contracts/CRBTC.sol:C
 console.log('CRBTC.json created');
 fs.writeFileSync('./abis/WhitePaperInterestRateModel.json', contracts.contracts['contracts/WhitePaperInterestRateModel.sol:WhitePaperInterestRateModel'].abi);
 console.log('WhitePaperInterestRateModel.json created');
+fs.writeFileSync('./abis/HurricaneInterestRateModel', contracts.contracts['contracts/HurricaneInterestRateModel.sol:HurricaneInterestRateModel'].abi);
+console.log('HurricaneInterestRateModel.json created');
 fs.writeFileSync('./abis/Maximillion.json', contracts.contracts['contracts/Maximillion.sol:Maximillion'].abi);
 console.log('Maximillion.json created');
 fs.writeFileSync('./abis/PriceOracleProxy.json', contracts.contracts['contracts/PriceOracleProxy.sol:PriceOracleProxy'].abi);
