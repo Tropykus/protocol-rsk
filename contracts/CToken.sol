@@ -408,6 +408,22 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         return (MathError.NO_ERROR, result);
     }
 
+    function getBorrowerPrincipalStored(address account)
+        public
+        view
+        returns (uint256 borrowed)
+    {
+        borrowed = accountBorrows[account].principal;
+    }
+
+    function getSupplierUnderlyingStored(address account)
+        public
+        view
+        returns (uint256 supplied)
+    {
+        supplied = accountTokens[account].underlyingAmount;
+    }
+
     /**
      * @notice Accrue interest then return the up-to-date exchange rate
      * @return Calculated exchange rate scaled by 1e18
