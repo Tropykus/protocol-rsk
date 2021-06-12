@@ -40,7 +40,7 @@ contract InterestRateModel is Exponential {
         return borrows.mul(1e18).div(cash.add(borrows).sub(reserves));
     }
 
-    /**_totalCash
+    /**
      * @notice Calculates the current borrow interest rate per block
      * @param cash The total amount of cash the market has
      * @param borrows The total amount of borrows the market has outstanding
