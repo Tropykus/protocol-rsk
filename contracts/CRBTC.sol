@@ -186,4 +186,8 @@ contract CRBTC is CToken {
 
         require(errCode == uint256(Error.NO_ERROR), string(fullMessage));
     }
+
+    function addSubsidy() external payable {
+        _addSubsidyInternal(msg.value);
+    }
 }
