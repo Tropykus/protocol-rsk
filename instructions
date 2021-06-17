@@ -1,0 +1,13 @@
+load = async() => {
+    [dep, alice, bob, eve] = await ethers.getSigners();
+    comptroller = await ethers.getContractAt('ComptrollerG6', Comptroller, dep);
+    rif = await ethers.getContractAt('StandardToken', RIF, dep);
+    doc = await ethers.getContractAt('StandardToken', DOC, dep);
+    usdt = await ethers.getContractAt('StandardToken', USDT, dep);
+    crif = await ethers.getContractAt('CErc20Immutable', cRIF, dep);
+    cdoc = await ethers.getContractAt('CErc20Immutable', cDOC, dep);
+    cusdt = await ethers.getContractAt('CErc20Immutable', cUSDT, dep);
+    crbtc = await ethers.getContractAt('CRBTC', cRBTC, dep);
+}
+
+load()
