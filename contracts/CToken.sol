@@ -1132,7 +1132,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 (, Exp memory num) =
                     mulExp(vars.redeemTokens, supplySnapshot.underlyingAmount);
                 (, Exp memory realUnderlyingWithdrawAmount) =
-                    divScalar(num, supplySnapshot.tokens);
+                    getExp(num.mantissa, supplySnapshot.tokens);
                 vars.redeemAmount = realUnderlyingWithdrawAmount.mantissa;
             } else {
                 /*
@@ -1161,7 +1161,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 (, Exp memory num) =
                     mulExp(vars.redeemAmount, supplySnapshot.tokens);
                 (, Exp memory realTokensWithdrawAmount) =
-                    divScalar(num, supplySnapshot.underlyingAmount);
+                    getExp(num.mantissa, supplySnapshot.underlyingAmount);
                 vars.redeemTokens = realTokensWithdrawAmount.mantissa;
             } else {
                 /*
