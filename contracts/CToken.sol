@@ -743,6 +743,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
     }
 
+
     /**
      * @notice Sender supplies assets into the market and receives cTokens in exchange
      * @dev Accrues interest whether or not the operation succeeds, unless reverted
@@ -1054,6 +1055,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         uint256 interestEarned;
         uint256 subsidyFundPortion;
+        uint256 currentUnderlying;
 
         bool isTropykusInterestRateModel =
             interestRateModel.isTropykusInterestRateModel();
@@ -1070,7 +1072,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                     Exp({mantissa: 1e18}),
                     expectedSupplyRatePerBlockWithDelta
                 );
-            uint256 currentUnderlying = supplySnapshot.underlyingAmount;
+            currentUnderlying = supplySnapshot.underlyingAmount;
             Exp memory redeemerUnderlying = Exp({mantissa: currentUnderlying});
             (, Exp memory realAmount) =
                 mulExp(interestFactor, redeemerUnderlying);
@@ -1080,7 +1082,6 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 currentUnderlying
             );
         }
-        supplySnapshot.suppliedAt = accrualBlockNumber;
         supplySnapshot.promisedSupplyRate = interestRateModel.getSupplyRate(
             getCashPrior(),
             totalBorrows,
@@ -1130,7 +1131,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             vars.redeemTokens = redeemTokensIn;
             if (isTropykusInterestRateModel) {
                 (, Exp memory num) =
-                    mulExp(vars.redeemTokens, supplySnapshot.underlyingAmount);
+                    mulExp(vars.redeemTokens, currentUnderlying);
                 (, Exp memory realUnderlyingWithdrawAmount) =
                     getExp(num.mantissa, supplySnapshot.tokens);
                 vars.redeemAmount = realUnderlyingWithdrawAmount.mantissa;
@@ -1161,7 +1162,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 (, Exp memory num) =
                     mulExp(vars.redeemAmount, supplySnapshot.tokens);
                 (, Exp memory realTokensWithdrawAmount) =
-                    getExp(num.mantissa, supplySnapshot.underlyingAmount);
+                    getExp(num.mantissa, currentUnderlying);
                 vars.redeemTokens = realTokensWithdrawAmount.mantissa;
             } else {
                 /*
@@ -1244,8 +1245,13 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 );
         }
 
+        uint256 cash = getCashPrior();
         /* Fail gracefully if protocol has insufficient cash */
-        if (getCashPrior() < vars.redeemAmount) {
+        if (isTropykusInterestRateModel) {
+            cash = address(this).balance;
+        }
+
+        if (cash < vars.redeemAmount) {
             return
                 fail(
                     Error.TOKEN_INSUFFICIENT_CASH,

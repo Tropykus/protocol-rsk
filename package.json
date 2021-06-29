@@ -15,7 +15,7 @@
     "report": "npx run ./script/saddle/gasReport.js",
     "test": "./script/test",
     "rsk": "./script/rsk",
-    "abis": "rm -rf abis && mkdir abis && node datagen.js && rm -rf ../tropykus-app/src/abis && cp -r abis ../tropykus-app/src",
+    "abis": "rm -rf abis && mkdir abis && node datagen.js && rm -rf ../app/src/abis && cp -r abis ../app/src",
     "test:prepare": "NO_RUN=true ./script/test",
     "checksize": "npx run ./script/saddle/comptrollerSize.js"
   },
