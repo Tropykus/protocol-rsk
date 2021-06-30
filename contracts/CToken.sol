@@ -416,12 +416,20 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         borrowed = accountBorrows[account].principal;
     }
 
-    function getSupplierUnderlyingStored(address account)
+    function getSupplierSnapshotStored(address account)
         public
         view
-        returns (uint256 supplied)
+        returns (
+            uint256 tokens,
+            uint256 underlyingAmount,
+            uint256 suppliedAt,
+            uint256 promisedSupplyRate
+        )
     {
-        supplied = accountTokens[account].underlyingAmount;
+        tokens = accountTokens[account].tokens;
+        underlyingAmount = accountTokens[account].underlyingAmount;
+        suppliedAt = accountTokens[account].suppliedAt;
+        promisedSupplyRate = accountTokens[account].promisedSupplyRate;
     }
 
     /**
@@ -1276,6 +1284,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         subsidyFund = vars.newSubsidyFund;
         supplySnapshot.tokens = vars.accountTokensNew;
         supplySnapshot.suppliedAt = accrualBlockNumber;
+        (, supplySnapshot.underlyingAmount) = subUInt(supplySnapshot.underlyingAmount, vars.redeemAmount);
 
         /* We emit a Transfer event, and a Redeem event */
         emit Transfer(redeemer, address(this), vars.redeemTokens);
