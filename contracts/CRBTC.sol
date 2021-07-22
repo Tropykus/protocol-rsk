@@ -1,4 +1,5 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.4;
 
 import "./CToken.sol";
 
@@ -121,7 +122,7 @@ contract CRBTC is CToken {
     /**
      * @notice Send Ether to CRBTC to mint
      */
-    function() external payable {
+    fallback() external payable {
         (uint256 err, ) = mintInternal(msg.value);
         requireNoError(err, "mint failed");
     }

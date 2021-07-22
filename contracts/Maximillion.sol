@@ -1,4 +1,5 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.4;
 
 import "./CRBTC.sol";
 
@@ -15,7 +16,7 @@ contract Maximillion {
     /**
      * @notice Construct a Maximillion to repay max in a CRBTC market
      */
-    constructor(CRBTC cRBTC_) public {
+    constructor(CRBTC cRBTC_) {
         cRBTC = cRBTC_;
     }
 
@@ -34,14 +35,18 @@ contract Maximillion {
      * @param borrower The address of the borrower account to repay on behalf of
      * @param cRBTC_ The address of the cRBTC contract to repay in
      */
-    function repayBehalfExplicit(address borrower, CRBTC cRBTC_) public payable {
-        uint received = msg.value;
-        uint borrows = cRBTC_.borrowBalanceCurrent(borrower);
+    function repayBehalfExplicit(address borrower, CRBTC cRBTC_)
+        public
+        payable
+    {
+        uint256 received = msg.value;
+        uint256 borrows = cRBTC_.borrowBalanceCurrent(borrower);
         if (received > borrows) {
-            cRBTC_.repayBorrowBehalf.value(borrows)(borrower);
-            msg.sender.transfer(received - borrows);
+            address payable sender = payable(msg.sender);
+            cRBTC_.repayBorrowBehalf{value: borrows}(borrower);
+            sender.transfer(received - borrows);
         } else {
-            cRBTC_.repayBorrowBehalf.value(received)(borrower);
+            cRBTC_.repayBorrowBehalf{value: received}(borrower);
         }
     }
 }

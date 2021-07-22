@@ -1,15 +1,14 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.4;
 
 import "../../contracts/Timelock.sol";
 
 interface Administered {
-    function _acceptAdmin() external returns (uint);
+    function _acceptAdmin() external returns (uint256);
 }
 
 contract TimelockHarness is Timelock {
-    constructor(address admin_, uint delay_)
-        Timelock(admin_, delay_) public {
-    }
+    constructor(address admin_, uint256 delay_) Timelock(admin_, delay_) {}
 
     function harnessSetPendingAdmin(address pendingAdmin_) public {
         pendingAdmin = pendingAdmin_;
@@ -21,12 +20,12 @@ contract TimelockHarness is Timelock {
 }
 
 contract TimelockTest is Timelock {
-    constructor(address admin_, uint delay_) Timelock(admin_, 2 days) public {
+    constructor(address admin_, uint256 delay_) Timelock(admin_, 2 days) {
         delay = delay_;
     }
 
     function harnessSetAdmin(address admin_) public {
-        require(msg.sender == admin,"Not admin!");
+        require(msg.sender == admin, "Not admin!");
         admin = admin_;
     }
 

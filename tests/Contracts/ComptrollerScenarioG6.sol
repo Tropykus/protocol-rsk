@@ -1,14 +1,15 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.4;
 
 import "../../contracts/ComptrollerG6.sol";
 
 contract ComptrollerScenarioG6 is ComptrollerG6 {
-    uint public blockNumber;
+    uint256 public blockNumber;
     address public compAddress;
 
-    constructor() ComptrollerG6() public {}
+    constructor() ComptrollerG6() {}
 
-    function fastForward(uint blocks) public returns (uint) {
+    function fastForward(uint256 blocks) public returns (uint256) {
         blockNumber += blocks;
         return blockNumber;
     }
@@ -17,19 +18,19 @@ contract ComptrollerScenarioG6 is ComptrollerG6 {
         compAddress = compAddress_;
     }
 
-    function getCompAddress() public view returns (address) {
+    function getCompAddress() public view override returns (address) {
         return compAddress;
     }
 
-    function setBlockNumber(uint number) public {
+    function setBlockNumber(uint256 number) public {
         blockNumber = number;
     }
 
-    function getBlockNumber() public view returns (uint) {
+    function getBlockNumber() public view override returns (uint256) {
         return blockNumber;
     }
 
-    function membershipLength(CToken cToken) public view returns (uint) {
+    function membershipLength(CToken cToken) public view returns (uint256) {
         return accountAssets[address(cToken)].length;
     }
 
@@ -37,7 +38,7 @@ contract ComptrollerScenarioG6 is ComptrollerG6 {
         markets[address(cToken)].isListed = false;
     }
 
-    function setCompSpeed(address cToken, uint compSpeed) public {
+    function setCompSpeed(address cToken, uint256 compSpeed) public {
         compSpeeds[cToken] = compSpeed;
     }
 }

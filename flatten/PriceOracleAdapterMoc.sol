@@ -1,6 +1,6 @@
 // Dependency file: contracts/PriceOracleAdapter.sol
 
-// pragma solidity ^0.5.16;
+// pragma solidity 0.8.4;
 
 contract PriceOracleAdapter {
     /// @notice Event adapter interface updated
@@ -17,7 +17,7 @@ contract PriceOracleAdapter {
 
 // Root file: contracts/PriceOracleAdapterMoc.sol
 
-pragma solidity ^0.5.16;
+pragma solidity 0.8.4;
 
 // import "contracts/PriceOracleAdapter.sol";
 

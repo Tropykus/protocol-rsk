@@ -1,4 +1,5 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.4;
 
 import "../PriceOracleAdapter.sol";
 import "../CErc20.sol";
@@ -25,7 +26,7 @@ contract PriceOracleAdapterCompound is PriceOracleAdapter {
     /// @notice Frozen SAI price (or 0 if not set yet)
     uint256 public saiPrice;
 
-    constructor(address guardian_) public {
+    constructor(address guardian_) {
         guardian = guardian_;
     }
 
@@ -34,7 +35,12 @@ contract PriceOracleAdapterCompound is PriceOracleAdapter {
      * @param cTokenAddress address of cToken
      * @return The price
      */
-    function assetPrices(address cTokenAddress) public view returns (uint256) {
+    function assetPrices(address cTokenAddress)
+        public
+        view
+        override
+        returns (uint256)
+    {
         //get keyAddress or undlerlyingAddress
         address asset = (oracleKeyAddress[cTokenAddress] != address(0))
             ? address(oracleKeyAddress[cTokenAddress])

@@ -1,6 +1,6 @@
 // Dependency file: contracts/ComptrollerInterface.sol
 
-// pragma solidity ^0.5.16;
+// pragma solidity 0.8.4;
 
 contract ComptrollerInterface {
     /// @notice Indicator that this is a Comptroller contract (for inspection)
@@ -75,7 +75,7 @@ contract ComptrollerInterface {
 
 // Dependency file: contracts/InterestRateModel.sol
 
-// pragma solidity ^0.5.16;
+// pragma solidity 0.8.4;
 
 /**
   * @title tropykus InterestRateModel Interface
@@ -109,7 +109,7 @@ contract InterestRateModel {
 
 // Dependency file: contracts/EIP20NonStandardInterface.sol
 
-// pragma solidity ^0.5.16;
+// pragma solidity 0.8.4;
 
 /**
  * @title EIP20NonStandardInterface
@@ -183,7 +183,7 @@ interface EIP20NonStandardInterface {
 
 // Root file: contracts/CTokenInterfaces.sol
 
-pragma solidity ^0.5.16;
+pragma solidity 0.8.4;
 
 // import "contracts/ComptrollerInterface.sol";
 // import "contracts/InterestRateModel.sol";

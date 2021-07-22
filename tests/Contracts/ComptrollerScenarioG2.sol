@@ -1,19 +1,20 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.4;
 
 import "../../contracts/ComptrollerG2.sol";
 
 contract ComptrollerScenarioG2 is ComptrollerG2 {
-    uint public blockNumber;
+    uint256 public blockNumber;
     address public compAddress;
 
-    constructor() ComptrollerG2() public {}
+    constructor() ComptrollerG2() {}
 
-    function fastForward(uint blocks) public returns (uint) {
+    function fastForward(uint256 blocks) public returns (uint256) {
         blockNumber += blocks;
         return blockNumber;
     }
 
-    function setBlockNumber(uint number) public {
+    function setBlockNumber(uint256 number) public {
         blockNumber = number;
     }
 }

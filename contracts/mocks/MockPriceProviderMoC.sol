@@ -1,4 +1,5 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.4;
 
 import "../CErc20.sol";
 
@@ -16,7 +17,7 @@ contract MockPriceProviderMoC {
     /// @notice Event rbtcPrice updated
     event MockPriceProviderMoCUpdated(uint256 oldPrice, uint256 newPrice);
 
-    constructor(address guardian_, uint256 price) public {
+    constructor(address guardian_, uint256 price) {
         require(
             guardian_ != address(0),
             "MockPriceProviderMoC: address could not be 0"
@@ -52,6 +53,9 @@ contract MockPriceProviderMoC {
         //update rbtcPrice
         rbtcPrice = bytes32(price);
         //emit event
-        emit MockPriceProviderMoCUpdated(uint256(oldRbtcPrice), uint256(rbtcPrice));
+        emit MockPriceProviderMoCUpdated(
+            uint256(oldRbtcPrice),
+            uint256(rbtcPrice)
+        );
     }
 }

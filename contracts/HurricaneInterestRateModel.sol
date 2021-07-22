@@ -1,4 +1,5 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.4;
 
 import "./InterestRateModel.sol";
 
@@ -21,7 +22,7 @@ contract HurricaneInterestRateModel is InterestRateModel {
         uint256 _optimalUtilizationRate,
         uint256 _borrowRateSlope,
         uint256 _supplyRateSlope
-    ) public {
+    ) {
         baseBorrowRatePerBlock = _baseBorrowRate.div(blocksPerYear);
         promisedBaseReturnRatePerBlock = _promisedBaseReturnRate.div(
             blocksPerYear
@@ -58,19 +59,19 @@ contract HurricaneInterestRateModel is InterestRateModel {
         uint256 cash,
         uint256 borrows,
         uint256 reserves
-    ) public view returns (uint256 borrowRate) {
+    ) public view override returns (uint256 borrowRate) {
         uint256 utilizationRate = utilizationRate(cash, borrows, reserves);
         borrowRate = utilizationRate
-            .mul(borrowRateSlopePerBlock)
-            .div(FACTOR)
-            .add(baseBorrowRatePerBlock);
+        .mul(borrowRateSlopePerBlock)
+        .div(FACTOR)
+        .add(baseBorrowRatePerBlock);
     }
 
     function isAboveOptimal(
         uint256 cash,
         uint256 borrows,
         uint256 reserves
-    ) public view returns (bool) {
+    ) public view override returns (bool) {
         uint256 utilizationRate = utilizationRate(cash, borrows, reserves);
         return utilizationRate > optimalUtilizationRate;
     }

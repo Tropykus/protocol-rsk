@@ -1,17 +1,24 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.4;
 
 import "./FaucetToken.sol";
+import "../../contracts/SafeMath.sol";
 
 /**
-  * @title The Compound Evil Test Token
-  * @author tropykus
-  * @notice A simple test token that fails certain operations
-  */
+ * @title The Compound Evil Test Token
+ * @author tropykus
+ * @notice A simple test token that fails certain operations
+ */
 contract EvilToken is FaucetToken {
+    using SafeMath for uint256;
     bool public fail;
 
-    constructor(uint256 _initialAmount, string memory _tokenName, uint8 _decimalUnits, string memory _tokenSymbol) public
-        FaucetToken(_initialAmount, _tokenName, _decimalUnits, _tokenSymbol) {
+    constructor(
+        uint256 _initialAmount,
+        string memory _tokenName,
+        uint8 _decimalUnits,
+        string memory _tokenSymbol
+    ) FaucetToken(_initialAmount, _tokenName, _decimalUnits, _tokenSymbol) {
         fail = true;
     }
 
@@ -19,7 +26,11 @@ contract EvilToken is FaucetToken {
         fail = _fail;
     }
 
-    function transfer(address dst, uint256 amount) external returns (bool) {
+    function transfer(address dst, uint256 amount)
+        external
+        override
+        returns (bool)
+    {
         if (fail) {
             return false;
         }
@@ -29,7 +40,11 @@ contract EvilToken is FaucetToken {
         return true;
     }
 
-    function transferFrom(address src, address dst, uint256 amount) external returns (bool) {
+    function transferFrom(
+        address src,
+        address dst,
+        uint256 amount
+    ) external override returns (bool) {
         if (fail) {
             return false;
         }

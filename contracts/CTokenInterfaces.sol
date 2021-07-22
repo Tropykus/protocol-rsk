@@ -1,4 +1,5 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.4;
 
 import "./ComptrollerInterface.sol";
 import "./InterestRateModel.sol";
@@ -267,32 +268,43 @@ contract CTokenInterface is CTokenStorage {
     /**
      * @notice Failure event
      */
-    event Failure(uint256 error, uint256 info, uint256 detail);
+    event CTokenStorageFailure(uint256 error, uint256 info, uint256 detail);
 
     /*** User Interface ***/
 
-    function transfer(address dst, uint256 amount) external returns (bool);
+    function transfer(address dst, uint256 amount)
+        external
+        virtual
+        returns (bool);
 
     function transferFrom(
         address src,
         address dst,
         uint256 amount
-    ) external returns (bool);
+    ) external virtual returns (bool);
 
-    function approve(address spender, uint256 amount) external returns (bool);
+    function approve(address spender, uint256 amount)
+        external
+        virtual
+        returns (bool);
 
     function allowance(address owner, address spender)
         external
         view
+        virtual
         returns (uint256);
 
-    function balanceOf(address owner) external view returns (uint256);
+    function balanceOf(address owner) external view virtual returns (uint256);
 
-    function balanceOfUnderlying(address owner) external returns (uint256);
+    function balanceOfUnderlying(address owner)
+        external
+        virtual
+        returns (uint256);
 
     function getAccountSnapshot(address account)
         external
         view
+        virtual
         returns (
             uint256,
             uint256,
@@ -300,50 +312,64 @@ contract CTokenInterface is CTokenStorage {
             uint256
         );
 
-    function borrowRatePerBlock() external view returns (uint256);
+    function borrowRatePerBlock() external view virtual returns (uint256);
 
-    function supplyRatePerBlock() external view returns (uint256);
+    function supplyRatePerBlock() external view virtual returns (uint256);
 
-    function totalBorrowsCurrent() external returns (uint256);
+    function totalBorrowsCurrent() external virtual returns (uint256);
 
-    function borrowBalanceCurrent(address account) external returns (uint256);
+    function borrowBalanceCurrent(address account)
+        external
+        virtual
+        returns (uint256);
 
-    function borrowBalanceStored(address account) public view returns (uint256);
+    function borrowBalanceStored(address account)
+        public
+        view
+        virtual
+        returns (uint256);
 
-    function exchangeRateCurrent() public returns (uint256);
+    function exchangeRateCurrent() public virtual returns (uint256);
 
-    function exchangeRateStored() public view returns (uint256);
+    function exchangeRateStored() public view virtual returns (uint256);
 
-    function getCash() external view returns (uint256);
+    function getCash() external view virtual returns (uint256);
 
-    function accrueInterest() public returns (uint256);
+    function accrueInterest() public virtual returns (uint256);
 
     function seize(
         address liquidator,
         address borrower,
         uint256 seizeTokens
-    ) external returns (uint256);
+    ) external virtual returns (uint256);
 
     /*** Admin Functions ***/
 
     function _setPendingAdmin(address payable newPendingAdmin)
         external
+        virtual
         returns (uint256);
 
-    function _acceptAdmin() external returns (uint256);
+    function _acceptAdmin() external virtual returns (uint256);
 
     function _setComptroller(ComptrollerInterface newComptroller)
         public
+        virtual
         returns (uint256);
 
     function _setReserveFactor(uint256 newReserveFactorMantissa)
         external
+        virtual
         returns (uint256);
 
-    function _reduceReserves(uint256 reduceAmount) external returns (uint256);
+    function _reduceReserves(uint256 reduceAmount)
+        external
+        virtual
+        returns (uint256);
 
     function _setInterestRateModel(InterestRateModel newInterestRateModel)
         public
+        virtual
         returns (uint256);
 }
 

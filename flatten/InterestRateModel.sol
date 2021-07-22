@@ -1,6 +1,6 @@
 // Root file: contracts/InterestRateModel.sol
 
-pragma solidity ^0.5.16;
+pragma solidity 0.8.4;
 
 /**
   * @title tropykus InterestRateModel Interface

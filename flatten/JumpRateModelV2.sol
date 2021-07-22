@@ -1,6 +1,6 @@
 // Dependency file: contracts/SafeMath.sol
 
-// pragma solidity ^0.5.16;
+// pragma solidity 0.8.4;
 
 // From https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/math/Math.sol
 // Subject to the MIT license.
@@ -190,7 +190,7 @@ library SafeMath {
 
 // Dependency file: contracts/BaseJumpRateModelV2.sol
 
-// pragma solidity ^0.5.16;
+// pragma solidity 0.8.4;
 
 // import "contracts/SafeMath.sol";
 
@@ -348,7 +348,7 @@ contract BaseJumpRateModelV2 {
 
 // Dependency file: contracts/InterestRateModel.sol
 
-// pragma solidity ^0.5.16;
+// pragma solidity 0.8.4;
 
 /**
   * @title tropykus InterestRateModel Interface
@@ -382,7 +382,7 @@ contract InterestRateModel {
 
 // Root file: contracts/JumpRateModelV2.sol
 
-pragma solidity ^0.5.16;
+pragma solidity 0.8.4;
 
 // import "contracts/BaseJumpRateModelV2.sol";
 // import "contracts/InterestRateModel.sol";

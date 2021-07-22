@@ -1,20 +1,26 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.4;
 
 import "../../contracts/PriceOracle.sol";
 
 contract FixedPriceOracle is PriceOracle {
-    uint public price;
+    uint256 public price;
 
-    constructor(uint _price) public {
+    constructor(uint256 _price) {
         price = _price;
     }
 
-    function getUnderlyingPrice(CToken cToken) public view returns (uint) {
+    function getUnderlyingPrice(CToken cToken)
+        public
+        view
+        override
+        returns (uint256)
+    {
         cToken;
         return price;
     }
 
-    function assetPrices(address asset) public view returns (uint) {
+    function assetPrices(address asset) public view returns (uint256) {
         asset;
         return price;
     }

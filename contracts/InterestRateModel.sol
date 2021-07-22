@@ -1,4 +1,5 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.4;
 
 import "./Exponential.sol";
 import "./SafeMath.sol";
@@ -7,7 +8,7 @@ import "./SafeMath.sol";
  * @title tropykus InterestRateModel Interface
  * @author tropykus
  */
-contract InterestRateModel is Exponential {
+abstract contract InterestRateModel is Exponential {
     using SafeMath for uint256;
 
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)
@@ -31,7 +32,7 @@ contract InterestRateModel is Exponential {
         uint256 cash,
         uint256 borrows,
         uint256 reserves
-    ) public pure returns (uint256) {
+    ) public pure virtual returns (uint256) {
         // Utilization rate is 0 when there are no borrows
         if (borrows == 0) {
             return 0;
@@ -51,7 +52,7 @@ contract InterestRateModel is Exponential {
         uint256 cash,
         uint256 borrows,
         uint256 reserves
-    ) external view returns (uint256);
+    ) external view virtual returns (uint256);
 
     /**
      * @notice Calculates the current supply interest rate per block
@@ -66,7 +67,7 @@ contract InterestRateModel is Exponential {
         uint256 borrows,
         uint256 reserves,
         uint256 reserveFactorMantissa
-    ) external view returns (uint256);
+    ) external view virtual returns (uint256);
 
     function getExchangeRate(
         uint256 _totalCash,
@@ -103,7 +104,7 @@ contract InterestRateModel is Exponential {
         uint256 cash,
         uint256 borrows,
         uint256 reserves
-    ) public view returns (bool) {
+    ) public view virtual returns (bool) {
         cash;
         borrows;
         reserves;

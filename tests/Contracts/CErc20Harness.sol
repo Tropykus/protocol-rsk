@@ -1,4 +1,5 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.4;
 
 import "../../contracts/CErc20Immutable.sol";
 import "../../contracts/CErc20Delegator.sol";
@@ -6,85 +7,104 @@ import "../../contracts/CErc20Delegate.sol";
 import "./ComptrollerScenario.sol";
 
 contract CErc20Harness is CErc20Immutable {
-    uint blockNumber = 100000;
-    uint harnessExchangeRate;
+    uint256 blockNumber = 100000;
+    uint256 harnessExchangeRate;
     bool harnessExchangeRateStored;
 
-    mapping (address => bool) public failTransferToAddresses;
+    mapping(address => bool) public failTransferToAddresses;
 
-    constructor(address underlying_,
-                ComptrollerInterface comptroller_,
-                InterestRateModel interestRateModel_,
-                uint initialExchangeRateMantissa_,
-                string memory name_,
-                string memory symbol_,
-                uint8 decimals_,
-                address payable admin_)
-    CErc20Immutable(
-    underlying_,
-    comptroller_,
-    interestRateModel_,
-    initialExchangeRateMantissa_,
-    name_,
-    symbol_,
-    decimals_,
-    admin_) public {}
+    constructor(
+        address underlying_,
+        ComptrollerInterface comptroller_,
+        InterestRateModel interestRateModel_,
+        uint256 initialExchangeRateMantissa_,
+        string memory name_,
+        string memory symbol_,
+        uint8 decimals_,
+        address payable admin_
+    )
+        CErc20Immutable(
+            underlying_,
+            comptroller_,
+            interestRateModel_,
+            initialExchangeRateMantissa_,
+            name_,
+            symbol_,
+            decimals_,
+            admin_
+        )
+    {}
 
-    function doTransferOut(address payable to, uint amount) internal {
-        require(failTransferToAddresses[to] == false, "TOKEN_TRANSFER_OUT_FAILED");
+    function doTransferOut(address payable to, uint256 amount)
+        internal
+        override
+    {
+        require(
+            failTransferToAddresses[to] == false,
+            "TOKEN_TRANSFER_OUT_FAILED"
+        );
         return super.doTransferOut(to, amount);
     }
 
-    function exchangeRateStoredInternal() internal view returns (MathError, uint) {
+    function exchangeRateStoredInternal()
+        internal
+        view
+        override
+        returns (MathError, uint256)
+    {
         if (harnessExchangeRateStored) {
             return (MathError.NO_ERROR, harnessExchangeRate);
         }
         return super.exchangeRateStoredInternal();
     }
 
-    function getBlockNumber() internal view returns (uint) {
+    function getBlockNumber() internal view override returns (uint256) {
         return blockNumber;
     }
 
-    function getBorrowRateMaxMantissa() public pure returns (uint) {
+    function getBorrowRateMaxMantissa() public pure returns (uint256) {
         return borrowRateMaxMantissa;
     }
 
-    function harnessSetAccrualBlockNumber(uint _accrualblockNumber) public {
+    function harnessSetAccrualBlockNumber(uint256 _accrualblockNumber) public {
         accrualBlockNumber = _accrualblockNumber;
     }
 
-    function harnessSetBlockNumber(uint newBlockNumber) public {
+    function harnessSetBlockNumber(uint256 newBlockNumber) public {
         blockNumber = newBlockNumber;
     }
 
-    function harnessFastForward(uint blocks) public {
+    function harnessFastForward(uint256 blocks) public {
         blockNumber += blocks;
     }
 
-    function harnessSetBalance(address account, uint amount) external {
+    function harnessSetBalance(address account, uint256 amount) external {
         accountTokens[account].tokens = amount;
     }
 
-    function harnessSetTotalSupply(uint totalSupply_) public {
+    function harnessSetTotalSupply(uint256 totalSupply_) public {
         totalSupply = totalSupply_;
     }
 
-    function harnessSetTotalBorrows(uint totalBorrows_) public {
+    function harnessSetTotalBorrows(uint256 totalBorrows_) public {
         totalBorrows = totalBorrows_;
     }
 
-    function harnessSetTotalReserves(uint totalReserves_) public {
+    function harnessSetTotalReserves(uint256 totalReserves_) public {
         totalReserves = totalReserves_;
     }
 
-    function harnessExchangeRateDetails(uint totalSupply_, uint totalBorrows_, uint totalReserves_) public {
+    function harnessExchangeRateDetails(
+        uint256 totalSupply_,
+        uint256 totalBorrows_,
+        uint256 totalReserves_
+    ) public {
         totalSupply = totalSupply_;
         totalBorrows = totalBorrows_;
         totalReserves = totalReserves_;
     }
 
-    function harnessSetExchangeRate(uint exchangeRate) public {
+    function harnessSetExchangeRate(uint256 exchangeRate) public {
         harnessExchangeRate = exchangeRate;
         harnessExchangeRateStored = true;
     }
@@ -93,221 +113,296 @@ contract CErc20Harness is CErc20Immutable {
         failTransferToAddresses[_to] = _fail;
     }
 
-    function harnessMintFresh(address account, uint mintAmount) public returns (uint) {
-        (uint err,) = super.mintFresh(account, mintAmount);
+    function harnessMintFresh(address account, uint256 mintAmount)
+        public
+        returns (uint256)
+    {
+        (uint256 err, ) = super.mintFresh(account, mintAmount);
         return err;
     }
 
-    function harnessRedeemFresh(address payable account, uint cTokenAmount, uint underlyingAmount) public returns (uint) {
+    function harnessRedeemFresh(
+        address payable account,
+        uint256 cTokenAmount,
+        uint256 underlyingAmount
+    ) public returns (uint256) {
         return super.redeemFresh(account, cTokenAmount, underlyingAmount);
     }
 
-    function harnessAccountBorrows(address account) public view returns (uint principal, uint interestIndex) {
+    function harnessAccountBorrows(address account)
+        public
+        view
+        returns (uint256 principal, uint256 interestIndex)
+    {
         BorrowSnapshot memory snapshot = accountBorrows[account];
         return (snapshot.principal, snapshot.interestIndex);
     }
 
-    function harnessSetAccountBorrows(address account, uint principal, uint interestIndex) public {
-        accountBorrows[account] = BorrowSnapshot({principal: principal, interestIndex: interestIndex});
+    function harnessSetAccountBorrows(
+        address account,
+        uint256 principal,
+        uint256 interestIndex
+    ) public {
+        accountBorrows[account] = BorrowSnapshot({
+            principal: principal,
+            interestIndex: interestIndex
+        });
     }
 
-    function harnessSetBorrowIndex(uint borrowIndex_) public {
+    function harnessSetBorrowIndex(uint256 borrowIndex_) public {
         borrowIndex = borrowIndex_;
     }
 
-    function harnessBorrowFresh(address payable account, uint borrowAmount) public returns (uint) {
+    function harnessBorrowFresh(address payable account, uint256 borrowAmount)
+        public
+        returns (uint256)
+    {
         return borrowFresh(account, borrowAmount);
     }
 
-    function harnessRepayBorrowFresh(address payer, address account, uint repayAmount) public returns (uint) {
-        (uint err,) = repayBorrowFresh(payer, account, repayAmount);
+    function harnessRepayBorrowFresh(
+        address payer,
+        address account,
+        uint256 repayAmount
+    ) public returns (uint256) {
+        (uint256 err, ) = repayBorrowFresh(payer, account, repayAmount);
         return err;
     }
 
-    function harnessLiquidateBorrowFresh(address liquidator, address borrower, uint repayAmount, CToken cTokenCollateral) public returns (uint) {
-        (uint err,) = liquidateBorrowFresh(liquidator, borrower, repayAmount, cTokenCollateral);
+    function harnessLiquidateBorrowFresh(
+        address liquidator,
+        address borrower,
+        uint256 repayAmount,
+        CToken cTokenCollateral
+    ) public returns (uint256) {
+        (uint256 err, ) = liquidateBorrowFresh(
+            liquidator,
+            borrower,
+            repayAmount,
+            cTokenCollateral
+        );
         return err;
     }
 
-    function harnessReduceReservesFresh(uint amount) public returns (uint) {
+    function harnessReduceReservesFresh(uint256 amount)
+        public
+        returns (uint256)
+    {
         return _reduceReservesFresh(amount);
     }
 
-    function harnessSetReserveFactorFresh(uint newReserveFactorMantissa) public returns (uint) {
+    function harnessSetReserveFactorFresh(uint256 newReserveFactorMantissa)
+        public
+        returns (uint256)
+    {
         return _setReserveFactorFresh(newReserveFactorMantissa);
     }
 
-    function harnessSetInterestRateModelFresh(InterestRateModel newInterestRateModel) public returns (uint) {
+    function harnessSetInterestRateModelFresh(
+        InterestRateModel newInterestRateModel
+    ) public returns (uint256) {
         return _setInterestRateModelFresh(newInterestRateModel);
     }
 
-    function harnessSetInterestRateModel(address newInterestRateModelAddress) public {
+    function harnessSetInterestRateModel(address newInterestRateModelAddress)
+        public
+    {
         interestRateModel = InterestRateModel(newInterestRateModelAddress);
     }
 
-    function harnessCallBorrowAllowed(uint amount) public returns (uint) {
+    function harnessCallBorrowAllowed(uint256 amount) public returns (uint256) {
         return comptroller.borrowAllowed(address(this), msg.sender, amount);
     }
 }
 
 contract CErc20Scenario is CErc20Immutable {
-    constructor(address underlying_,
-                ComptrollerInterface comptroller_,
-                InterestRateModel interestRateModel_,
-                uint initialExchangeRateMantissa_,
-                string memory name_,
-                string memory symbol_,
-                uint8 decimals_,
-                address payable admin_)
-    CErc20Immutable(
-    underlying_,
-    comptroller_,
-    interestRateModel_,
-    initialExchangeRateMantissa_,
-    name_,
-    symbol_,
-    decimals_,
-    admin_) public {}
+    constructor(
+        address underlying_,
+        ComptrollerInterface comptroller_,
+        InterestRateModel interestRateModel_,
+        uint256 initialExchangeRateMantissa_,
+        string memory name_,
+        string memory symbol_,
+        uint8 decimals_,
+        address payable admin_
+    )
+        CErc20Immutable(
+            underlying_,
+            comptroller_,
+            interestRateModel_,
+            initialExchangeRateMantissa_,
+            name_,
+            symbol_,
+            decimals_,
+            admin_
+        )
+    {}
 
-    function setTotalBorrows(uint totalBorrows_) public {
+    function setTotalBorrows(uint256 totalBorrows_) public {
         totalBorrows = totalBorrows_;
     }
 
-    function setTotalReserves(uint totalReserves_) public {
+    function setTotalReserves(uint256 totalReserves_) public {
         totalReserves = totalReserves_;
     }
 
-    function getBlockNumber() internal view returns (uint) {
-        ComptrollerScenario comptrollerScenario = ComptrollerScenario(address(comptroller));
+    function getBlockNumber() internal view override returns (uint256) {
+        ComptrollerScenario comptrollerScenario = ComptrollerScenario(
+            address(comptroller)
+        );
         return comptrollerScenario.blockNumber();
     }
 }
 
 contract CEvil is CErc20Scenario {
-    constructor(address underlying_,
-                ComptrollerInterface comptroller_,
-                InterestRateModel interestRateModel_,
-                uint initialExchangeRateMantissa_,
-                string memory name_,
-                string memory symbol_,
-                uint8 decimals_,
-                address payable admin_)
-    CErc20Scenario(
-    underlying_,
-    comptroller_,
-    interestRateModel_,
-    initialExchangeRateMantissa_,
-    name_,
-    symbol_,
-    decimals_,
-    admin_) public {}
+    constructor(
+        address underlying_,
+        ComptrollerInterface comptroller_,
+        InterestRateModel interestRateModel_,
+        uint256 initialExchangeRateMantissa_,
+        string memory name_,
+        string memory symbol_,
+        uint8 decimals_,
+        address payable admin_
+    )
+        CErc20Scenario(
+            underlying_,
+            comptroller_,
+            interestRateModel_,
+            initialExchangeRateMantissa_,
+            name_,
+            symbol_,
+            decimals_,
+            admin_
+        )
+    {}
 
-    function evilSeize(CToken treasure, address liquidator, address borrower, uint seizeTokens) public returns (uint) {
+    function evilSeize(
+        CToken treasure,
+        address liquidator,
+        address borrower,
+        uint256 seizeTokens
+    ) public returns (uint256) {
         return treasure.seize(liquidator, borrower, seizeTokens);
     }
 }
 
 contract CErc20DelegatorScenario is CErc20Delegator {
-    constructor(address underlying_,
-                ComptrollerInterface comptroller_,
-                InterestRateModel interestRateModel_,
-                uint initialExchangeRateMantissa_,
-                string memory name_,
-                string memory symbol_,
-                uint8 decimals_,
-                address payable admin_,
-                address implementation_,
-                bytes memory becomeImplementationData)
-    CErc20Delegator(
-    underlying_,
-    comptroller_,
-    interestRateModel_,
-    initialExchangeRateMantissa_,
-    name_,
-    symbol_,
-    decimals_,
-    admin_,
-    implementation_,
-    becomeImplementationData) public {}
+    constructor(
+        address underlying_,
+        ComptrollerInterface comptroller_,
+        InterestRateModel interestRateModel_,
+        uint256 initialExchangeRateMantissa_,
+        string memory name_,
+        string memory symbol_,
+        uint8 decimals_,
+        address payable admin_,
+        address implementation_,
+        bytes memory becomeImplementationData
+    )
+        CErc20Delegator(
+            underlying_,
+            comptroller_,
+            interestRateModel_,
+            initialExchangeRateMantissa_,
+            name_,
+            symbol_,
+            decimals_,
+            admin_,
+            implementation_,
+            becomeImplementationData
+        )
+    {}
 
-    function setTotalBorrows(uint totalBorrows_) public {
+    function setTotalBorrows(uint256 totalBorrows_) public {
         totalBorrows = totalBorrows_;
     }
 
-    function setTotalReserves(uint totalReserves_) public {
+    function setTotalReserves(uint256 totalReserves_) public {
         totalReserves = totalReserves_;
     }
 }
 
 contract CErc20DelegateHarness is CErc20Delegate {
     event Log(string x, address y);
-    event Log(string x, uint y);
+    event Log(string x, uint256 y);
 
-    uint blockNumber = 100000;
-    uint harnessExchangeRate;
+    uint256 blockNumber = 100000;
+    uint256 harnessExchangeRate;
     bool harnessExchangeRateStored;
 
-    mapping (address => bool) public failTransferToAddresses;
+    mapping(address => bool) public failTransferToAddresses;
 
-    function exchangeRateStoredInternal() internal view returns (MathError, uint) {
+    function exchangeRateStoredInternal()
+        internal
+        view
+        returns (MathError, uint256)
+    {
         if (harnessExchangeRateStored) {
             return (MathError.NO_ERROR, harnessExchangeRate);
         }
         return super.exchangeRateStoredInternal();
     }
 
-    function doTransferOut(address payable to, uint amount) internal {
-        require(failTransferToAddresses[to] == false, "TOKEN_TRANSFER_OUT_FAILED");
+    function doTransferOut(address payable to, uint256 amount) internal {
+        require(
+            failTransferToAddresses[to] == false,
+            "TOKEN_TRANSFER_OUT_FAILED"
+        );
         return super.doTransferOut(to, amount);
     }
 
-    function getBlockNumber() internal view returns (uint) {
+    function getBlockNumber() internal view returns (uint256) {
         return blockNumber;
     }
 
-    function getBorrowRateMaxMantissa() public pure returns (uint) {
+    function getBorrowRateMaxMantissa() public pure returns (uint256) {
         return borrowRateMaxMantissa;
     }
 
-    function harnessSetBlockNumber(uint newBlockNumber) public {
+    function harnessSetBlockNumber(uint256 newBlockNumber) public {
         blockNumber = newBlockNumber;
     }
 
-    function harnessFastForward(uint blocks) public {
+    function harnessFastForward(uint256 blocks) public {
         blockNumber += blocks;
     }
 
-    function harnessSetBalance(address account, uint amount) external {
+    function harnessSetBalance(address account, uint256 amount) external {
         accountTokens[account].tokens = amount;
     }
 
-    function harnessSetAccrualBlockNumber(uint _accrualblockNumber) public {
+    function harnessSetAccrualBlockNumber(uint256 _accrualblockNumber) public {
         accrualBlockNumber = _accrualblockNumber;
     }
 
-    function harnessSetTotalSupply(uint totalSupply_) public {
+    function harnessSetTotalSupply(uint256 totalSupply_) public {
         totalSupply = totalSupply_;
     }
 
-    function harnessSetTotalBorrows(uint totalBorrows_) public {
+    function harnessSetTotalBorrows(uint256 totalBorrows_) public {
         totalBorrows = totalBorrows_;
     }
 
-    function harnessIncrementTotalBorrows(uint addtlBorrow_) public {
+    function harnessIncrementTotalBorrows(uint256 addtlBorrow_) public {
         totalBorrows = totalBorrows + addtlBorrow_;
     }
 
-    function harnessSetTotalReserves(uint totalReserves_) public {
+    function harnessSetTotalReserves(uint256 totalReserves_) public {
         totalReserves = totalReserves_;
     }
 
-    function harnessExchangeRateDetails(uint totalSupply_, uint totalBorrows_, uint totalReserves_) public {
+    function harnessExchangeRateDetails(
+        uint256 totalSupply_,
+        uint256 totalBorrows_,
+        uint256 totalReserves_
+    ) public {
         totalSupply = totalSupply_;
         totalBorrows = totalBorrows_;
         totalReserves = totalReserves_;
     }
 
-    function harnessSetExchangeRate(uint exchangeRate) public {
+    function harnessSetExchangeRate(uint256 exchangeRate) public {
         harnessExchangeRate = exchangeRate;
         harnessExchangeRateStored = true;
     }
@@ -316,93 +411,139 @@ contract CErc20DelegateHarness is CErc20Delegate {
         failTransferToAddresses[_to] = _fail;
     }
 
-    function harnessMintFresh(address account, uint mintAmount) public returns (uint) {
-        (uint err,) = super.mintFresh(account, mintAmount);
+    function harnessMintFresh(address account, uint256 mintAmount)
+        public
+        returns (uint256)
+    {
+        (uint256 err, ) = super.mintFresh(account, mintAmount);
         return err;
     }
 
-    function harnessRedeemFresh(address payable account, uint cTokenAmount, uint underlyingAmount) public returns (uint) {
+    function harnessRedeemFresh(
+        address payable account,
+        uint256 cTokenAmount,
+        uint256 underlyingAmount
+    ) public returns (uint256) {
         return super.redeemFresh(account, cTokenAmount, underlyingAmount);
     }
 
-    function harnessAccountBorrows(address account) public view returns (uint principal, uint interestIndex) {
+    function harnessAccountBorrows(address account)
+        public
+        view
+        returns (uint256 principal, uint256 interestIndex)
+    {
         BorrowSnapshot memory snapshot = accountBorrows[account];
         return (snapshot.principal, snapshot.interestIndex);
     }
 
-    function harnessSetAccountBorrows(address account, uint principal, uint interestIndex) public {
-        accountBorrows[account] = BorrowSnapshot({principal: principal, interestIndex: interestIndex});
+    function harnessSetAccountBorrows(
+        address account,
+        uint256 principal,
+        uint256 interestIndex
+    ) public {
+        accountBorrows[account] = BorrowSnapshot({
+            principal: principal,
+            interestIndex: interestIndex
+        });
     }
 
-    function harnessSetBorrowIndex(uint borrowIndex_) public {
+    function harnessSetBorrowIndex(uint256 borrowIndex_) public {
         borrowIndex = borrowIndex_;
     }
 
-    function harnessBorrowFresh(address payable account, uint borrowAmount) public returns (uint) {
+    function harnessBorrowFresh(address payable account, uint256 borrowAmount)
+        public
+        returns (uint256)
+    {
         return borrowFresh(account, borrowAmount);
     }
 
-    function harnessRepayBorrowFresh(address payer, address account, uint repayAmount) public returns (uint) {
-        (uint err,) = repayBorrowFresh(payer, account, repayAmount);
+    function harnessRepayBorrowFresh(
+        address payer,
+        address account,
+        uint256 repayAmount
+    ) public returns (uint256) {
+        (uint256 err, ) = repayBorrowFresh(payer, account, repayAmount);
         return err;
     }
 
-    function harnessLiquidateBorrowFresh(address liquidator, address borrower, uint repayAmount, CToken cTokenCollateral) public returns (uint) {
-        (uint err,) = liquidateBorrowFresh(liquidator, borrower, repayAmount, cTokenCollateral);
+    function harnessLiquidateBorrowFresh(
+        address liquidator,
+        address borrower,
+        uint256 repayAmount,
+        CToken cTokenCollateral
+    ) public returns (uint256) {
+        (uint256 err, ) = liquidateBorrowFresh(
+            liquidator,
+            borrower,
+            repayAmount,
+            cTokenCollateral
+        );
         return err;
     }
 
-    function harnessReduceReservesFresh(uint amount) public returns (uint) {
+    function harnessReduceReservesFresh(uint256 amount)
+        public
+        returns (uint256)
+    {
         return _reduceReservesFresh(amount);
     }
 
-    function harnessSetReserveFactorFresh(uint newReserveFactorMantissa) public returns (uint) {
+    function harnessSetReserveFactorFresh(uint256 newReserveFactorMantissa)
+        public
+        returns (uint256)
+    {
         return _setReserveFactorFresh(newReserveFactorMantissa);
     }
 
-    function harnessSetInterestRateModelFresh(InterestRateModel newInterestRateModel) public returns (uint) {
+    function harnessSetInterestRateModelFresh(
+        InterestRateModel newInterestRateModel
+    ) public returns (uint256) {
         return _setInterestRateModelFresh(newInterestRateModel);
     }
 
-    function harnessSetInterestRateModel(address newInterestRateModelAddress) public {
+    function harnessSetInterestRateModel(address newInterestRateModelAddress)
+        public
+    {
         interestRateModel = InterestRateModel(newInterestRateModelAddress);
     }
 
-    function harnessCallBorrowAllowed(uint amount) public returns (uint) {
+    function harnessCallBorrowAllowed(uint256 amount) public returns (uint256) {
         return comptroller.borrowAllowed(address(this), msg.sender, amount);
     }
 }
 
 contract CErc20DelegateScenario is CErc20Delegate {
-    constructor() public {
+    constructor() {
         // solium-disable-previous-line no-empty-blocks
     }
 
-    function setTotalBorrows(uint totalBorrows_) public {
+    function setTotalBorrows(uint256 totalBorrows_) public {
         totalBorrows = totalBorrows_;
     }
 
-    function setTotalReserves(uint totalReserves_) public {
+    function setTotalReserves(uint256 totalReserves_) public {
         totalReserves = totalReserves_;
     }
 
-    function getBlockNumber() internal view returns (uint) {
-        ComptrollerScenario comptrollerScenario = ComptrollerScenario(address(comptroller));
+    function getBlockNumber() internal view returns (uint256) {
+        ComptrollerScenario comptrollerScenario = ComptrollerScenario(
+            address(comptroller)
+        );
         return comptrollerScenario.blockNumber();
     }
 }
 
 contract CErc20DelegateScenarioExtra is CErc20DelegateScenario {
     function iHaveSpoken() public pure returns (string memory) {
-      return "i have spoken";
+        return "i have spoken";
     }
 
     function itIsTheWay() public {
-      admin = address(1); // make a change to test effect
+        admin = payable(address(1)); // make a change to test effect
     }
 
     function babyYoda() public pure {
-      revert("protect the baby");
+        revert("protect the baby");
     }
 }
-

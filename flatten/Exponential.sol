@@ -1,6 +1,6 @@
 // Dependency file: contracts/CarefulMath.sol
 
-// pragma solidity ^0.5.16;
+// pragma solidity 0.8.4;
 
 /**
   * @title Careful Math
@@ -88,7 +88,7 @@ contract CarefulMath {
 
 // Dependency file: contracts/ExponentialNoError.sol
 
-// pragma solidity ^0.5.16;
+// pragma solidity 0.8.4;
 
 /**
  * @title Exponential module for storing fixed-precision decimals
@@ -287,7 +287,7 @@ contract ExponentialNoError {
 
 // Root file: contracts/Exponential.sol
 
-pragma solidity ^0.5.16;
+pragma solidity 0.8.4;
 
 // import "contracts/CarefulMath.sol";
 // import "contracts/ExponentialNoError.sol";

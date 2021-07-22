@@ -1,6 +1,8 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.4;
 
 import "./InterestRateModel.sol";
+import "./SafeMath.sol";
 
 /**
  * @title tropykus WhitePaperInterestRateModel Contract
@@ -8,6 +10,7 @@ import "./InterestRateModel.sol";
  * @notice The parameterized model described in section 2.4 of the original tropykus Protocol whitepaper
  */
 contract WhitePaperInterestRateModel is InterestRateModel {
+    using SafeMath for uint256;
 
     event NewInterestParams(
         uint256 baseRatePerBlock,
@@ -29,7 +32,7 @@ contract WhitePaperInterestRateModel is InterestRateModel {
      * @param baseRatePerYear The approximate target base APR, as a mantissa (scaled by 1e18)
      * @param multiplierPerYear The rate of increase in interest rate wrt utilization (scaled by 1e18)
      */
-    constructor(uint256 baseRatePerYear, uint256 multiplierPerYear) public {
+    constructor(uint256 baseRatePerYear, uint256 multiplierPerYear) {
         baseRatePerBlock = baseRatePerYear.div(blocksPerYear);
         multiplierPerBlock = multiplierPerYear.div(blocksPerYear);
 
@@ -47,7 +50,7 @@ contract WhitePaperInterestRateModel is InterestRateModel {
         uint256 cash,
         uint256 borrows,
         uint256 reserves
-    ) public view returns (uint256) {
+    ) public view override returns (uint256) {
         uint256 ur = utilizationRate(cash, borrows, reserves);
         return ur.mul(multiplierPerBlock).div(1e18).add(baseRatePerBlock);
     }
@@ -65,9 +68,10 @@ contract WhitePaperInterestRateModel is InterestRateModel {
         uint256 borrows,
         uint256 reserves,
         uint256 reserveFactorMantissa
-    ) public view returns (uint256) {
-        uint256 oneMinusReserveFactor =
-            uint256(1e18).sub(reserveFactorMantissa);
+    ) public view override returns (uint256) {
+        uint256 oneMinusReserveFactor = uint256(1e18).sub(
+            reserveFactorMantissa
+        );
         uint256 borrowRate = getBorrowRate(cash, borrows, reserves);
         uint256 rateToPool = borrowRate.mul(oneMinusReserveFactor).div(1e18);
         return

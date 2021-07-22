@@ -1,15 +1,20 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.4;
 
 import "../../contracts/ERC20.sol";
+
 /**
  * @title The Compound Faucet Test Token
  * @author tropykus
  * @notice A simple test token that lets anyone get more of it.
  */
 contract FaucetToken is StandardToken {
-    constructor(uint256 _initialAmount, string memory _tokenName, uint8 _decimalUnits, string memory _tokenSymbol) public
-        StandardToken(_initialAmount, _tokenName, _decimalUnits, _tokenSymbol) {
-    }
+    constructor(
+        uint256 _initialAmount,
+        string memory _tokenName,
+        uint8 _decimalUnits,
+        string memory _tokenSymbol
+    ) StandardToken(_initialAmount, _tokenName, _decimalUnits, _tokenSymbol) {}
 
     function allocateTo(address _owner, uint256 value) public {
         balanceOf[_owner] += value;
@@ -24,9 +29,19 @@ contract FaucetToken is StandardToken {
  * @notice A simple test token that lets anyone get more of it.
  */
 contract FaucetNonStandardToken is NonStandardToken {
-    constructor(uint256 _initialAmount, string memory _tokenName, uint8 _decimalUnits, string memory _tokenSymbol) public
-        NonStandardToken(_initialAmount, _tokenName, _decimalUnits, _tokenSymbol) {
-    }
+    constructor(
+        uint256 _initialAmount,
+        string memory _tokenName,
+        uint8 _decimalUnits,
+        string memory _tokenSymbol
+    )
+        NonStandardToken(
+            _initialAmount,
+            _tokenName,
+            _decimalUnits,
+            _tokenSymbol
+        )
+    {}
 
     function allocateTo(address _owner, uint256 value) public {
         balanceOf[_owner] += value;
@@ -44,19 +59,30 @@ contract FaucetTokenReEntrantHarness {
     using SafeMath for uint256;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
 
     string public name;
     string public symbol;
     uint8 public decimals;
     uint256 totalSupply_;
-    mapping (address => mapping (address => uint256)) allowance_;
-    mapping (address => uint256) balanceOf_;
+    mapping(address => mapping(address => uint256)) allowance_;
+    mapping(address => uint256) balanceOf_;
 
     bytes public reEntryCallData;
     string public reEntryFun;
 
-    constructor(uint256 _initialAmount, string memory _tokenName, uint8 _decimalUnits, string memory _tokenSymbol, bytes memory _reEntryCallData, string memory _reEntryFun) public {
+    constructor(
+        uint256 _initialAmount,
+        string memory _tokenName,
+        uint8 _decimalUnits,
+        string memory _tokenSymbol,
+        bytes memory _reEntryCallData,
+        string memory _reEntryFun
+    ) {
         totalSupply_ = _initialAmount;
         balanceOf_[msg.sender] = _initialAmount;
         name = _tokenName;
@@ -70,7 +96,9 @@ contract FaucetTokenReEntrantHarness {
         string memory _reEntryFun = reEntryFun;
         if (compareStrings(_reEntryFun, funName)) {
             reEntryFun = ""; // Clear re-entry fun
-            (bool success, bytes memory returndata) = msg.sender.call(reEntryCallData);
+            (bool success, bytes memory returndata) = msg.sender.call(
+                reEntryCallData
+            );
             assembly {
                 if eq(success, 0) {
                     revert(add(returndata, 0x20), returndatasize())
@@ -81,8 +109,14 @@ contract FaucetTokenReEntrantHarness {
         _;
     }
 
-    function compareStrings(string memory a, string memory b) internal pure returns (bool) {
-        return keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b)));
+    function compareStrings(string memory a, string memory b)
+        internal
+        pure
+        returns (bool)
+    {
+        return
+            keccak256(abi.encodePacked((a))) ==
+            keccak256(abi.encodePacked((b)));
     }
 
     function allocateTo(address _owner, uint256 value) public {
@@ -95,39 +129,67 @@ contract FaucetTokenReEntrantHarness {
         return totalSupply_;
     }
 
-    function allowance(address owner, address spender) public reEnter("allowance") returns (uint256 remaining) {
+    function allowance(address owner, address spender)
+        public
+        reEnter("allowance")
+        returns (uint256 remaining)
+    {
         return allowance_[owner][spender];
     }
 
-    function approve(address spender, uint256 amount) public reEnter("approve") returns (bool success) {
+    function approve(address spender, uint256 amount)
+        public
+        reEnter("approve")
+        returns (bool success)
+    {
         _approve(msg.sender, spender, amount);
         return true;
     }
 
-    function balanceOf(address owner) public reEnter("balanceOf") returns (uint256 balance) {
+    function balanceOf(address owner)
+        public
+        reEnter("balanceOf")
+        returns (uint256 balance)
+    {
         return balanceOf_[owner];
     }
 
-    function transfer(address dst, uint256 amount) public reEnter("transfer") returns (bool success) {
+    function transfer(address dst, uint256 amount)
+        public
+        reEnter("transfer")
+        returns (bool success)
+    {
         _transfer(msg.sender, dst, amount);
         return true;
     }
 
-    function transferFrom(address src, address dst, uint256 amount) public reEnter("transferFrom") returns (bool success) {
+    function transferFrom(
+        address src,
+        address dst,
+        uint256 amount
+    ) public reEnter("transferFrom") returns (bool success) {
         _transfer(src, dst, amount);
         _approve(src, msg.sender, allowance_[src][msg.sender].sub(amount));
         return true;
     }
 
-    function _approve(address owner, address spender, uint256 amount) internal {
-        require(spender != address(0),"No Spender!");
-        require(owner != address(0),"No Owner!");
+    function _approve(
+        address owner,
+        address spender,
+        uint256 amount
+    ) internal {
+        require(spender != address(0), "No Spender!");
+        require(owner != address(0), "No Owner!");
         allowance_[owner][spender] = amount;
         emit Approval(owner, spender, amount);
     }
 
-    function _transfer(address src, address dst, uint256 amount) internal {
-        require(dst != address(0),"No dst!");
+    function _transfer(
+        address src,
+        address dst,
+        uint256 amount
+    ) internal {
+        require(dst != address(0), "No dst!");
         balanceOf_[src] = balanceOf_[src].sub(amount);
         balanceOf_[dst] = balanceOf_[dst].add(amount);
         emit Transfer(src, dst, amount);

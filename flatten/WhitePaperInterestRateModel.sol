@@ -1,6 +1,6 @@
 // Dependency file: contracts/InterestRateModel.sol
 
-// pragma solidity ^0.5.16;
+// pragma solidity 0.8.4;
 
 /**
   * @title tropykus InterestRateModel Interface
@@ -34,7 +34,7 @@ contract InterestRateModel {
 
 // Dependency file: contracts/SafeMath.sol
 
-// pragma solidity ^0.5.16;
+// pragma solidity 0.8.4;
 
 // From https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/math/Math.sol
 // Subject to the MIT license.
@@ -224,7 +224,7 @@ library SafeMath {
 
 // Root file: contracts/WhitePaperInterestRateModel.sol
 
-pragma solidity ^0.5.16;
+pragma solidity 0.8.4;
 
 // import "contracts/InterestRateModel.sol";
 // import "contracts/SafeMath.sol";

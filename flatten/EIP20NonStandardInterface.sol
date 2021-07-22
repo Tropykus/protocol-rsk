@@ -1,6 +1,6 @@
 // Root file: contracts/EIP20NonStandardInterface.sol
 
-pragma solidity ^0.5.16;
+pragma solidity 0.8.4;
 
 /**
  * @title EIP20NonStandardInterface

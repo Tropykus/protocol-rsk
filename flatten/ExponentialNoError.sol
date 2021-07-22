@@ -1,6 +1,6 @@
 // Root file: contracts/ExponentialNoError.sol
 
-pragma solidity ^0.5.16;
+pragma solidity 0.8.4;
 
 /**
  * @title Exponential module for storing fixed-precision decimals

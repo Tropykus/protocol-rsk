@@ -1,4 +1,5 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.4;
 
 import "./PriceOracle.sol";
 import "./PriceOracleAdapter.sol";
@@ -35,7 +36,7 @@ contract PriceOracleProxy is PriceOracle {
     }
 
     /// @param guardian_ The address of the guardian, which may set the
-    constructor(address guardian_) public {
+    constructor(address guardian_) {
         guardian = guardian_;
     }
 
@@ -44,7 +45,13 @@ contract PriceOracleProxy is PriceOracle {
      * @param cToken The cToken to get the underlying price of
      * @return The underlying asset price mantissa (scaled by 1e18)
      */
-    function getUnderlyingPrice(CToken cToken) public view returns (uint256) {
+    function getUnderlyingPrice(CToken cToken)
+        public
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         address oracleAdapter = tokenAdapter[address(cToken)];
         //validate mapping
         if (oracleAdapter == address(0)) {

@@ -1,6 +1,6 @@
 // Root file: contracts/EIP20Interface.sol
 
-pragma solidity ^0.5.16;
+pragma solidity 0.8.4;
 
 /**
  * @title ERC 20 Token Standard Interface

@@ -1,35 +1,36 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.4;
 
 import "../../contracts/Comptroller.sol";
 
 contract ComptrollerScenario is Comptroller {
-    uint public blockNumber;
+    uint256 public blockNumber;
     address public compAddress;
 
-    constructor() Comptroller() public {}
+    constructor() Comptroller() {}
 
-    function fastForward(uint blocks) public returns (uint) {
+    function fastForward(uint256 blocks) public returns (uint256) {
         blockNumber += blocks;
         return blockNumber;
     }
 
-    function setCompAddress(address compAddress_) public {
+    function setCompAddress(address compAddress_) public override {
         compAddress = compAddress_;
     }
 
-    function getCompAddress() public view returns (address) {
+    function getCompAddress() public view override returns (address) {
         return compAddress;
     }
 
-    function setBlockNumber(uint number) public {
+    function setBlockNumber(uint256 number) public {
         blockNumber = number;
     }
 
-    function getBlockNumber() public view returns (uint) {
+    function getBlockNumber() public view override returns (uint256) {
         return blockNumber;
     }
 
-    function membershipLength(CToken cToken) public view returns (uint) {
+    function membershipLength(CToken cToken) public view returns (uint256) {
         return accountAssets[address(cToken)].length;
     }
 
@@ -43,7 +44,7 @@ contract ComptrollerScenario is Comptroller {
     function refreshCompSpeeds() public {
         CToken[] memory allMarkets_ = allMarkets;
 
-        for (uint i = 0; i < allMarkets_.length; i++) {
+        for (uint256 i = 0; i < allMarkets_.length; i++) {
             CToken cToken = allMarkets_[i];
             Exp memory borrowIndex = Exp({mantissa: cToken.borrowIndex()});
             updateCompSupplyIndex(address(cToken));
@@ -52,19 +53,23 @@ contract ComptrollerScenario is Comptroller {
 
         Exp memory totalUtility = Exp({mantissa: 0});
         Exp[] memory utilities = new Exp[](allMarkets_.length);
-        for (uint i = 0; i < allMarkets_.length; i++) {
+        for (uint256 i = 0; i < allMarkets_.length; i++) {
             CToken cToken = allMarkets_[i];
             if (compSpeeds[address(cToken)] > 0) {
-                Exp memory assetPrice = Exp({mantissa: oracle.getUnderlyingPrice(cToken)});
+                Exp memory assetPrice = Exp({
+                    mantissa: oracle.getUnderlyingPrice(cToken)
+                });
                 Exp memory utility = mul_(assetPrice, cToken.totalBorrows());
                 utilities[i] = utility;
                 totalUtility = add_(totalUtility, utility);
             }
         }
 
-        for (uint i = 0; i < allMarkets_.length; i++) {
+        for (uint256 i = 0; i < allMarkets_.length; i++) {
             CToken cToken = allMarkets[i];
-            uint newSpeed = totalUtility.mantissa > 0 ? mul_(compRate, div_(utilities[i], totalUtility)) : 0;
+            uint256 newSpeed = totalUtility.mantissa > 0
+                ? mul_(compRate, div_(utilities[i], totalUtility))
+                : 0;
             setCompSpeedInternal(cToken, newSpeed);
         }
     }

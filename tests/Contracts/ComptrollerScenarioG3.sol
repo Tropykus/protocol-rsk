@@ -1,51 +1,52 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.4;
 
 import "../../contracts/ComptrollerG3.sol";
 
 contract ComptrollerScenarioG3 is ComptrollerG3 {
-    uint public blockNumber;
+    uint256 public blockNumber;
     address public compAddress;
 
-    constructor() ComptrollerG3() public {}
+    constructor() ComptrollerG3() {}
 
     function setCompAddress(address compAddress_) public {
         compAddress = compAddress_;
     }
 
-    function getCompAddress() public view returns (address) {
+    function getCompAddress() public view override returns (address) {
         return compAddress;
     }
 
-    function membershipLength(CToken cToken) public view returns (uint) {
+    function membershipLength(CToken cToken) public view returns (uint256) {
         return accountAssets[address(cToken)].length;
     }
 
-    function fastForward(uint blocks) public returns (uint) {
+    function fastForward(uint256 blocks) public returns (uint256) {
         blockNumber += blocks;
 
         return blockNumber;
     }
 
-    function setBlockNumber(uint number) public {
+    function setBlockNumber(uint256 number) public {
         blockNumber = number;
     }
 
-    function getBlockNumber() public view returns (uint) {
+    function getBlockNumber() public view override returns (uint256) {
         return blockNumber;
     }
 
     function getCompMarkets() public view returns (address[] memory) {
-        uint m = allMarkets.length;
-        uint n = 0;
-        for (uint i = 0; i < m; i++) {
+        uint256 m = allMarkets.length;
+        uint256 n = 0;
+        for (uint256 i = 0; i < m; i++) {
             if (markets[address(allMarkets[i])].isComped) {
                 n++;
             }
         }
 
         address[] memory compMarkets = new address[](n);
-        uint k = 0;
-        for (uint i = 0; i < m; i++) {
+        uint256 k = 0;
+        for (uint256 i = 0; i < m; i++) {
             if (markets[address(allMarkets[i])].isComped) {
                 compMarkets[k++] = address(allMarkets[i]);
             }
