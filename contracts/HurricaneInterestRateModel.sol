@@ -14,7 +14,6 @@ contract HurricaneInterestRateModel is InterestRateModel {
     uint256 public supplyRateSlopePerBlock;
 
     uint256 constant FACTOR = 1e18;
-    bool public constant isTropykusInterestRateModel = true;
 
     constructor(
         uint256 _baseBorrowRate,
@@ -31,6 +30,7 @@ contract HurricaneInterestRateModel is InterestRateModel {
         borrowRateSlopePerBlock = _borrowRateSlope.div(blocksPerYear);
         supplyRateSlopePerBlock = _supplyRateSlope.div(blocksPerYear);
         owner = msg.sender;
+        isTropykusInterestRateModel = true;
     }
 
     modifier onlyOwner() {
@@ -46,7 +46,7 @@ contract HurricaneInterestRateModel is InterestRateModel {
         uint256 borrows,
         uint256 reserves,
         uint256 reserveFactorMantissa
-    ) public view returns (uint256) {
+    ) public view override returns (uint256) {
         reserveFactorMantissa;
         uint256 utilizationRate = utilizationRate(cash, borrows, reserves);
         return

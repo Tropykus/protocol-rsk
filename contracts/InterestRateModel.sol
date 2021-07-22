@@ -13,8 +13,7 @@ abstract contract InterestRateModel is Exponential {
 
     /// @notice Indicator that this is an InterestRateModel contract (for inspection)
     bool public constant isInterestRateModel = true;
-
-    bool public constant isTropykusInterestRateModel = false;
+    bool public isTropykusInterestRateModel;
 
     /**
      * @notice The approximate number of blocks per year that is assumed by the interest rate model

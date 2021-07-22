@@ -27,9 +27,9 @@ contract CRBTC is CToken {
         string memory symbol_,
         uint8 decimals_,
         address payable admin_
-    ) public {
+    ) {
         // Creator of the contract is admin during initialization
-        admin = msg.sender;
+        admin = payable(msg.sender);
 
         initialize(
             comptroller_,
@@ -114,8 +114,11 @@ contract CRBTC is CToken {
         external
         payable
     {
-        (uint256 err, ) =
-            liquidateBorrowInternal(borrower, msg.value, cTokenCollateral);
+        (uint256 err, ) = liquidateBorrowInternal(
+            borrower,
+            msg.value,
+            cTokenCollateral
+        );
         requireNoError(err, "liquidateBorrow failed");
     }
 
@@ -123,6 +126,14 @@ contract CRBTC is CToken {
      * @notice Send Ether to CRBTC to mint
      */
     fallback() external payable {
+        internalFallback();
+    }
+
+    receive() external payable {
+        internalFallback();
+    }
+
+    function internalFallback() public payable {
         (uint256 err, ) = mintInternal(msg.value);
         requireNoError(err, "mint failed");
     }
@@ -134,9 +145,11 @@ contract CRBTC is CToken {
      * @dev This excludes the value of the current message, if any
      * @return The quantity of Ether owned by this contract
      */
-    function getCashPrior() internal view returns (uint256) {
-        (MathError err, uint256 startingBalance) =
-            subUInt(address(this).balance, msg.value);
+    function getCashPrior() internal view override returns (uint256) {
+        (MathError err, uint256 startingBalance) = subUInt(
+            address(this).balance,
+            msg.value
+        );
         if (interestRateModel.isTropykusInterestRateModel())
             (err, startingBalance) = subUInt(startingBalance, subsidyFund);
         require(err == MathError.NO_ERROR, "Math error");
@@ -151,6 +164,7 @@ contract CRBTC is CToken {
      */
     function doTransferIn(address from, uint256 amount)
         internal
+        override
         returns (uint256)
     {
         // Sanity checks
@@ -159,7 +173,11 @@ contract CRBTC is CToken {
         return amount;
     }
 
-    function doTransferOut(address payable to, uint256 amount) internal {
+    function doTransferOut(address payable to, uint256 amount)
+        internal
+        virtual
+        override
+    {
         /* Send the Ether, with minimal gas and revert on failure */
         to.transfer(amount);
     }

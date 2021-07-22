@@ -121,7 +121,7 @@ contract ComptrollerG5 is
     // liquidationIncentiveMantissa must be no greater than this value
     uint256 internal constant liquidationIncentiveMaxMantissa = 1.5e18; // 1.5
 
-    constructor() public {
+    constructor() {
         admin = msg.sender;
     }
 
@@ -273,22 +273,20 @@ contract ComptrollerG5 is
         /* Delete cToken from the account’s list of assets */
         // load into memory for faster iteration
         CToken[] memory userAssetList = accountAssets[msg.sender];
+        accountAssets[msg.sender] = new CToken[](0);
+        CToken[] storage newMarketList = accountAssets[msg.sender];
         uint256 len = userAssetList.length;
         uint256 assetIndex = len;
         for (uint256 i = 0; i < len; i++) {
             if (userAssetList[i] == cToken) {
                 assetIndex = i;
-                break;
+                continue;
             }
+            newMarketList.push(userAssetList[i]);
         }
 
         // We *must* have found the asset in the list or our redundant data structure is broken
         assert(assetIndex < len);
-
-        // copy last item in list to location of item to be removed, reduce length by 1
-        CToken[] storage storedList = accountAssets[msg.sender];
-        storedList[assetIndex] = storedList[storedList.length - 1];
-        storedList.length--;
 
         emit MarketExited(cToken, msg.sender);
 
@@ -423,7 +421,7 @@ contract ComptrollerG5 is
         address redeemer,
         uint256 redeemAmount,
         uint256 redeemTokens
-    ) external override {
+    ) external pure override {
         // Shh - currently unused
         cToken;
         redeemer;
@@ -447,6 +445,8 @@ contract ComptrollerG5 is
         uint256 borrowAmount
     ) external override returns (uint256) {
         // Pausing is a very serious situation - we revert to sound the alarms
+        Error err;
+        uint256 shortfall;
         require(!borrowGuardianPaused[cToken], "borrow is paused");
 
         if (!markets[cToken].isListed) {
@@ -458,7 +458,7 @@ contract ComptrollerG5 is
             require(msg.sender == cToken, "sender must be cToken");
 
             // attempt to add borrower to the market
-            Error err = addToMarketInternal(CToken(msg.sender), borrower);
+            err = addToMarketInternal(CToken(msg.sender), borrower);
             if (err != Error.NO_ERROR) {
                 return uint256(err);
             }
@@ -483,11 +483,7 @@ contract ComptrollerG5 is
             require(nextTotalBorrows < borrowCap, "market borrow cap reached");
         }
 
-        (
-            Error err,
-            ,
-            uint256 shortfall
-        ) = getHypotheticalAccountLiquidityInternal(
+        (err, , shortfall) = getHypotheticalAccountLiquidityInternal(
             borrower,
             CToken(cToken),
             0,
@@ -602,7 +598,7 @@ contract ComptrollerG5 is
         address liquidator,
         address borrower,
         uint256 repayAmount
-    ) external override returns (uint256) {
+    ) external view override returns (uint256) {
         // Shh - currently unused
         liquidator;
 
@@ -1886,7 +1882,7 @@ contract ComptrollerG5 is
         return allMarkets;
     }
 
-    function getBlockNumber() public view returns (uint256) {
+    function getBlockNumber() public view virtual returns (uint256) {
         return block.number;
     }
 

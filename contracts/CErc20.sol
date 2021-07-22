@@ -52,7 +52,7 @@ contract CErc20 is CToken, CErc20Interface {
      * @param mintAmount The amount of the underlying asset to supply
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function mint(uint256 mintAmount) external returns (uint256) {
+    function mint(uint256 mintAmount) external override returns (uint256) {
         (uint256 err, ) = mintInternal(mintAmount);
         return err;
     }
@@ -63,7 +63,7 @@ contract CErc20 is CToken, CErc20Interface {
      * @param redeemTokens The number of cTokens to redeem into underlying
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function redeem(uint256 redeemTokens) external returns (uint256) {
+    function redeem(uint256 redeemTokens) external override returns (uint256) {
         return redeemInternal(redeemTokens);
     }
 
@@ -73,7 +73,11 @@ contract CErc20 is CToken, CErc20Interface {
      * @param redeemAmount The amount of underlying to redeem
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function redeemUnderlying(uint256 redeemAmount) external returns (uint256) {
+    function redeemUnderlying(uint256 redeemAmount)
+        external
+        override
+        returns (uint256)
+    {
         return redeemUnderlyingInternal(redeemAmount);
     }
 
@@ -82,7 +86,7 @@ contract CErc20 is CToken, CErc20Interface {
      * @param borrowAmount The amount of the underlying asset to borrow
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function borrow(uint256 borrowAmount) external returns (uint256) {
+    function borrow(uint256 borrowAmount) external override returns (uint256) {
         return borrowInternal(borrowAmount);
     }
 
@@ -91,7 +95,11 @@ contract CErc20 is CToken, CErc20Interface {
      * @param repayAmount The amount to repay
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function repayBorrow(uint256 repayAmount) external returns (uint256) {
+    function repayBorrow(uint256 repayAmount)
+        external
+        override
+        returns (uint256)
+    {
         (uint256 err, ) = repayBorrowInternal(repayAmount);
         return err;
     }
@@ -104,6 +112,7 @@ contract CErc20 is CToken, CErc20Interface {
      */
     function repayBorrowBehalf(address borrower, uint256 repayAmount)
         external
+        override
         returns (uint256)
     {
         (uint256 err, ) = repayBorrowBehalfInternal(borrower, repayAmount);
@@ -122,7 +131,7 @@ contract CErc20 is CToken, CErc20Interface {
         address borrower,
         uint256 repayAmount,
         CTokenInterface cTokenCollateral
-    ) external returns (uint256) {
+    ) external override returns (uint256) {
         (uint256 err, ) = liquidateBorrowInternal(
             borrower,
             repayAmount,
@@ -135,7 +144,7 @@ contract CErc20 is CToken, CErc20Interface {
      * @notice A public function to sweep accidental ERC-20 transfers to this contract. Tokens are sent to admin (timelock)
      * @param token The address of the ERC-20 token to sweep
      */
-    function sweepToken(EIP20NonStandardInterface token) external {
+    function sweepToken(EIP20NonStandardInterface token) external override {
         require(
             address(token) != underlying,
             "CErc20::sweepToken: can not sweep underlying token"
@@ -149,7 +158,11 @@ contract CErc20 is CToken, CErc20Interface {
      * @param addAmount The amount fo underlying token to add as reserves
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _addReserves(uint256 addAmount) external returns (uint256) {
+    function _addReserves(uint256 addAmount)
+        external
+        override
+        returns (uint256)
+    {
         return _addReservesInternal(addAmount);
     }
 
@@ -160,7 +173,7 @@ contract CErc20 is CToken, CErc20Interface {
      * @dev This excludes the value of the current message, if any
      * @return The quantity of underlying tokens owned by this contract
      */
-    function getCashPrior() internal view returns (uint256) {
+    function getCashPrior() internal view override returns (uint256) {
         EIP20Interface token = EIP20Interface(underlying);
         return token.balanceOf(address(this));
     }
@@ -176,6 +189,7 @@ contract CErc20 is CToken, CErc20Interface {
      */
     function doTransferIn(address from, uint256 amount)
         internal
+        override
         returns (uint256)
     {
         EIP20NonStandardInterface token = EIP20NonStandardInterface(underlying);
@@ -223,6 +237,7 @@ contract CErc20 is CToken, CErc20Interface {
     function doTransferOut(address payable to, uint256 amount)
         internal
         virtual
+        override
     {
         EIP20NonStandardInterface token = EIP20NonStandardInterface(underlying);
         token.transfer(to, amount);

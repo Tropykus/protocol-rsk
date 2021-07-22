@@ -290,9 +290,9 @@ contract GovernorAlpha {
     }
 
     function cancel(uint256 proposalId) public {
-        ProposalState state = state(proposalId);
+        ProposalState proposalState = state(proposalId);
         require(
-            state != ProposalState.Executed,
+            proposalState != ProposalState.Executed,
             "GovernorAlpha::cancel: cannot cancel executed proposal"
         );
 
@@ -495,7 +495,7 @@ contract GovernorAlpha {
         return a - b;
     }
 
-    function getChainId() internal pure returns (uint256) {
+    function getChainId() internal view returns (uint256) {
         uint256 chainId;
         assembly {
             chainId := chainid()

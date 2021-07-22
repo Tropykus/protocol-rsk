@@ -23,5 +23,7 @@ contract JumpRateModelV2 is BaseJumpRateModelV2 {
             kink_,
             owner_
         )
-    {}
+    {
+        isTropykusInterestRateModel = false;
+    }
 }

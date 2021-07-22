@@ -30,7 +30,10 @@ contract CRBTCHarness is CRBTC {
         )
     {}
 
-    function doTransferOut(address payable to, uint256 amount) internal {
+    function doTransferOut(address payable to, uint256 amount)
+        internal
+        override
+    {
         require(
             failTransferToAddresses[to] == false,
             "TOKEN_TRANSFER_OUT_FAILED"
@@ -41,6 +44,7 @@ contract CRBTCHarness is CRBTC {
     function exchangeRateStoredInternal()
         internal
         view
+        override
         returns (MathError, uint256)
     {
         if (harnessExchangeRate != 0) {
@@ -49,7 +53,7 @@ contract CRBTCHarness is CRBTC {
         return super.exchangeRateStoredInternal();
     }
 
-    function getBlockNumber() internal view returns (uint256) {
+    function getBlockNumber() internal view override returns (uint256) {
         return blockNumber;
     }
 

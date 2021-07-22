@@ -14,6 +14,7 @@ contract InterestRateModelHarness is InterestRateModel {
 
     constructor(uint256 borrowRate_) {
         borrowRate = borrowRate_;
+        isTropykusInterestRateModel = false;
     }
 
     function setFailBorrowRate(bool failBorrowRate_) public {

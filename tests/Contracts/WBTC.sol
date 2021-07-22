@@ -668,18 +668,24 @@ contract WBTCToken is
         super.burn(value);
     }
 
-    function finishMinting() public override onlyOwner returns (bool) {
+    function finishMinting()
+        public
+        view
+        override
+        onlyOwner
+        returns (bool result)
+    {
         return false;
     }
 
-    function renounceOwnership() public override onlyOwner {
+    function renounceOwnership() public view override onlyOwner {
         revert("renouncing ownership is blocked");
     }
 
     function approve(address _spender, uint256 _value)
         public
         override(StandardToken, PausableToken, ERC20)
-        returns (bool)
+        returns (bool result)
     {
         StandardToken.approve(_spender, _value);
     }
@@ -687,7 +693,7 @@ contract WBTCToken is
     function decreaseApproval(address _spender, uint256 _subtractedValue)
         public
         override(StandardToken, PausableToken)
-        returns (bool)
+        returns (bool result)
     {
         StandardToken.decreaseApproval(_spender, _subtractedValue);
     }
@@ -695,7 +701,7 @@ contract WBTCToken is
     function increaseApproval(address _spender, uint256 _addedValue)
         public
         override(StandardToken, PausableToken)
-        returns (bool)
+        returns (bool result)
     {
         StandardToken.increaseApproval(_spender, _addedValue);
     }
@@ -703,7 +709,7 @@ contract WBTCToken is
     function transfer(address _to, uint256 _value)
         public
         override(BasicToken, ERC20Basic, PausableToken)
-        returns (bool)
+        returns (bool result)
     {
         BasicToken.transfer(_to, _value);
     }
@@ -712,7 +718,11 @@ contract WBTCToken is
         address _from,
         address _to,
         uint256 _value
-    ) public override(StandardToken, PausableToken, ERC20) returns (bool) {
+    )
+        public
+        override(StandardToken, PausableToken, ERC20)
+        returns (bool)
+    {
         StandardToken.transferFrom(_from, _to, _value);
     }
 

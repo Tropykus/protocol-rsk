@@ -336,6 +336,7 @@ contract CErc20DelegateHarness is CErc20Delegate {
     function exchangeRateStoredInternal()
         internal
         view
+        override
         returns (MathError, uint256)
     {
         if (harnessExchangeRateStored) {
@@ -344,7 +345,10 @@ contract CErc20DelegateHarness is CErc20Delegate {
         return super.exchangeRateStoredInternal();
     }
 
-    function doTransferOut(address payable to, uint256 amount) internal {
+    function doTransferOut(address payable to, uint256 amount)
+        internal
+        override
+    {
         require(
             failTransferToAddresses[to] == false,
             "TOKEN_TRANSFER_OUT_FAILED"
@@ -352,7 +356,7 @@ contract CErc20DelegateHarness is CErc20Delegate {
         return super.doTransferOut(to, amount);
     }
 
-    function getBlockNumber() internal view returns (uint256) {
+    function getBlockNumber() internal view override returns (uint256) {
         return blockNumber;
     }
 
@@ -526,7 +530,7 @@ contract CErc20DelegateScenario is CErc20Delegate {
         totalReserves = totalReserves_;
     }
 
-    function getBlockNumber() internal view returns (uint256) {
+    function getBlockNumber() internal view override returns (uint256) {
         ComptrollerScenario comptrollerScenario = ComptrollerScenario(
             address(comptroller)
         );

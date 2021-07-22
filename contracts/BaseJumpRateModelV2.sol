@@ -110,7 +110,7 @@ contract BaseJumpRateModelV2 is InterestRateModel {
         uint256 cash,
         uint256 borrows,
         uint256 reserves
-    ) external view returns (uint256) {
+    ) external view override returns (uint256) {
         return getBorrowRateInternal(cash, borrows, reserves);
     }
 

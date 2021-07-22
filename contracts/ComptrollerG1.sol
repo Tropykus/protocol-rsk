@@ -112,7 +112,7 @@ contract ComptrollerG1 is
     // liquidationIncentiveMantissa must be no greater than this value
     uint256 constant liquidationIncentiveMaxMantissa = 15e17; // 1.5
 
-    constructor() public {
+    constructor() {
         admin = msg.sender;
     }
 
@@ -154,6 +154,7 @@ contract ComptrollerG1 is
      */
     function enterMarkets(address[] memory cTokens)
         public
+        override
         returns (uint256[] memory)
     {
         uint256 len = cTokens.length;
@@ -204,7 +205,11 @@ contract ComptrollerG1 is
      * @param cTokenAddress The address of the asset to be removed
      * @return Whether or not the account successfully exited the market
      */
-    function exitMarket(address cTokenAddress) external returns (uint256) {
+    function exitMarket(address cTokenAddress)
+        external
+        override
+        returns (uint256)
+    {
         CToken cToken = CToken(cTokenAddress);
         /* Get sender tokensHeld and amountOwed underlying from the cToken */
         (uint256 oErr, uint256 tokensHeld, uint256 amountOwed, ) = cToken
@@ -248,22 +253,20 @@ contract ComptrollerG1 is
         /* Delete cToken from the account’s list of assets */
         // load into memory for faster iteration
         CToken[] memory userAssetList = accountAssets[msg.sender];
+        accountAssets[msg.sender] = new CToken[](0);
+        CToken[] storage newMarketList = accountAssets[msg.sender];
         uint256 len = userAssetList.length;
         uint256 assetIndex = len;
         for (uint256 i = 0; i < len; i++) {
             if (userAssetList[i] == cToken) {
                 assetIndex = i;
-                break;
+                continue;
             }
+            newMarketList.push(userAssetList[i]);
         }
 
         // We *must* have found the asset in the list or our redundant data structure is broken
         assert(assetIndex < len);
-
-        // copy last item in list to location of item to be removed, reduce length by 1
-        CToken[] storage storedList = accountAssets[msg.sender];
-        storedList[assetIndex] = storedList[storedList.length - 1];
-        storedList.length--;
 
         emit MarketExited(cToken, msg.sender);
 
@@ -283,7 +286,7 @@ contract ComptrollerG1 is
         address cToken,
         address minter,
         uint256 mintAmount
-    ) external returns (uint256) {
+    ) external view override returns (uint256) {
         minter; // currently unused
         mintAmount; // currently unused
 
@@ -308,7 +311,7 @@ contract ComptrollerG1 is
         address minter,
         uint256 mintAmount,
         uint256 mintTokens
-    ) external {
+    ) external override {
         cToken; // currently unused
         minter; // currently unused
         mintAmount; // currently unused
@@ -330,7 +333,7 @@ contract ComptrollerG1 is
         address cToken,
         address redeemer,
         uint256 redeemTokens
-    ) external returns (uint256) {
+    ) external view override returns (uint256) {
         return redeemAllowedInternal(cToken, redeemer, redeemTokens);
     }
 
@@ -383,7 +386,7 @@ contract ComptrollerG1 is
         address redeemer,
         uint256 redeemAmount,
         uint256 redeemTokens
-    ) external {
+    ) external pure override {
         cToken; // currently unused
         redeemer; // currently unused
         redeemAmount; // currently unused
@@ -406,7 +409,7 @@ contract ComptrollerG1 is
         address cToken,
         address borrower,
         uint256 borrowAmount
-    ) external returns (uint256) {
+    ) external view override returns (uint256) {
         if (!markets[cToken].isListed) {
             return uint256(Error.MARKET_NOT_LISTED);
         }
@@ -451,7 +454,7 @@ contract ComptrollerG1 is
         address cToken,
         address borrower,
         uint256 borrowAmount
-    ) external {
+    ) external override {
         cToken; // currently unused
         borrower; // currently unused
         borrowAmount; // currently unused
@@ -474,7 +477,7 @@ contract ComptrollerG1 is
         address payer,
         address borrower,
         uint256 repayAmount
-    ) external returns (uint256) {
+    ) external view override returns (uint256) {
         payer; // currently unused
         borrower; // currently unused
         repayAmount; // currently unused
@@ -501,7 +504,7 @@ contract ComptrollerG1 is
         address borrower,
         uint256 repayAmount,
         uint256 borrowerIndex
-    ) external {
+    ) external override {
         cToken; // currently unused
         payer; // currently unused
         borrower; // currently unused
@@ -527,7 +530,7 @@ contract ComptrollerG1 is
         address liquidator,
         address borrower,
         uint256 repayAmount
-    ) external returns (uint256) {
+    ) external view override returns (uint256) {
         liquidator; // currently unused
         borrower; // currently unused
         repayAmount; // currently unused
@@ -585,7 +588,7 @@ contract ComptrollerG1 is
         address borrower,
         uint256 repayAmount,
         uint256 seizeTokens
-    ) external {
+    ) external override {
         cTokenBorrowed; // currently unused
         cTokenCollateral; // currently unused
         liquidator; // currently unused
@@ -612,7 +615,7 @@ contract ComptrollerG1 is
         address liquidator,
         address borrower,
         uint256 seizeTokens
-    ) external returns (uint256) {
+    ) external view override returns (uint256) {
         liquidator; // currently unused
         borrower; // currently unused
         seizeTokens; // currently unused
@@ -650,7 +653,7 @@ contract ComptrollerG1 is
         address liquidator,
         address borrower,
         uint256 seizeTokens
-    ) external {
+    ) external override {
         cTokenCollateral; // currently unused
         cTokenBorrowed; // currently unused
         liquidator; // currently unused
@@ -675,7 +678,7 @@ contract ComptrollerG1 is
         address src,
         address dst,
         uint256 transferTokens
-    ) external returns (uint256) {
+    ) external view override returns (uint256) {
         cToken; // currently unused
         src; // currently unused
         dst; // currently unused
@@ -700,7 +703,7 @@ contract ComptrollerG1 is
         address src,
         address dst,
         uint256 transferTokens
-    ) external {
+    ) external override {
         cToken; // currently unused
         src; // currently unused
         dst; // currently unused
@@ -750,7 +753,12 @@ contract ComptrollerG1 is
             Error err,
             uint256 liquidity,
             uint256 shortfall
-        ) = getHypotheticalAccountLiquidityInternal(account, CToken(address(0)), 0, 0);
+        ) = getHypotheticalAccountLiquidityInternal(
+            account,
+            CToken(address(0)),
+            0,
+            0
+        );
 
         return (uint256(err), liquidity, shortfall);
     }
@@ -771,7 +779,12 @@ contract ComptrollerG1 is
         )
     {
         return
-            getHypotheticalAccountLiquidityInternal(account, CToken(address(0)), 0, 0);
+            getHypotheticalAccountLiquidityInternal(
+                account,
+                CToken(address(0)),
+                0,
+                0
+            );
     }
 
     /**
@@ -916,7 +929,7 @@ contract ComptrollerG1 is
         address cTokenBorrowed,
         address cTokenCollateral,
         uint256 repayAmount
-    ) external view returns (uint256, uint256) {
+    ) external view override returns (uint256, uint256) {
         /* Read oracle prices for borrowed and collateral markets */
         uint256 priceBorrowedMantissa = oracle.getUnderlyingPrice(
             CToken(cTokenBorrowed)

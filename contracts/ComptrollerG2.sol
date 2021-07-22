@@ -102,7 +102,7 @@ contract ComptrollerG2 is
     // liquidationIncentiveMantissa must be no greater than this value
     uint256 internal constant liquidationIncentiveMaxMantissa = 1.5e18; // 1.5
 
-    constructor() public {
+    constructor() {
         admin = msg.sender;
     }
 
@@ -144,6 +144,7 @@ contract ComptrollerG2 is
      */
     function enterMarkets(address[] memory cTokens)
         public
+        override
         returns (uint256[] memory)
     {
         uint256 len = cTokens.length;
@@ -205,7 +206,11 @@ contract ComptrollerG2 is
      * @param cTokenAddress The address of the asset to be removed
      * @return Whether or not the account successfully exited the market
      */
-    function exitMarket(address cTokenAddress) external returns (uint256) {
+    function exitMarket(address cTokenAddress)
+        external
+        override
+        returns (uint256)
+    {
         CToken cToken = CToken(cTokenAddress);
         /* Get sender tokensHeld and amountOwed underlying from the cToken */
         (uint256 oErr, uint256 tokensHeld, uint256 amountOwed, ) = cToken
@@ -249,22 +254,20 @@ contract ComptrollerG2 is
         /* Delete cToken from the account’s list of assets */
         // load into memory for faster iteration
         CToken[] memory userAssetList = accountAssets[msg.sender];
+        accountAssets[msg.sender] = new CToken[](0);
+        CToken[] storage newMarketList = accountAssets[msg.sender];
         uint256 len = userAssetList.length;
         uint256 assetIndex = len;
         for (uint256 i = 0; i < len; i++) {
             if (userAssetList[i] == cToken) {
                 assetIndex = i;
-                break;
+                continue;
             }
+            newMarketList.push(userAssetList[i]);
         }
 
         // We *must* have found the asset in the list or our redundant data structure is broken
         assert(assetIndex < len);
-
-        // copy last item in list to location of item to be removed, reduce length by 1
-        CToken[] storage storedList = accountAssets[msg.sender];
-        storedList[assetIndex] = storedList[storedList.length - 1];
-        storedList.length--;
 
         emit MarketExited(cToken, msg.sender);
 
@@ -284,7 +287,7 @@ contract ComptrollerG2 is
         address cToken,
         address minter,
         uint256 mintAmount
-    ) external returns (uint256) {
+    ) external view override returns (uint256) {
         // Pausing is a very serious situation - we revert to sound the alarms
         require(!mintGuardianPaused[cToken], "mint is paused");
 
@@ -337,7 +340,7 @@ contract ComptrollerG2 is
         address cToken,
         address redeemer,
         uint256 redeemTokens
-    ) external returns (uint256) {
+    ) external view override returns (uint256) {
         return redeemAllowedInternal(cToken, redeemer, redeemTokens);
     }
 
@@ -390,7 +393,7 @@ contract ComptrollerG2 is
         address redeemer,
         uint256 redeemAmount,
         uint256 redeemTokens
-    ) external override {
+    ) external pure override {
         // Shh - currently unused
         cToken;
         redeemer;
@@ -412,8 +415,10 @@ contract ComptrollerG2 is
         address cToken,
         address borrower,
         uint256 borrowAmount
-    ) external returns (uint256) {
+    ) external override returns (uint256) {
         // Pausing is a very serious situation - we revert to sound the alarms
+        Error err;
+        uint256 shortfall;
         require(!borrowGuardianPaused[cToken], "borrow is paused");
 
         if (!markets[cToken].isListed) {
@@ -427,7 +432,7 @@ contract ComptrollerG2 is
             require(msg.sender == cToken, "sender must be cToken");
 
             // attempt to add borrower to the market
-            Error err = addToMarketInternal(CToken(msg.sender), borrower);
+            err = addToMarketInternal(CToken(msg.sender), borrower);
             if (err != Error.NO_ERROR) {
                 return uint256(err);
             }
@@ -440,11 +445,7 @@ contract ComptrollerG2 is
             return uint256(Error.PRICE_ERROR);
         }
 
-        (
-            Error err,
-            ,
-            uint256 shortfall
-        ) = getHypotheticalAccountLiquidityInternal(
+        (err, , shortfall) = getHypotheticalAccountLiquidityInternal(
             borrower,
             CToken(cToken),
             0,
@@ -495,7 +496,7 @@ contract ComptrollerG2 is
         address payer,
         address borrower,
         uint256 repayAmount
-    ) external returns (uint256) {
+    ) external view override returns (uint256) {
         // Shh - currently unused
         payer;
         borrower;
@@ -523,7 +524,7 @@ contract ComptrollerG2 is
         address borrower,
         uint256 actualRepayAmount,
         uint256 borrowerIndex
-    ) external {
+    ) external override {
         // Shh - currently unused
         cToken;
         payer;
@@ -551,7 +552,7 @@ contract ComptrollerG2 is
         address liquidator,
         address borrower,
         uint256 repayAmount
-    ) external returns (uint256) {
+    ) external view override returns (uint256) {
         // Shh - currently unused
         liquidator;
 
@@ -608,7 +609,7 @@ contract ComptrollerG2 is
         address borrower,
         uint256 actualRepayAmount,
         uint256 seizeTokens
-    ) external {
+    ) external override {
         // Shh - currently unused
         cTokenBorrowed;
         cTokenCollateral;
@@ -637,7 +638,7 @@ contract ComptrollerG2 is
         address liquidator,
         address borrower,
         uint256 seizeTokens
-    ) external returns (uint256) {
+    ) external view override returns (uint256) {
         // Pausing is a very serious situation - we revert to sound the alarms
         require(!seizeGuardianPaused, "seize is paused");
 
@@ -679,7 +680,7 @@ contract ComptrollerG2 is
         address liquidator,
         address borrower,
         uint256 seizeTokens
-    ) external {
+    ) external override {
         // Shh - currently unused
         cTokenCollateral;
         cTokenBorrowed;
@@ -706,7 +707,7 @@ contract ComptrollerG2 is
         address src,
         address dst,
         uint256 transferTokens
-    ) external returns (uint256) {
+    ) external view override returns (uint256) {
         // Pausing is a very serious situation - we revert to sound the alarms
         require(!transferGuardianPaused, "transfer is paused");
 
@@ -732,7 +733,7 @@ contract ComptrollerG2 is
         address src,
         address dst,
         uint256 transferTokens
-    ) external {
+    ) external override {
         // Shh - currently unused
         cToken;
         src;
@@ -784,7 +785,12 @@ contract ComptrollerG2 is
             Error err,
             uint256 liquidity,
             uint256 shortfall
-        ) = getHypotheticalAccountLiquidityInternal(account, CToken(address(0)), 0, 0);
+        ) = getHypotheticalAccountLiquidityInternal(
+            account,
+            CToken(address(0)),
+            0,
+            0
+        );
 
         return (uint256(err), liquidity, shortfall);
     }
@@ -805,7 +811,12 @@ contract ComptrollerG2 is
         )
     {
         return
-            getHypotheticalAccountLiquidityInternal(account, CToken(address(0)), 0, 0);
+            getHypotheticalAccountLiquidityInternal(
+                account,
+                CToken(address(0)),
+                0,
+                0
+            );
     }
 
     /**

@@ -5,13 +5,13 @@ import "../../contracts/Comptroller.sol";
 import "../../contracts/PriceOracle.sol";
 
 contract ComptrollerKovan is Comptroller {
-    function getCompAddress() public view override returns (address) {
+    function getCompAddress() public pure override returns (address) {
         return 0x61460874a7196d6a22D1eE4922473664b3E95270;
     }
 }
 
 contract ComptrollerRopsten is Comptroller {
-    function getCompAddress() public view override returns (address) {
+    function getCompAddress() public pure override returns (address) {
         return 0x1Fe16De955718CFAb7A44605458AB023838C2793;
     }
 }
@@ -273,6 +273,7 @@ contract BoolComptroller is ComptrollerInterface {
 
     function enterMarkets(address[] calldata _cTokens)
         external
+        pure
         override
         returns (uint256[] memory)
     {
@@ -281,7 +282,12 @@ contract BoolComptroller is ComptrollerInterface {
         return ret;
     }
 
-    function exitMarket(address _cToken) external override returns (uint256) {
+    function exitMarket(address _cToken)
+        external
+        view
+        override
+        returns (uint256)
+    {
         _cToken;
         return noError;
     }
@@ -292,7 +298,7 @@ contract BoolComptroller is ComptrollerInterface {
         address _cToken,
         address _minter,
         uint256 _mintAmount
-    ) public override returns (uint256) {
+    ) public view override returns (uint256) {
         _cToken;
         _minter;
         _mintAmount;
@@ -304,7 +310,7 @@ contract BoolComptroller is ComptrollerInterface {
         address _minter,
         uint256 _mintAmount,
         uint256 _mintTokens
-    ) external override {
+    ) external view override {
         _cToken;
         _minter;
         _mintAmount;
@@ -316,7 +322,7 @@ contract BoolComptroller is ComptrollerInterface {
         address _cToken,
         address _redeemer,
         uint256 _redeemTokens
-    ) public override returns (uint256) {
+    ) public view override returns (uint256) {
         _cToken;
         _redeemer;
         _redeemTokens;
@@ -328,7 +334,7 @@ contract BoolComptroller is ComptrollerInterface {
         address _redeemer,
         uint256 _redeemAmount,
         uint256 _redeemTokens
-    ) external override {
+    ) external view override {
         _cToken;
         _redeemer;
         _redeemAmount;
@@ -340,7 +346,7 @@ contract BoolComptroller is ComptrollerInterface {
         address _cToken,
         address _borrower,
         uint256 _borrowAmount
-    ) public override returns (uint256) {
+    ) public view override returns (uint256) {
         _cToken;
         _borrower;
         _borrowAmount;
@@ -351,7 +357,7 @@ contract BoolComptroller is ComptrollerInterface {
         address _cToken,
         address _borrower,
         uint256 _borrowAmount
-    ) external override {
+    ) external view override {
         _cToken;
         _borrower;
         _borrowAmount;
@@ -363,7 +369,7 @@ contract BoolComptroller is ComptrollerInterface {
         address _payer,
         address _borrower,
         uint256 _repayAmount
-    ) public override returns (uint256) {
+    ) public view override returns (uint256) {
         _cToken;
         _payer;
         _borrower;
@@ -377,7 +383,7 @@ contract BoolComptroller is ComptrollerInterface {
         address _borrower,
         uint256 _repayAmount,
         uint256 _borrowerIndex
-    ) external override {
+    ) external view override {
         _cToken;
         _payer;
         _borrower;
@@ -392,7 +398,7 @@ contract BoolComptroller is ComptrollerInterface {
         address _liquidator,
         address _borrower,
         uint256 _repayAmount
-    ) public override returns (uint256) {
+    ) public view override returns (uint256) {
         _cTokenBorrowed;
         _cTokenCollateral;
         _liquidator;
@@ -408,7 +414,7 @@ contract BoolComptroller is ComptrollerInterface {
         address _borrower,
         uint256 _repayAmount,
         uint256 _seizeTokens
-    ) external override {
+    ) external view override {
         _cTokenBorrowed;
         _cTokenCollateral;
         _liquidator;
@@ -427,7 +433,7 @@ contract BoolComptroller is ComptrollerInterface {
         address _borrower,
         address _liquidator,
         uint256 _seizeTokens
-    ) public override returns (uint256) {
+    ) public view override returns (uint256) {
         _cTokenCollateral;
         _cTokenBorrowed;
         _liquidator;
@@ -442,7 +448,7 @@ contract BoolComptroller is ComptrollerInterface {
         address _liquidator,
         address _borrower,
         uint256 _seizeTokens
-    ) external override {
+    ) external view override {
         _cTokenCollateral;
         _cTokenBorrowed;
         _liquidator;
@@ -456,7 +462,7 @@ contract BoolComptroller is ComptrollerInterface {
         address _src,
         address _dst,
         uint256 _transferTokens
-    ) public override returns (uint256) {
+    ) public view override returns (uint256) {
         _cToken;
         _src;
         _dst;
@@ -469,7 +475,7 @@ contract BoolComptroller is ComptrollerInterface {
         address _src,
         address _dst,
         uint256 _transferTokens
-    ) external override {
+    ) external view override {
         _cToken;
         _src;
         _dst;

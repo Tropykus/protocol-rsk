@@ -35,6 +35,7 @@ contract WhitePaperInterestRateModel is InterestRateModel {
     constructor(uint256 baseRatePerYear, uint256 multiplierPerYear) {
         baseRatePerBlock = baseRatePerYear.div(blocksPerYear);
         multiplierPerBlock = multiplierPerYear.div(blocksPerYear);
+        isTropykusInterestRateModel = false;
 
         emit NewInterestParams(baseRatePerBlock, multiplierPerBlock);
     }

@@ -36,8 +36,7 @@ contract PriceOracleProxyExtends is PriceOracleProxy {
 
     /**
      * @notice Set the address or adapter MoC
-     * @return The underlying asset price mantissa (scaled by 1e18)
-    //  */
+     */
     function setMockAdapter(address addressAdapter) public {
         //validate only guardian can set
         require(

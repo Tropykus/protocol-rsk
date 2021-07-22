@@ -37,9 +37,9 @@ contract CErc20Delegator is
         address payable admin_,
         address implementation_,
         bytes memory becomeImplementationData
-    ) public {
+    ) {
         // Creator of the contract is admin during initialization
-        admin = msg.sender;
+        admin = payable(msg.sender);
 
         // First delegate gets to initialize the delegator (i.e. storage contract)
         delegateTo(
@@ -73,7 +73,7 @@ contract CErc20Delegator is
         address implementation_,
         bool allowResign,
         bytes memory becomeImplementationData
-    ) public {
+    ) public override {
         require(
             msg.sender == admin,
             "CErc20Delegator::_setImplementation: Caller must be admin"
@@ -104,7 +104,7 @@ contract CErc20Delegator is
      * @param mintAmount The amount of the underlying asset to supply
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function mint(uint256 mintAmount) external returns (uint256) {
+    function mint(uint256 mintAmount) external override returns (uint256) {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature("mint(uint256)", mintAmount)
         );
@@ -117,7 +117,7 @@ contract CErc20Delegator is
      * @param redeemTokens The number of cTokens to redeem into underlying
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function redeem(uint256 redeemTokens) external returns (uint256) {
+    function redeem(uint256 redeemTokens) external override returns (uint256) {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature("redeem(uint256)", redeemTokens)
         );
@@ -130,7 +130,11 @@ contract CErc20Delegator is
      * @param redeemAmount The amount of underlying to redeem
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function redeemUnderlying(uint256 redeemAmount) external returns (uint256) {
+    function redeemUnderlying(uint256 redeemAmount)
+        external
+        override
+        returns (uint256)
+    {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature("redeemUnderlying(uint256)", redeemAmount)
         );
@@ -142,7 +146,7 @@ contract CErc20Delegator is
      * @param borrowAmount The amount of the underlying asset to borrow
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function borrow(uint256 borrowAmount) external returns (uint256) {
+    function borrow(uint256 borrowAmount) external override returns (uint256) {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature("borrow(uint256)", borrowAmount)
         );
@@ -154,7 +158,11 @@ contract CErc20Delegator is
      * @param repayAmount The amount to repay
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function repayBorrow(uint256 repayAmount) external returns (uint256) {
+    function repayBorrow(uint256 repayAmount)
+        external
+        override
+        returns (uint256)
+    {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature("repayBorrow(uint256)", repayAmount)
         );
@@ -169,6 +177,7 @@ contract CErc20Delegator is
      */
     function repayBorrowBehalf(address borrower, uint256 repayAmount)
         external
+        override
         returns (uint256)
     {
         bytes memory data = delegateToImplementation(
@@ -193,7 +202,7 @@ contract CErc20Delegator is
         address borrower,
         uint256 repayAmount,
         CTokenInterface cTokenCollateral
-    ) external returns (uint256) {
+    ) external override returns (uint256) {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature(
                 "liquidateBorrow(address,uint256,address)",
@@ -211,7 +220,11 @@ contract CErc20Delegator is
      * @param amount The number of tokens to transfer
      * @return Whether or not the transfer succeeded
      */
-    function transfer(address dst, uint256 amount) external returns (bool) {
+    function transfer(address dst, uint256 amount)
+        external
+        override
+        returns (bool)
+    {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature("transfer(address,uint256)", dst, amount)
         );
@@ -229,7 +242,7 @@ contract CErc20Delegator is
         address src,
         address dst,
         uint256 amount
-    ) external returns (bool) {
+    ) external override returns (bool) {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature(
                 "transferFrom(address,address,uint256)",
@@ -249,7 +262,11 @@ contract CErc20Delegator is
      * @param amount The number of tokens that are approved (-1 means infinite)
      * @return Whether or not the approval succeeded
      */
-    function approve(address spender, uint256 amount) external returns (bool) {
+    function approve(address spender, uint256 amount)
+        external
+        override
+        returns (bool)
+    {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature("approve(address,uint256)", spender, amount)
         );
@@ -265,6 +282,7 @@ contract CErc20Delegator is
     function allowance(address owner, address spender)
         external
         view
+        override
         returns (uint256)
     {
         bytes memory data = delegateToViewImplementation(
@@ -282,7 +300,7 @@ contract CErc20Delegator is
      * @param owner The address of the account to query
      * @return The number of tokens owned by `owner`
      */
-    function balanceOf(address owner) external view returns (uint256) {
+    function balanceOf(address owner) external view override returns (uint256) {
         bytes memory data = delegateToViewImplementation(
             abi.encodeWithSignature("balanceOf(address)", owner)
         );
@@ -295,7 +313,11 @@ contract CErc20Delegator is
      * @param owner The address of the account to query
      * @return The amount of underlying owned by `owner`
      */
-    function balanceOfUnderlying(address owner) external returns (uint256) {
+    function balanceOfUnderlying(address owner)
+        external
+        override
+        returns (uint256)
+    {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature("balanceOfUnderlying(address)", owner)
         );
@@ -311,6 +333,7 @@ contract CErc20Delegator is
     function getAccountSnapshot(address account)
         external
         view
+        override
         returns (
             uint256,
             uint256,
@@ -328,7 +351,7 @@ contract CErc20Delegator is
      * @notice Returns the current per-block borrow interest rate for this cToken
      * @return The borrow interest rate per block, scaled by 1e18
      */
-    function borrowRatePerBlock() external view returns (uint256) {
+    function borrowRatePerBlock() external view override returns (uint256) {
         bytes memory data = delegateToViewImplementation(
             abi.encodeWithSignature("borrowRatePerBlock()")
         );
@@ -339,7 +362,7 @@ contract CErc20Delegator is
      * @notice Returns the current per-block supply interest rate for this cToken
      * @return The supply interest rate per block, scaled by 1e18
      */
-    function supplyRatePerBlock() external view returns (uint256) {
+    function supplyRatePerBlock() external view override returns (uint256) {
         bytes memory data = delegateToViewImplementation(
             abi.encodeWithSignature("supplyRatePerBlock()")
         );
@@ -350,7 +373,7 @@ contract CErc20Delegator is
      * @notice Returns the current total borrows plus accrued interest
      * @return The total borrows with interest
      */
-    function totalBorrowsCurrent() external returns (uint256) {
+    function totalBorrowsCurrent() external override returns (uint256) {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature("totalBorrowsCurrent()")
         );
@@ -362,7 +385,11 @@ contract CErc20Delegator is
      * @param account The address whose balance should be calculated after updating borrowIndex
      * @return The calculated balance
      */
-    function borrowBalanceCurrent(address account) external returns (uint256) {
+    function borrowBalanceCurrent(address account)
+        external
+        override
+        returns (uint256)
+    {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature("borrowBalanceCurrent(address)", account)
         );
@@ -377,6 +404,7 @@ contract CErc20Delegator is
     function borrowBalanceStored(address account)
         public
         view
+        override
         returns (uint256)
     {
         bytes memory data = delegateToViewImplementation(
@@ -389,7 +417,7 @@ contract CErc20Delegator is
      * @notice Accrue interest then return the up-to-date exchange rate
      * @return Calculated exchange rate scaled by 1e18
      */
-    function exchangeRateCurrent() public returns (uint256) {
+    function exchangeRateCurrent() public override returns (uint256) {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature("exchangeRateCurrent()")
         );
@@ -401,7 +429,7 @@ contract CErc20Delegator is
      * @dev This function does not accrue interest before calculating the exchange rate
      * @return Calculated exchange rate scaled by 1e18
      */
-    function exchangeRateStored() public view returns (uint256) {
+    function exchangeRateStored() public view override returns (uint256) {
         bytes memory data = delegateToViewImplementation(
             abi.encodeWithSignature("exchangeRateStored()")
         );
@@ -412,7 +440,7 @@ contract CErc20Delegator is
      * @notice Get cash balance of this cToken in the underlying asset
      * @return The quantity of underlying asset owned by this contract
      */
-    function getCash() external view returns (uint256) {
+    function getCash() external view override returns (uint256) {
         bytes memory data = delegateToViewImplementation(
             abi.encodeWithSignature("getCash()")
         );
@@ -424,7 +452,7 @@ contract CErc20Delegator is
      * @dev This calculates interest accrued from the last checkpointed block
      *      up to the current block and writes new checkpoint to storage.
      */
-    function accrueInterest() public returns (uint256) {
+    function accrueInterest() public override returns (uint256) {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature("accrueInterest()")
         );
@@ -444,7 +472,7 @@ contract CErc20Delegator is
         address liquidator,
         address borrower,
         uint256 seizeTokens
-    ) external returns (uint256) {
+    ) external override returns (uint256) {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature(
                 "seize(address,address,uint256)",
@@ -460,7 +488,7 @@ contract CErc20Delegator is
      * @notice A public function to sweep accidental ERC-20 transfers to this contract. Tokens are sent to admin (timelock)
      * @param token The address of the ERC-20 token to sweep
      */
-    function sweepToken(EIP20NonStandardInterface token) external {
+    function sweepToken(EIP20NonStandardInterface token) external override {
         delegateToImplementation(
             abi.encodeWithSignature("sweepToken(address)", token)
         );
@@ -476,6 +504,7 @@ contract CErc20Delegator is
      */
     function _setPendingAdmin(address payable newPendingAdmin)
         external
+        override
         returns (uint256)
     {
         bytes memory data = delegateToImplementation(
@@ -494,6 +523,7 @@ contract CErc20Delegator is
      */
     function _setComptroller(ComptrollerInterface newComptroller)
         public
+        override
         returns (uint256)
     {
         bytes memory data = delegateToImplementation(
@@ -509,6 +539,7 @@ contract CErc20Delegator is
      */
     function _setReserveFactor(uint256 newReserveFactorMantissa)
         external
+        override
         returns (uint256)
     {
         bytes memory data = delegateToImplementation(
@@ -525,7 +556,7 @@ contract CErc20Delegator is
      * @dev Admin function for pending admin to accept role and update admin
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _acceptAdmin() external returns (uint256) {
+    function _acceptAdmin() external override returns (uint256) {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature("_acceptAdmin()")
         );
@@ -537,7 +568,11 @@ contract CErc20Delegator is
      * @param addAmount Amount of reserves to add
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _addReserves(uint256 addAmount) external returns (uint256) {
+    function _addReserves(uint256 addAmount)
+        external
+        override
+        returns (uint256)
+    {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature("_addReserves(uint256)", addAmount)
         );
@@ -549,7 +584,11 @@ contract CErc20Delegator is
      * @param reduceAmount Amount of reduction to reserves
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _reduceReserves(uint256 reduceAmount) external returns (uint256) {
+    function _reduceReserves(uint256 reduceAmount)
+        external
+        override
+        returns (uint256)
+    {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature("_reduceReserves(uint256)", reduceAmount)
         );
@@ -564,6 +603,7 @@ contract CErc20Delegator is
      */
     function _setInterestRateModel(InterestRateModel newInterestRateModel)
         public
+        override
         returns (uint256)
     {
         bytes memory data = delegateToImplementation(
@@ -635,7 +675,7 @@ contract CErc20Delegator is
      * @notice Delegates execution to an implementation contract
      * @dev It returns to the external caller whatever the implementation returns or forwards reverts
      */
-    fallback() external payable {
+    function internalFallback() public payable {
         require(
             msg.value == 0,
             "CErc20Delegator:fallback: cannot send value to fallback"
@@ -656,5 +696,13 @@ contract CErc20Delegator is
                 return(free_mem_ptr, returndatasize())
             }
         }
+    }
+
+    fallback() external payable {
+        internalFallback();
+    }
+
+    receive() external payable {
+        internalFallback();
     }
 }
