@@ -1,13 +1,19 @@
 require("@nomiclabs/hardhat-ethers");
 require("@nomiclabs/hardhat-waffle");
+require('hardhat-contract-sizer');
 require("hardhat-deploy");
 
 const networks = require('./hardhat.networks')
 
 const config = {
   defaultNetwork: "hardhat",
+  contractSizer: {
+    alphaSort: true,
+    runOnCompile: true,
+    disambiguatePaths: false,
+  },
   solidity: {
-    version: "0.5.17",
+    version: "0.8.4",
     settings: {
       optimizer: {
         enabled: true,

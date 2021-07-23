@@ -1,5 +1,6 @@
 // Root file: contracts/SafeMath.sol
 
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.4;
 
 // From https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/math/Math.sol

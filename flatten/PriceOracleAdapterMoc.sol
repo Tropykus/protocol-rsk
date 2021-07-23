@@ -1,8 +1,9 @@
 // Dependency file: contracts/PriceOracleAdapter.sol
 
+// SPDX-License-Identifier: UNLICENSED
 // pragma solidity 0.8.4;
 
-contract PriceOracleAdapter {
+abstract contract PriceOracleAdapter {
     /// @notice Event adapter interface updated
     event PriceOracleAdapterUpdated(address oldAddress, address newAddress);
 
@@ -11,7 +12,11 @@ contract PriceOracleAdapter {
      * @return The underlying asset price mantissa (scaled by 1e18).
      *  Zero means the price is unavailable.
      */
-    function assetPrices(address cTokenAddress) external view returns (uint256);
+    function assetPrices(address cTokenAddress)
+        external
+        view
+        virtual
+        returns (uint256);
 }
 
 
@@ -32,14 +37,14 @@ contract PriceOracleAdapterMoc is PriceOracleAdapter {
     PriceProviderMoC public priceProviderMoC;
 
     /// @notice Guardian updated
-    event NewGuardian(address oldGuardian,address newGuardian);
+    event NewGuardian(address oldGuardian, address newGuardian);
 
     /**
      * @notice Construct a PriceOracleAdapter for a MoC oracle
      * @param guardian_ address of guardian that is allowed to manage this contract
      * @param priceProvider address of asset's MoC price provider
      */
-    constructor(address guardian_,address priceProvider) public {
+    constructor(address guardian_, address priceProvider) {
         require(
             guardian_ != address(0),
             "PriceOracleAdapterMoc: guardian could not be 0"
@@ -56,7 +61,7 @@ contract PriceOracleAdapterMoc is PriceOracleAdapter {
      * @notice Get the price from MoC and divide it by the rBTC price
      * @return The price
      */
-    function assetPrices(address) public view returns (uint256) {
+    function assetPrices(address) public view override returns (uint256) {
         (bytes32 price, bool has) = priceProviderMoC.peek();
         require(has, "PriceOracleAdapterMoc: Oracle have no Price");
         return uint256(price);
@@ -91,10 +96,7 @@ contract PriceOracleAdapterMoc is PriceOracleAdapter {
      * @param newGuardian address of the guardian
      */
     function setGuardian(address newGuardian) public {
-        require(
-            msg.sender == guardian,
-            "PriceOracleAdapterMoc: only guardian"
-        );
+        require(msg.sender == guardian, "PriceOracleAdapterMoc: only guardian");
         require(
             guardian != address(0),
             "PriceOracleAdapterMoc: guardin address can not be 0"
@@ -104,9 +106,6 @@ contract PriceOracleAdapterMoc is PriceOracleAdapter {
         //update
         guardian = newGuardian;
         //emit event
-        emit NewGuardian(
-            oldGuardian,
-            newGuardian
-        );
+        emit NewGuardian(oldGuardian, newGuardian);
     }
 }

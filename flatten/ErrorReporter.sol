@@ -1,5 +1,6 @@
 // Root file: contracts/ErrorReporter.sol
 
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.4;
 
 contract ComptrollerErrorReporter {
@@ -48,27 +49,31 @@ contract ComptrollerErrorReporter {
     }
 
     /**
-      * @dev `error` corresponds to enum Error; `info` corresponds to enum FailureInfo, and `detail` is an arbitrary
-      * contract-specific code that enables us to report opaque error codes from upgradeable contracts.
-      **/
-    event Failure(uint error, uint info, uint detail);
+     * @dev `error` corresponds to enum Error; `info` corresponds to enum FailureInfo, and `detail` is an arbitrary
+     * contract-specific code that enables us to report opaque error codes from upgradeable contracts.
+     **/
+    event Failure(uint256 error, uint256 info, uint256 detail);
 
     /**
-      * @dev use this when reporting a known error from the money market or a non-upgradeable collaborator
-      */
-    function fail(Error err, FailureInfo info) internal returns (uint) {
-        emit Failure(uint(err), uint(info), 0);
+     * @dev use this when reporting a known error from the money market or a non-upgradeable collaborator
+     */
+    function fail(Error err, FailureInfo info) internal returns (uint256) {
+        emit Failure(uint256(err), uint256(info), 0);
 
-        return uint(err);
+        return uint256(err);
     }
 
     /**
-      * @dev use this when reporting an opaque error from an upgradeable collaborator contract
-      */
-    function failOpaque(Error err, FailureInfo info, uint opaqueError) internal returns (uint) {
-        emit Failure(uint(err), uint(info), opaqueError);
+     * @dev use this when reporting an opaque error from an upgradeable collaborator contract
+     */
+    function failOpaque(
+        Error err,
+        FailureInfo info,
+        uint256 opaqueError
+    ) internal returns (uint256) {
+        emit Failure(uint256(err), uint256(info), opaqueError);
 
-        return uint(err);
+        return uint256(err);
     }
 }
 
@@ -180,30 +185,36 @@ contract TokenErrorReporter {
         TRANSFER_TOO_MUCH,
         ADD_RESERVES_ACCRUE_INTEREST_FAILED,
         ADD_RESERVES_FRESH_CHECK,
-        ADD_RESERVES_TRANSFER_IN_NOT_POSSIBLE
+        ADD_RESERVES_TRANSFER_IN_NOT_POSSIBLE,
+        ADD_SUBSIDY_FUND_FAILED,
+        ADD_SUBSIDY_FUND_FRESH_CHECK
     }
 
     /**
-      * @dev `error` corresponds to enum Error; `info` corresponds to enum FailureInfo, and `detail` is an arbitrary
-      * contract-specific code that enables us to report opaque error codes from upgradeable contracts.
-      **/
-    event Failure(uint error, uint info, uint detail);
+     * @dev `error` corresponds to enum Error; `info` corresponds to enum FailureInfo, and `detail` is an arbitrary
+     * contract-specific code that enables us to report opaque error codes from upgradeable contracts.
+     **/
+    event TokenFailure(uint256 error, uint256 info, uint256 detail);
 
     /**
-      * @dev use this when reporting a known error from the money market or a non-upgradeable collaborator
-      */
-    function fail(Error err, FailureInfo info) internal returns (uint) {
-        emit Failure(uint(err), uint(info), 0);
+     * @dev use this when reporting a known error from the money market or a non-upgradeable collaborator
+     */
+    function fail(Error err, FailureInfo info) internal returns (uint256) {
+        emit TokenFailure(uint256(err), uint256(info), 0);
 
-        return uint(err);
+        return uint256(err);
     }
 
     /**
-      * @dev use this when reporting an opaque error from an upgradeable collaborator contract
-      */
-    function failOpaque(Error err, FailureInfo info, uint opaqueError) internal returns (uint) {
-        emit Failure(uint(err), uint(info), opaqueError);
+     * @dev use this when reporting an opaque error from an upgradeable collaborator contract
+     */
+    function failOpaque(
+        Error err,
+        FailureInfo info,
+        uint256 opaqueError
+    ) internal returns (uint256) {
+        emit TokenFailure(uint256(err), uint256(info), opaqueError);
 
-        return uint(err);
+        return uint256(err);
     }
 }
