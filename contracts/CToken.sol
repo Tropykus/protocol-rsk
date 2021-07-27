@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.4;
+pragma solidity >0.8.4;
 
 import "./ComptrollerInterface.sol";
 import "./CTokenInterfaces.sol";
@@ -31,29 +31,23 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         string memory symbol_,
         uint8 decimals_
     ) public {
-        require(msg.sender == admin, "only admin may initialize the market");
+        require(msg.sender == admin, "CT01");
         require(
             accrualBlockNumber == 0 && borrowIndex == 0,
-            "market may only be initialized once"
+            "CT02"
         );
 
         initialExchangeRateMantissa = initialExchangeRateMantissa_;
-        require(
-            initialExchangeRateMantissa > 0,
-            "initial exchange rate must be greater than zero."
-        );
+        require(initialExchangeRateMantissa > 0, "CT03");
 
         uint256 err = _setComptroller(comptroller_);
-        require(err == uint256(Error.NO_ERROR), "setting comptroller failed");
+        require(err == uint256(Error.NO_ERROR), "CT04");
 
         accrualBlockNumber = getBlockNumber();
         borrowIndex = mantissaOne;
 
         err = _setInterestRateModelFresh(interestRateModel_);
-        require(
-            err == uint256(Error.NO_ERROR),
-            "setting interest rate model failed"
-        );
+        require(err == uint256(Error.NO_ERROR), "CT05");
 
         name = name_;
         symbol = symbol_;
@@ -228,7 +222,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             exchangeRate,
             accountTokens[owner].tokens
         );
-        require(mErr == MathError.NO_ERROR, "balance could not be calculated");
+        require(mErr == MathError.NO_ERROR, "CT06");
         return balance;
     }
 
@@ -324,10 +318,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         nonReentrant
         returns (uint256)
     {
-        require(
-            accrueInterest() == uint256(Error.NO_ERROR),
-            "accrue interest failed"
-        );
+        require(accrueInterest() == uint256(Error.NO_ERROR), "CT07");
         return totalBorrows;
     }
 
@@ -342,10 +333,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         nonReentrant
         returns (uint256)
     {
-        require(
-            accrueInterest() == uint256(Error.NO_ERROR),
-            "accrue interest failed"
-        );
+        require(accrueInterest() == uint256(Error.NO_ERROR), "CT07");
         return borrowBalanceStored(account);
     }
 
@@ -361,10 +349,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         returns (uint256)
     {
         (MathError err, uint256 result) = borrowBalanceStoredInternal(account);
-        require(
-            err == MathError.NO_ERROR,
-            "borrowBalanceStored: borrowBalanceStoredInternal failed"
-        );
+        require(err == MathError.NO_ERROR, "CT08");
         return result;
     }
 
@@ -441,10 +426,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         nonReentrant
         returns (uint256)
     {
-        require(
-            accrueInterest() == uint256(Error.NO_ERROR),
-            "accrue interest failed"
-        );
+        require(accrueInterest() == uint256(Error.NO_ERROR), "CT07");
         return exchangeRateStored();
     }
 
@@ -455,10 +437,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
      */
     function exchangeRateStored() public view override returns (uint256) {
         (MathError err, uint256 result) = exchangeRateStoredInternal();
-        require(
-            err == MathError.NO_ERROR,
-            "exchangeRateStored: exchangeRateStoredInternal failed"
-        );
+        require(err == MathError.NO_ERROR, "CT09");
         return result;
     }
 
@@ -558,19 +537,13 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             borrowsPrior,
             reservesPrior
         );
-        require(
-            borrowRateMantissa <= borrowRateMaxMantissa,
-            "borrow rate is absurdly high"
-        );
+        require(borrowRateMantissa <= borrowRateMaxMantissa, "CT10");
 
         (MathError mathErr, uint256 blockDelta) = subUInt(
             currentBlockNumber,
             accrualBlockNumberPrior
         );
-        require(
-            mathErr == MathError.NO_ERROR,
-            "could not calculate block delta"
-        );
+        require(mathErr == MathError.NO_ERROR, "CT11");
 
         Exp memory simpleInterestFactor;
         uint256 interestAccumulated;
@@ -823,28 +796,19 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             vars.actualMintAmount,
             Exp({mantissa: vars.exchangeRateMantissa})
         );
-        require(
-            vars.mathErr == MathError.NO_ERROR,
-            "MINT_EXCHANGE_CALCULATION_FAILED"
-        );
+        require(vars.mathErr == MathError.NO_ERROR, "CT12");
 
         (vars.mathErr, vars.totalSupplyNew) = addUInt(
             totalSupply,
             vars.mintTokens
         );
-        require(
-            vars.mathErr == MathError.NO_ERROR,
-            "MINT_NEW_TOTAL_SUPPLY_CALCULATION_FAILED"
-        );
+        require(vars.mathErr == MathError.NO_ERROR, "CT13");
 
         (vars.mathErr, vars.accountTokensNew) = addUInt(
             accountTokens[minter].tokens,
             vars.mintTokens
         );
-        require(
-            vars.mathErr == MathError.NO_ERROR,
-            "MINT_NEW_ACCOUNT_BALANCE_CALCULATION_FAILED"
-        );
+        require(vars.mathErr == MathError.NO_ERROR, "CT14");
 
         uint256 currentSupplyRate = interestRateModel.getSupplyRate(
             getCashPrior(),
@@ -927,25 +891,6 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     }
 
     /**
-     * @notice Sender redeems cTokens in exchange for the underlying asset
-     * @dev Accrues interest whether or not the operation succeeds, unless reverted
-     * @param redeemTokens The number of cTokens to redeem into underlying
-     * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
-     */
-    function redeemInternal(uint256 redeemTokens)
-        internal
-        nonReentrant
-        returns (uint256)
-    {
-        uint256 error = accrueInterest();
-        if (error != uint256(Error.NO_ERROR)) {
-            return
-                fail(Error(error), FailureInfo.REDEEM_ACCRUE_INTEREST_FAILED);
-        }
-        return redeemFresh(payable(msg.sender), redeemTokens, 0);
-    }
-
-    /**
      * @notice Sender redeems cTokens in exchange for a specified amount of underlying asset
      * @dev Accrues interest whether or not the operation succeeds, unless reverted
      * @param redeemAmount The amount of underlying to receive from redeeming cTokens
@@ -961,7 +906,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             return
                 fail(Error(error), FailureInfo.REDEEM_ACCRUE_INTEREST_FAILED);
         }
-        return redeemFresh(payable(msg.sender), 0, redeemAmount);
+        return redeemFresh(payable(msg.sender), redeemAmount);
     }
 
     struct RedeemLocalVars {
@@ -979,19 +924,14 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
      * @notice User redeems cTokens in exchange for the underlying asset
      * @dev Assumes interest has already been accrued up to the current block
      * @param redeemer The address of the account which is redeeming the tokens
-     * @param redeemTokensIn The number of cTokens to redeem into underlying (only one of redeemTokensIn or redeemAmountIn may be non-zero)
-     * @param redeemAmountIn The number of underlying tokens to receive from redeeming cTokens (only one of redeemTokensIn or redeemAmountIn may be non-zero)
+     * @param redeemAmountIn The number of underlying tokens to receive from redeeming cTokens
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
     function redeemFresh(
         address payable redeemer,
-        uint256 redeemTokensIn,
         uint256 redeemAmountIn
     ) internal returns (uint256) {
-        require(
-            redeemTokensIn == 0 || redeemAmountIn == 0,
-            "one of redeemTokensIn or redeemAmountIn must be zero"
-        );
+        require(redeemAmountIn > 0, "CT15");
 
         RedeemLocalVars memory vars;
 
@@ -1091,34 +1031,34 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             );
         }
 
-        if (redeemTokensIn > 0) {
-            vars.redeemTokens = redeemTokensIn;
-            if (isTropykusInterestRateModel) {
-                (, Exp memory num) = mulExp(
-                    vars.redeemTokens,
-                    currentUnderlying
-                );
-                (, Exp memory realUnderlyingWithdrawAmount) = getExp(
-                    num.mantissa,
-                    supplySnapshot.tokens
-                );
-                vars.redeemAmount = realUnderlyingWithdrawAmount.mantissa;
-            } else {
-                (vars.mathErr, vars.redeemAmount) = mulScalarTruncate(
-                    Exp({mantissa: vars.exchangeRateMantissa}),
-                    redeemTokensIn
-                );
-                if (vars.mathErr != MathError.NO_ERROR) {
-                    return
-                        failOpaque(
-                            Error.MATH_ERROR,
-                            FailureInfo
-                                .REDEEM_EXCHANGE_TOKENS_CALCULATION_FAILED,
-                            uint256(vars.mathErr)
-                        );
-                }
-            }
-        } else {
+        //        if (redeemTokensIn > 0) {
+        //            vars.redeemTokens = redeemTokensIn;
+        //            if (isTropykusInterestRateModel) {
+        //                (, Exp memory num) = mulExp(
+        //                    vars.redeemTokens,
+        //                    currentUnderlying
+        //                );
+        //                (, Exp memory realUnderlyingWithdrawAmount) = getExp(
+        //                    num.mantissa,
+        //                    supplySnapshot.tokens
+        //                );
+        //                vars.redeemAmount = realUnderlyingWithdrawAmount.mantissa;
+        //            } else {
+        //                (vars.mathErr, vars.redeemAmount) = mulScalarTruncate(
+        //                    Exp({mantissa: vars.exchangeRateMantissa}),
+        //                    redeemTokensIn
+        //                );
+        //                if (vars.mathErr != MathError.NO_ERROR) {
+        //                    return
+        //                        failOpaque(
+        //                            Error.MATH_ERROR,
+        //                            FailureInfo
+        //                                .REDEEM_EXCHANGE_TOKENS_CALCULATION_FAILED,
+        //                            uint256(vars.mathErr)
+        //                        );
+        //                }
+        //            }
+        //        } else {
             vars.redeemAmount = redeemAmountIn;
 
             if (isTropykusInterestRateModel) {
@@ -1146,7 +1086,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                         );
                 }
             }
-        }
+        //        }
 
         uint256 allowed = comptroller.redeemAllowed(
             address(this),
@@ -1484,19 +1424,13 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             vars.accountBorrows,
             vars.actualRepayAmount
         );
-        require(
-            vars.mathErr == MathError.NO_ERROR,
-            "REPAY_BORROW_NEW_ACCOUNT_BORROW_BALANCE_CALCULATION_FAILED"
-        );
+        require(vars.mathErr == MathError.NO_ERROR, "CT16");
 
         (vars.mathErr, vars.totalBorrowsNew) = subUInt(
             totalBorrows,
             vars.actualRepayAmount
         );
-        require(
-            vars.mathErr == MathError.NO_ERROR,
-            "REPAY_BORROW_NEW_TOTAL_BALANCE_CALCULATION_FAILED"
-        );
+        require(vars.mathErr == MathError.NO_ERROR, "CT17");
 
         accountBorrows[borrower].principal = vars.accountBorrowsNew;
         accountBorrows[borrower].interestIndex = borrowIndex;
@@ -1661,15 +1595,9 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             address(cTokenCollateral),
             actualRepayAmount
         );
-        require(
-            amountSeizeError == uint256(Error.NO_ERROR),
-            "LIQUIDATE_COMPTROLLER_CALCULATE_AMOUNT_SEIZE_FAILED"
-        );
+        require(amountSeizeError == uint256(Error.NO_ERROR), "CT18");
 
-        require(
-            cTokenCollateral.balanceOf(borrower) >= seizeTokens,
-            "LIQUIDATE_SEIZE_TOO_MUCH"
-        );
+        require(cTokenCollateral.balanceOf(borrower) >= seizeTokens, "CT19");
 
         uint256 seizeError;
         if (address(cTokenCollateral) == address(this)) {
@@ -1687,7 +1615,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             );
         }
 
-        require(seizeError == uint256(Error.NO_ERROR), "token seizure failed");
+        require(seizeError == uint256(Error.NO_ERROR), "CT20");
 
         emit LiquidateBorrow(
             liquidator,
@@ -1869,7 +1797,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
 
         ComptrollerInterface oldComptroller = comptroller;
-        require(newComptroller.isComptroller(), "marker method returned false");
+        require(newComptroller.isComptroller(), "CT21");
 
         comptroller = newComptroller;
 
@@ -1994,10 +1922,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         totalReservesNew = totalReserves + actualAddAmount;
 
-        require(
-            totalReservesNew >= totalReserves,
-            "add reserves unexpected overflow"
-        );
+        require(totalReservesNew >= totalReserves, "CT22");
 
         totalReserves = totalReservesNew;
 
@@ -2048,10 +1973,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         subsidyFundNew = subsidyFund + actualAddAmount;
 
-        require(
-            subsidyFundNew >= subsidyFund,
-            "add reserves unexpected overflow"
-        );
+        require(subsidyFundNew >= subsidyFund, "CT22");
 
         subsidyFund = subsidyFundNew;
 
@@ -2125,10 +2047,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
 
         totalReservesNew = totalReserves - reduceAmount;
-        require(
-            totalReservesNew <= totalReserves,
-            "reduce reserves unexpected underflow"
-        );
+        require(totalReservesNew <= totalReserves, "CT23");
 
         totalReserves = totalReservesNew;
 
@@ -2191,10 +2110,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         oldInterestRateModel = interestRateModel;
 
-        require(
-            newInterestRateModel.isInterestRateModel(),
-            "marker method returned false"
-        );
+        require(newInterestRateModel.isInterestRateModel(), "CT21");
 
         interestRateModel = newInterestRateModel;
 
