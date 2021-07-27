@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.4;
+pragma solidity >0.8.4;
 
 /**
  *Submitted for verification at Etherscan.io on 2018-11-24

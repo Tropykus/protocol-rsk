@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.4;
+pragma solidity >0.8.4;
 
 import "../../contracts/CRBTC.sol";
 import "./ComptrollerScenario.sol";
@@ -113,10 +113,9 @@ contract CRBTCHarness is CRBTC {
 
     function harnessRedeemFresh(
         address payable account,
-        uint256 cTokenAmount,
         uint256 underlyingAmount
     ) public returns (uint256) {
-        return super.redeemFresh(account, cTokenAmount, underlyingAmount);
+        return super.redeemFresh(account, underlyingAmount);
     }
 
     function harnessAccountBorrows(address account)

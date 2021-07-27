@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.4;
+pragma solidity >0.8.4;
 
 abstract contract PriceOracleAdapter {
     /// @notice Event adapter interface updated

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.4;
+pragma solidity >0.8.4;
 
 import "./ComptrollerInterface.sol";
 import "./InterestRateModel.sol";
@@ -385,9 +385,7 @@ abstract contract CErc20Interface is CErc20Storage {
 
     function mint(uint256 mintAmount) external virtual returns (uint256);
 
-    function redeem(uint256 redeemTokens) external virtual returns (uint256);
-
-    function redeemUnderlying(uint256 redeemAmount)
+    function redeem(uint256 redeemAmount)
         external
         virtual
         returns (uint256);

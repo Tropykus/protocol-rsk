@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.4;
+pragma solidity >0.8.4;
 
 import "../../contracts/CErc20Immutable.sol";
 import "../../contracts/CErc20Delegator.sol";
@@ -123,10 +123,9 @@ contract CErc20Harness is CErc20Immutable {
 
     function harnessRedeemFresh(
         address payable account,
-        uint256 cTokenAmount,
         uint256 underlyingAmount
     ) public returns (uint256) {
-        return super.redeemFresh(account, cTokenAmount, underlyingAmount);
+        return super.redeemFresh(account, underlyingAmount);
     }
 
     function harnessAccountBorrows(address account)
@@ -425,10 +424,9 @@ contract CErc20DelegateHarness is CErc20Delegate {
 
     function harnessRedeemFresh(
         address payable account,
-        uint256 cTokenAmount,
         uint256 underlyingAmount
     ) public returns (uint256) {
-        return super.redeemFresh(account, cTokenAmount, underlyingAmount);
+        return super.redeemFresh(account, underlyingAmount);
     }
 
     function harnessAccountBorrows(address account)
