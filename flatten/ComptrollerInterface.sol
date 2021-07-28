@@ -1,7 +1,7 @@
 // Root file: contracts/ComptrollerInterface.sol
 
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.4;
+pragma solidity >=0.8.4;
 
 abstract contract ComptrollerInterface {
     /// @notice Indicator that this is a Comptroller contract (for inspection)

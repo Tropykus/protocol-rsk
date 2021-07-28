@@ -1,7 +1,7 @@
 // Dependency file: contracts/EIP20Interface.sol
 
 // SPDX-License-Identifier: UNLICENSED
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 /**
  * @title ERC 20 Token Standard Interface
@@ -84,7 +84,7 @@ interface EIP20Interface {
 
 // Root file: contracts/Reservoir.sol
 
-pragma solidity 0.8.4;
+pragma solidity >=0.8.4;
 
 /**
  * @title Reservoir Contract

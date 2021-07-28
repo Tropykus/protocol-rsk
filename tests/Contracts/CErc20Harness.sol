@@ -39,10 +39,7 @@ contract CErc20Harness is CErc20Immutable {
         internal
         override
     {
-        require(
-            failTransferToAddresses[to] == false,
-            "TOKEN_TRANSFER_OUT_FAILED"
-        );
+        require(failTransferToAddresses[to] == false, "CE01");
         return super.doTransferOut(to, amount);
     }
 
@@ -348,10 +345,7 @@ contract CErc20DelegateHarness is CErc20Delegate {
         internal
         override
     {
-        require(
-            failTransferToAddresses[to] == false,
-            "TOKEN_TRANSFER_OUT_FAILED"
-        );
+        require(failTransferToAddresses[to] == false, "CE01");
         return super.doTransferOut(to, amount);
     }
 
@@ -546,6 +540,6 @@ contract CErc20DelegateScenarioExtra is CErc20DelegateScenario {
     }
 
     function babyYoda() public pure {
-        revert("protect the baby");
+        revert("CE02");
     }
 }

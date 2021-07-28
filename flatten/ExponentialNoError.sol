@@ -1,7 +1,7 @@
 // Root file: contracts/ExponentialNoError.sol
 
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.4;
+pragma solidity >=0.8.4;
 
 /**
  * @title Exponential module for storing fixed-precision decimals

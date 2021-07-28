@@ -1,7 +1,7 @@
 // Root file: contracts/MultiSigWallet.sol
 
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.4;
+pragma solidity >=0.8.4;
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>

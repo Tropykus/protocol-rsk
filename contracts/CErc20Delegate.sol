@@ -29,10 +29,7 @@ contract CErc20Delegate is CErc20, CDelegateInterface {
             implementation = address(0);
         }
 
-        require(
-            msg.sender == admin,
-            "only the admin may call _becomeImplementation"
-        );
+        require(msg.sender == admin, "ER01");
     }
 
     /**
@@ -44,9 +41,6 @@ contract CErc20Delegate is CErc20, CDelegateInterface {
             implementation = address(0);
         }
 
-        require(
-            msg.sender == admin,
-            "only the admin may call _resignImplementation"
-        );
+        require(msg.sender == admin, "ER02");
     }
 }

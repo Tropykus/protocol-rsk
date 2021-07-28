@@ -1,7 +1,7 @@
 // Dependency file: contracts/ComptrollerInterface.sol
 
 // SPDX-License-Identifier: UNLICENSED
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 abstract contract ComptrollerInterface {
     /// @notice Indicator that this is a Comptroller contract (for inspection)
@@ -130,7 +130,7 @@ abstract contract ComptrollerInterface {
 
 // Dependency file: contracts/CarefulMath.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 /**
   * @title Careful Math
@@ -219,7 +219,7 @@ contract CarefulMath {
 
 // Dependency file: contracts/ExponentialNoError.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 /**
  * @title Exponential module for storing fixed-precision decimals
@@ -418,7 +418,7 @@ contract ExponentialNoError {
 
 // Dependency file: contracts/Exponential.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 // import "contracts/CarefulMath.sol";
 // import "contracts/ExponentialNoError.sol";
@@ -605,7 +605,7 @@ contract Exponential is CarefulMath, ExponentialNoError {
 
 // Dependency file: contracts/SafeMath.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 // From https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/math/Math.sol
 // Subject to the MIT license.
@@ -795,7 +795,7 @@ library SafeMath {
 
 // Dependency file: contracts/InterestRateModel.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 // import "contracts/Exponential.sol";
 // import "contracts/SafeMath.sol";
@@ -910,7 +910,7 @@ abstract contract InterestRateModel is Exponential {
 
 // Dependency file: contracts/EIP20NonStandardInterface.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 /**
  * @title EIP20NonStandardInterface
@@ -996,7 +996,7 @@ interface EIP20NonStandardInterface {
 
 // Dependency file: contracts/CTokenInterfaces.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 // import "contracts/ComptrollerInterface.sol";
 // import "contracts/InterestRateModel.sol";
@@ -1382,9 +1382,7 @@ abstract contract CErc20Interface is CErc20Storage {
 
     function mint(uint256 mintAmount) external virtual returns (uint256);
 
-    function redeem(uint256 redeemTokens) external virtual returns (uint256);
-
-    function redeemUnderlying(uint256 redeemAmount)
+    function redeem(uint256 redeemAmount)
         external
         virtual
         returns (uint256);
@@ -1460,7 +1458,7 @@ abstract contract CDelegateInterface is CDelegationStorage {
 
 // Dependency file: contracts/ErrorReporter.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 contract ComptrollerErrorReporter {
     enum Error {
@@ -1681,7 +1679,7 @@ contract TokenErrorReporter {
 
 // Dependency file: contracts/EIP20Interface.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 /**
  * @title ERC 20 Token Standard Interface
@@ -1764,7 +1762,7 @@ interface EIP20Interface {
 
 // Dependency file: contracts/CToken.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 // import "contracts/ComptrollerInterface.sol";
 // import "contracts/CTokenInterfaces.sol";
@@ -1796,29 +1794,23 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         string memory symbol_,
         uint8 decimals_
     ) public {
-        require(msg.sender == admin, "only admin may initialize the market");
+        require(msg.sender == admin, "CT01");
         require(
             accrualBlockNumber == 0 && borrowIndex == 0,
-            "market may only be initialized once"
+            "CT02"
         );
 
         initialExchangeRateMantissa = initialExchangeRateMantissa_;
-        require(
-            initialExchangeRateMantissa > 0,
-            "initial exchange rate must be greater than zero."
-        );
+        require(initialExchangeRateMantissa > 0, "CT03");
 
         uint256 err = _setComptroller(comptroller_);
-        require(err == uint256(Error.NO_ERROR), "setting comptroller failed");
+        require(err == uint256(Error.NO_ERROR), "CT04");
 
         accrualBlockNumber = getBlockNumber();
         borrowIndex = mantissaOne;
 
         err = _setInterestRateModelFresh(interestRateModel_);
-        require(
-            err == uint256(Error.NO_ERROR),
-            "setting interest rate model failed"
-        );
+        require(err == uint256(Error.NO_ERROR), "CT05");
 
         name = name_;
         symbol = symbol_;
@@ -1993,7 +1985,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             exchangeRate,
             accountTokens[owner].tokens
         );
-        require(mErr == MathError.NO_ERROR, "balance could not be calculated");
+        require(mErr == MathError.NO_ERROR, "CT06");
         return balance;
     }
 
@@ -2089,10 +2081,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         nonReentrant
         returns (uint256)
     {
-        require(
-            accrueInterest() == uint256(Error.NO_ERROR),
-            "accrue interest failed"
-        );
+        require(accrueInterest() == uint256(Error.NO_ERROR), "CT07");
         return totalBorrows;
     }
 
@@ -2107,10 +2096,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         nonReentrant
         returns (uint256)
     {
-        require(
-            accrueInterest() == uint256(Error.NO_ERROR),
-            "accrue interest failed"
-        );
+        require(accrueInterest() == uint256(Error.NO_ERROR), "CT07");
         return borrowBalanceStored(account);
     }
 
@@ -2126,10 +2112,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         returns (uint256)
     {
         (MathError err, uint256 result) = borrowBalanceStoredInternal(account);
-        require(
-            err == MathError.NO_ERROR,
-            "borrowBalanceStored: borrowBalanceStoredInternal failed"
-        );
+        require(err == MathError.NO_ERROR, "CT08");
         return result;
     }
 
@@ -2206,10 +2189,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         nonReentrant
         returns (uint256)
     {
-        require(
-            accrueInterest() == uint256(Error.NO_ERROR),
-            "accrue interest failed"
-        );
+        require(accrueInterest() == uint256(Error.NO_ERROR), "CT07");
         return exchangeRateStored();
     }
 
@@ -2220,10 +2200,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
      */
     function exchangeRateStored() public view override returns (uint256) {
         (MathError err, uint256 result) = exchangeRateStoredInternal();
-        require(
-            err == MathError.NO_ERROR,
-            "exchangeRateStored: exchangeRateStoredInternal failed"
-        );
+        require(err == MathError.NO_ERROR, "CT09");
         return result;
     }
 
@@ -2323,19 +2300,13 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             borrowsPrior,
             reservesPrior
         );
-        require(
-            borrowRateMantissa <= borrowRateMaxMantissa,
-            "borrow rate is absurdly high"
-        );
+        require(borrowRateMantissa <= borrowRateMaxMantissa, "CT10");
 
         (MathError mathErr, uint256 blockDelta) = subUInt(
             currentBlockNumber,
             accrualBlockNumberPrior
         );
-        require(
-            mathErr == MathError.NO_ERROR,
-            "could not calculate block delta"
-        );
+        require(mathErr == MathError.NO_ERROR, "CT11");
 
         Exp memory simpleInterestFactor;
         uint256 interestAccumulated;
@@ -2588,28 +2559,19 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             vars.actualMintAmount,
             Exp({mantissa: vars.exchangeRateMantissa})
         );
-        require(
-            vars.mathErr == MathError.NO_ERROR,
-            "MINT_EXCHANGE_CALCULATION_FAILED"
-        );
+        require(vars.mathErr == MathError.NO_ERROR, "CT12");
 
         (vars.mathErr, vars.totalSupplyNew) = addUInt(
             totalSupply,
             vars.mintTokens
         );
-        require(
-            vars.mathErr == MathError.NO_ERROR,
-            "MINT_NEW_TOTAL_SUPPLY_CALCULATION_FAILED"
-        );
+        require(vars.mathErr == MathError.NO_ERROR, "CT13");
 
         (vars.mathErr, vars.accountTokensNew) = addUInt(
             accountTokens[minter].tokens,
             vars.mintTokens
         );
-        require(
-            vars.mathErr == MathError.NO_ERROR,
-            "MINT_NEW_ACCOUNT_BALANCE_CALCULATION_FAILED"
-        );
+        require(vars.mathErr == MathError.NO_ERROR, "CT14");
 
         uint256 currentSupplyRate = interestRateModel.getSupplyRate(
             getCashPrior(),
@@ -2692,25 +2654,6 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     }
 
     /**
-     * @notice Sender redeems cTokens in exchange for the underlying asset
-     * @dev Accrues interest whether or not the operation succeeds, unless reverted
-     * @param redeemTokens The number of cTokens to redeem into underlying
-     * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
-     */
-    function redeemInternal(uint256 redeemTokens)
-        internal
-        nonReentrant
-        returns (uint256)
-    {
-        uint256 error = accrueInterest();
-        if (error != uint256(Error.NO_ERROR)) {
-            return
-                fail(Error(error), FailureInfo.REDEEM_ACCRUE_INTEREST_FAILED);
-        }
-        return redeemFresh(payable(msg.sender), redeemTokens, 0);
-    }
-
-    /**
      * @notice Sender redeems cTokens in exchange for a specified amount of underlying asset
      * @dev Accrues interest whether or not the operation succeeds, unless reverted
      * @param redeemAmount The amount of underlying to receive from redeeming cTokens
@@ -2726,7 +2669,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             return
                 fail(Error(error), FailureInfo.REDEEM_ACCRUE_INTEREST_FAILED);
         }
-        return redeemFresh(payable(msg.sender), 0, redeemAmount);
+        return redeemFresh(payable(msg.sender), redeemAmount);
     }
 
     struct RedeemLocalVars {
@@ -2744,19 +2687,14 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
      * @notice User redeems cTokens in exchange for the underlying asset
      * @dev Assumes interest has already been accrued up to the current block
      * @param redeemer The address of the account which is redeeming the tokens
-     * @param redeemTokensIn The number of cTokens to redeem into underlying (only one of redeemTokensIn or redeemAmountIn may be non-zero)
-     * @param redeemAmountIn The number of underlying tokens to receive from redeeming cTokens (only one of redeemTokensIn or redeemAmountIn may be non-zero)
+     * @param redeemAmountIn The number of underlying tokens to receive from redeeming cTokens
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
     function redeemFresh(
         address payable redeemer,
-        uint256 redeemTokensIn,
         uint256 redeemAmountIn
     ) internal returns (uint256) {
-        require(
-            redeemTokensIn == 0 || redeemAmountIn == 0,
-            "one of redeemTokensIn or redeemAmountIn must be zero"
-        );
+        require(redeemAmountIn > 0, "CT15");
 
         RedeemLocalVars memory vars;
 
@@ -2856,34 +2794,34 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             );
         }
 
-        if (redeemTokensIn > 0) {
-            vars.redeemTokens = redeemTokensIn;
-            if (isTropykusInterestRateModel) {
-                (, Exp memory num) = mulExp(
-                    vars.redeemTokens,
-                    currentUnderlying
-                );
-                (, Exp memory realUnderlyingWithdrawAmount) = getExp(
-                    num.mantissa,
-                    supplySnapshot.tokens
-                );
-                vars.redeemAmount = realUnderlyingWithdrawAmount.mantissa;
-            } else {
-                (vars.mathErr, vars.redeemAmount) = mulScalarTruncate(
-                    Exp({mantissa: vars.exchangeRateMantissa}),
-                    redeemTokensIn
-                );
-                if (vars.mathErr != MathError.NO_ERROR) {
-                    return
-                        failOpaque(
-                            Error.MATH_ERROR,
-                            FailureInfo
-                                .REDEEM_EXCHANGE_TOKENS_CALCULATION_FAILED,
-                            uint256(vars.mathErr)
-                        );
-                }
-            }
-        } else {
+        //        if (redeemTokensIn > 0) {
+        //            vars.redeemTokens = redeemTokensIn;
+        //            if (isTropykusInterestRateModel) {
+        //                (, Exp memory num) = mulExp(
+        //                    vars.redeemTokens,
+        //                    currentUnderlying
+        //                );
+        //                (, Exp memory realUnderlyingWithdrawAmount) = getExp(
+        //                    num.mantissa,
+        //                    supplySnapshot.tokens
+        //                );
+        //                vars.redeemAmount = realUnderlyingWithdrawAmount.mantissa;
+        //            } else {
+        //                (vars.mathErr, vars.redeemAmount) = mulScalarTruncate(
+        //                    Exp({mantissa: vars.exchangeRateMantissa}),
+        //                    redeemTokensIn
+        //                );
+        //                if (vars.mathErr != MathError.NO_ERROR) {
+        //                    return
+        //                        failOpaque(
+        //                            Error.MATH_ERROR,
+        //                            FailureInfo
+        //                                .REDEEM_EXCHANGE_TOKENS_CALCULATION_FAILED,
+        //                            uint256(vars.mathErr)
+        //                        );
+        //                }
+        //            }
+        //        } else {
             vars.redeemAmount = redeemAmountIn;
 
             if (isTropykusInterestRateModel) {
@@ -2911,7 +2849,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                         );
                 }
             }
-        }
+        //        }
 
         uint256 allowed = comptroller.redeemAllowed(
             address(this),
@@ -3249,19 +3187,13 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             vars.accountBorrows,
             vars.actualRepayAmount
         );
-        require(
-            vars.mathErr == MathError.NO_ERROR,
-            "REPAY_BORROW_NEW_ACCOUNT_BORROW_BALANCE_CALCULATION_FAILED"
-        );
+        require(vars.mathErr == MathError.NO_ERROR, "CT16");
 
         (vars.mathErr, vars.totalBorrowsNew) = subUInt(
             totalBorrows,
             vars.actualRepayAmount
         );
-        require(
-            vars.mathErr == MathError.NO_ERROR,
-            "REPAY_BORROW_NEW_TOTAL_BALANCE_CALCULATION_FAILED"
-        );
+        require(vars.mathErr == MathError.NO_ERROR, "CT17");
 
         accountBorrows[borrower].principal = vars.accountBorrowsNew;
         accountBorrows[borrower].interestIndex = borrowIndex;
@@ -3426,15 +3358,9 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             address(cTokenCollateral),
             actualRepayAmount
         );
-        require(
-            amountSeizeError == uint256(Error.NO_ERROR),
-            "LIQUIDATE_COMPTROLLER_CALCULATE_AMOUNT_SEIZE_FAILED"
-        );
+        require(amountSeizeError == uint256(Error.NO_ERROR), "CT18");
 
-        require(
-            cTokenCollateral.balanceOf(borrower) >= seizeTokens,
-            "LIQUIDATE_SEIZE_TOO_MUCH"
-        );
+        require(cTokenCollateral.balanceOf(borrower) >= seizeTokens, "CT19");
 
         uint256 seizeError;
         if (address(cTokenCollateral) == address(this)) {
@@ -3452,7 +3378,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             );
         }
 
-        require(seizeError == uint256(Error.NO_ERROR), "token seizure failed");
+        require(seizeError == uint256(Error.NO_ERROR), "CT20");
 
         emit LiquidateBorrow(
             liquidator,
@@ -3634,7 +3560,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
 
         ComptrollerInterface oldComptroller = comptroller;
-        require(newComptroller.isComptroller(), "marker method returned false");
+        require(newComptroller.isComptroller(), "CT21");
 
         comptroller = newComptroller;
 
@@ -3759,10 +3685,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         totalReservesNew = totalReserves + actualAddAmount;
 
-        require(
-            totalReservesNew >= totalReserves,
-            "add reserves unexpected overflow"
-        );
+        require(totalReservesNew >= totalReserves, "CT22");
 
         totalReserves = totalReservesNew;
 
@@ -3813,10 +3736,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         subsidyFundNew = subsidyFund + actualAddAmount;
 
-        require(
-            subsidyFundNew >= subsidyFund,
-            "add reserves unexpected overflow"
-        );
+        require(subsidyFundNew >= subsidyFund, "CT22");
 
         subsidyFund = subsidyFundNew;
 
@@ -3890,10 +3810,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
 
         totalReservesNew = totalReserves - reduceAmount;
-        require(
-            totalReservesNew <= totalReserves,
-            "reduce reserves unexpected underflow"
-        );
+        require(totalReservesNew <= totalReserves, "CT23");
 
         totalReserves = totalReservesNew;
 
@@ -3956,10 +3873,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         oldInterestRateModel = interestRateModel;
 
-        require(
-            newInterestRateModel.isInterestRateModel(),
-            "marker method returned false"
-        );
+        require(newInterestRateModel.isInterestRateModel(), "CT21");
 
         interestRateModel = newInterestRateModel;
 
@@ -4008,7 +3922,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
 // Dependency file: contracts/PriceOracle.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 // import "contracts/CToken.sol";
 
@@ -4032,7 +3946,7 @@ abstract contract PriceOracle {
 
 // Dependency file: contracts/ComptrollerStorage.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 // import "contracts/CToken.sol";
 // import "contracts/PriceOracle.sol";
@@ -4184,7 +4098,7 @@ contract ComptrollerV5Storage is ComptrollerV4Storage {
 
 // Dependency file: contracts/Unitroller.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 // import "contracts/ErrorReporter.sol";
 // import "contracts/ComptrollerStorage.sol";
@@ -4383,7 +4297,7 @@ contract Unitroller is UnitrollerAdminStorage, ComptrollerErrorReporter {
 
 // Dependency file: contracts/Governance/TROP.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 pragma experimental ABIEncoderV2;
 
 /**
@@ -4832,7 +4746,7 @@ contract TROP {
 
 // Root file: contracts/ComptrollerG5.sol
 
-pragma solidity 0.8.4;
+pragma solidity >=0.8.4;
 
 // import "contracts/CToken.sol";
 // import "contracts/ErrorReporter.sol";
@@ -5067,7 +4981,7 @@ contract ComptrollerG5 is
         /* Get sender tokensHeld and amountOwed underlying from the cToken */
         (uint256 oErr, uint256 tokensHeld, uint256 amountOwed, ) = cToken
         .getAccountSnapshot(msg.sender);
-        require(oErr == 0, "exitMarket: getAccountSnapshot failed"); // semi-opaque error code
+        require(oErr == 0, "C501"); // semi-opaque error code
 
         /* Fail if the sender has a borrow balance */
         if (amountOwed != 0) {
@@ -5141,7 +5055,7 @@ contract ComptrollerG5 is
         uint256 mintAmount
     ) external override returns (uint256) {
         // Pausing is a very serious situation - we revert to sound the alarms
-        require(!mintGuardianPaused[cToken], "mint is paused");
+        require(!mintGuardianPaused[cToken], "C502");
 
         // Shh - currently unused
         minter;
@@ -5261,7 +5175,7 @@ contract ComptrollerG5 is
 
         // Require tokens is zero or amount is also zero
         if (redeemTokens == 0 && redeemAmount > 0) {
-            revert("redeemTokens zero");
+            revert("C503");
         }
     }
 
@@ -5280,7 +5194,7 @@ contract ComptrollerG5 is
         // Pausing is a very serious situation - we revert to sound the alarms
         Error err;
         uint256 shortfall;
-        require(!borrowGuardianPaused[cToken], "borrow is paused");
+        require(!borrowGuardianPaused[cToken], "C504");
 
         if (!markets[cToken].isListed) {
             return uint256(Error.MARKET_NOT_LISTED);
@@ -5288,7 +5202,7 @@ contract ComptrollerG5 is
 
         if (!markets[cToken].accountMembership[borrower]) {
             // only cTokens may call borrowAllowed if borrower not in market
-            require(msg.sender == cToken, "sender must be cToken");
+            require(msg.sender == cToken, "C505");
 
             // attempt to add borrower to the market
             err = addToMarketInternal(CToken(msg.sender), borrower);
@@ -5312,8 +5226,8 @@ contract ComptrollerG5 is
                 totalBorrows,
                 borrowAmount
             );
-            require(mathErr == MathError.NO_ERROR, "total borrows overflow");
-            require(nextTotalBorrows < borrowCap, "market borrow cap reached");
+            require(mathErr == MathError.NO_ERROR, "C506");
+            require(nextTotalBorrows < borrowCap, "C507");
         }
 
         (err, , shortfall) = getHypotheticalAccountLiquidityInternal(
@@ -5517,7 +5431,7 @@ contract ComptrollerG5 is
         uint256 seizeTokens
     ) external override returns (uint256) {
         // Pausing is a very serious situation - we revert to sound the alarms
-        require(!seizeGuardianPaused, "seize is paused");
+        require(!seizeGuardianPaused, "C508");
 
         // Shh - currently unused
         seizeTokens;
@@ -5587,7 +5501,7 @@ contract ComptrollerG5 is
         uint256 transferTokens
     ) external override returns (uint256) {
         // Pausing is a very serious situation - we revert to sound the alarms
-        require(!transferGuardianPaused, "transfer is paused");
+        require(!transferGuardianPaused, "C509");
 
         // Currently the only consideration is whether or not
         //  the src is allowed to redeem this many tokens
@@ -6202,7 +6116,7 @@ contract ComptrollerG5 is
 
     function _addMarketInternal(address cToken) internal {
         for (uint256 i = 0; i < allMarkets.length; i++) {
-            require(allMarkets[i] != CToken(cToken), "market already added");
+            require(allMarkets[i] != CToken(cToken), "C510");
         }
         allMarkets.push(CToken(cToken));
     }
@@ -6217,18 +6131,12 @@ contract ComptrollerG5 is
         CToken[] calldata cTokens,
         uint256[] calldata newBorrowCaps
     ) external {
-        require(
-            msg.sender == admin || msg.sender == borrowCapGuardian,
-            "only admin or borrow cap guardian can set borrow caps"
-        );
+        require(msg.sender == admin || msg.sender == borrowCapGuardian, "C511");
 
         uint256 numMarkets = cTokens.length;
         uint256 numBorrowCaps = newBorrowCaps.length;
 
-        require(
-            numMarkets != 0 && numMarkets == numBorrowCaps,
-            "invalid input"
-        );
+        require(numMarkets != 0 && numMarkets == numBorrowCaps, "C512");
 
         for (uint256 i = 0; i < numMarkets; i++) {
             borrowCaps[address(cTokens[i])] = newBorrowCaps[i];
@@ -6241,7 +6149,7 @@ contract ComptrollerG5 is
      * @param newBorrowCapGuardian The address of the new Borrow Cap Guardian
      */
     function _setBorrowCapGuardian(address newBorrowCapGuardian) external {
-        require(msg.sender == admin, "only admin can set borrow cap guardian");
+        require(msg.sender == admin, "C513");
 
         // Save current value for inclusion in log
         address oldBorrowCapGuardian = borrowCapGuardian;
@@ -6283,15 +6191,9 @@ contract ComptrollerG5 is
     }
 
     function _setMintPaused(CToken cToken, bool state) public returns (bool) {
-        require(
-            markets[address(cToken)].isListed,
-            "cannot pause a market that is not listed"
-        );
-        require(
-            msg.sender == pauseGuardian || msg.sender == admin,
-            "only pause guardian and admin can pause"
-        );
-        require(msg.sender == admin || state == true, "only admin can unpause");
+        require(markets[address(cToken)].isListed, "C514");
+        require(msg.sender == pauseGuardian || msg.sender == admin, "C515");
+        require(msg.sender == admin || state == true, "C516");
 
         mintGuardianPaused[address(cToken)] = state;
         emit ActionPaused(cToken, "Mint", state);
@@ -6299,15 +6201,9 @@ contract ComptrollerG5 is
     }
 
     function _setBorrowPaused(CToken cToken, bool state) public returns (bool) {
-        require(
-            markets[address(cToken)].isListed,
-            "cannot pause a market that is not listed"
-        );
-        require(
-            msg.sender == pauseGuardian || msg.sender == admin,
-            "only pause guardian and admin can pause"
-        );
-        require(msg.sender == admin || state == true, "only admin can unpause");
+        require(markets[address(cToken)].isListed, "C514");
+        require(msg.sender == pauseGuardian || msg.sender == admin, "C515");
+        require(msg.sender == admin || state == true, "C516");
 
         borrowGuardianPaused[address(cToken)] = state;
         emit ActionPaused(cToken, "Borrow", state);
@@ -6315,11 +6211,8 @@ contract ComptrollerG5 is
     }
 
     function _setTransferPaused(bool state) public returns (bool) {
-        require(
-            msg.sender == pauseGuardian || msg.sender == admin,
-            "only pause guardian and admin can pause"
-        );
-        require(msg.sender == admin || state == true, "only admin can unpause");
+        require(msg.sender == pauseGuardian || msg.sender == admin, "C515");
+        require(msg.sender == admin || state == true, "C516");
 
         transferGuardianPaused = state;
         emit ActionPaused("Transfer", state);
@@ -6327,11 +6220,8 @@ contract ComptrollerG5 is
     }
 
     function _setSeizePaused(bool state) public returns (bool) {
-        require(
-            msg.sender == pauseGuardian || msg.sender == admin,
-            "only pause guardian and admin can pause"
-        );
-        require(msg.sender == admin || state == true, "only admin can unpause");
+        require(msg.sender == pauseGuardian || msg.sender == admin, "C515");
+        require(msg.sender == admin || state == true, "C516");
 
         seizeGuardianPaused = state;
         emit ActionPaused("Seize", state);
@@ -6339,14 +6229,8 @@ contract ComptrollerG5 is
     }
 
     function _become(Unitroller unitroller) public {
-        require(
-            msg.sender == unitroller.admin(),
-            "only unitroller admin can change brains"
-        );
-        require(
-            unitroller._acceptImplementation() == 0,
-            "change not authorized"
-        );
+        require(msg.sender == unitroller.admin(), "C517");
+        require(unitroller._acceptImplementation() == 0, "C518");
     }
 
     /**
@@ -6362,10 +6246,7 @@ contract ComptrollerG5 is
      * @notice Recalculate and update COMP speeds for all COMP markets
      */
     function refreshCompSpeeds() public {
-        require(
-            msg.sender == tx.origin,
-            "only externally owned accounts may refresh speeds"
-        );
+        require(msg.sender == tx.origin, "C519");
         refreshCompSpeedsInternal();
     }
 
@@ -6423,14 +6304,11 @@ contract ComptrollerG5 is
                 ratio
             );
             compSupplyState[cToken] = CompMarketState({
-                index: safe224(index.mantissa, "new index exceeds 224 bits"),
-                block: safe32(blockNumber, "block number exceeds 32 bits")
+                index: safe224(index.mantissa, "C520"),
+                block: safe32(blockNumber, "C521")
             });
         } else if (deltaBlocks > 0) {
-            supplyState.block = safe32(
-                blockNumber,
-                "block number exceeds 32 bits"
-            );
+            supplyState.block = safe32(blockNumber, "C521");
         }
     }
 
@@ -6459,14 +6337,11 @@ contract ComptrollerG5 is
                 ratio
             );
             compBorrowState[cToken] = CompMarketState({
-                index: safe224(index.mantissa, "new index exceeds 224 bits"),
-                block: safe32(blockNumber, "block number exceeds 32 bits")
+                index: safe224(index.mantissa, "C520"),
+                block: safe32(blockNumber, "C521")
             });
         } else if (deltaBlocks > 0) {
-            borrowState.block = safe32(
-                blockNumber,
-                "block number exceeds 32 bits"
-            );
+            borrowState.block = safe32(blockNumber, "C521");
         }
     }
 
@@ -6609,7 +6484,7 @@ contract ComptrollerG5 is
     ) public {
         for (uint256 i = 0; i < cTokens.length; i++) {
             CToken cToken = cTokens[i];
-            require(markets[address(cToken)].isListed, "market must be listed");
+            require(markets[address(cToken)].isListed, "C522");
             if (borrowers == true) {
                 Exp memory borrowIndex = Exp({mantissa: cToken.borrowIndex()});
                 updateCompBorrowIndex(address(cToken), borrowIndex);
@@ -6638,7 +6513,7 @@ contract ComptrollerG5 is
      * @param compRate_ The amount of COMP wei per block to distribute
      */
     function _setCompRate(uint256 compRate_) public {
-        require(adminOrInitializing(), "only admin can change comp rate");
+        require(adminOrInitializing(), "C523");
 
         uint256 oldRate = compRate;
         compRate = compRate_;
@@ -6652,7 +6527,7 @@ contract ComptrollerG5 is
      * @param cTokens The addresses of the markets to add
      */
     function _addCompMarkets(address[] memory cTokens) public {
-        require(adminOrInitializing(), "only admin can add comp market");
+        require(adminOrInitializing(), "C524");
 
         for (uint256 i = 0; i < cTokens.length; i++) {
             _addCompMarketInternal(cTokens[i]);
@@ -6663,8 +6538,8 @@ contract ComptrollerG5 is
 
     function _addCompMarketInternal(address cToken) internal {
         Market storage market = markets[cToken];
-        require(market.isListed == true, "comp market is not listed");
-        require(market.isComped == false, "comp market already added");
+        require(market.isListed == true, "C525");
+        require(market.isComped == false, "C526");
 
         market.isComped = true;
         emit MarketComped(CToken(cToken), true);
@@ -6675,7 +6550,7 @@ contract ComptrollerG5 is
         ) {
             compSupplyState[cToken] = CompMarketState({
                 index: compInitialIndex,
-                block: safe32(getBlockNumber(), "block number exceeds 32 bits")
+                block: safe32(getBlockNumber(), "C521")
             });
         }
 
@@ -6685,7 +6560,7 @@ contract ComptrollerG5 is
         ) {
             compBorrowState[cToken] = CompMarketState({
                 index: compInitialIndex,
-                block: safe32(getBlockNumber(), "block number exceeds 32 bits")
+                block: safe32(getBlockNumber(), "C521")
             });
         }
     }
@@ -6695,10 +6570,10 @@ contract ComptrollerG5 is
      * @param cToken The address of the market to drop
      */
     function _dropCompMarket(address cToken) public {
-        require(msg.sender == admin, "only admin can drop comp market");
+        require(msg.sender == admin, "C527");
 
         Market storage market = markets[cToken];
-        require(market.isComped == true, "market is not a comp market");
+        require(market.isComped == true, "C528");
 
         market.isComped = false;
         emit MarketComped(CToken(cToken), false);

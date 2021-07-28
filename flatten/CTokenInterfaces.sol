@@ -1,7 +1,7 @@
 // Dependency file: contracts/ComptrollerInterface.sol
 
 // SPDX-License-Identifier: UNLICENSED
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 abstract contract ComptrollerInterface {
     /// @notice Indicator that this is a Comptroller contract (for inspection)
@@ -130,7 +130,7 @@ abstract contract ComptrollerInterface {
 
 // Dependency file: contracts/CarefulMath.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 /**
   * @title Careful Math
@@ -219,7 +219,7 @@ contract CarefulMath {
 
 // Dependency file: contracts/ExponentialNoError.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 /**
  * @title Exponential module for storing fixed-precision decimals
@@ -418,7 +418,7 @@ contract ExponentialNoError {
 
 // Dependency file: contracts/Exponential.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 // import "contracts/CarefulMath.sol";
 // import "contracts/ExponentialNoError.sol";
@@ -605,7 +605,7 @@ contract Exponential is CarefulMath, ExponentialNoError {
 
 // Dependency file: contracts/SafeMath.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 // From https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/math/Math.sol
 // Subject to the MIT license.
@@ -795,7 +795,7 @@ library SafeMath {
 
 // Dependency file: contracts/InterestRateModel.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 // import "contracts/Exponential.sol";
 // import "contracts/SafeMath.sol";
@@ -910,7 +910,7 @@ abstract contract InterestRateModel is Exponential {
 
 // Dependency file: contracts/EIP20NonStandardInterface.sol
 
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 /**
  * @title EIP20NonStandardInterface
@@ -996,7 +996,7 @@ interface EIP20NonStandardInterface {
 
 // Root file: contracts/CTokenInterfaces.sol
 
-pragma solidity 0.8.4;
+pragma solidity >=0.8.4;
 
 // import "contracts/ComptrollerInterface.sol";
 // import "contracts/InterestRateModel.sol";
@@ -1382,9 +1382,7 @@ abstract contract CErc20Interface is CErc20Storage {
 
     function mint(uint256 mintAmount) external virtual returns (uint256);
 
-    function redeem(uint256 redeemTokens) external virtual returns (uint256);
-
-    function redeemUnderlying(uint256 redeemAmount)
+    function redeem(uint256 redeemAmount)
         external
         virtual
         returns (uint256);

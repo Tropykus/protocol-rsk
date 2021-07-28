@@ -34,10 +34,7 @@ contract CRBTCHarness is CRBTC {
         internal
         override
     {
-        require(
-            failTransferToAddresses[to] == false,
-            "TOKEN_TRANSFER_OUT_FAILED"
-        );
+        require(failTransferToAddresses[to] == false, "CE01");
         return super.doTransferOut(to, amount);
     }
 

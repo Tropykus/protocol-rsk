@@ -1,7 +1,7 @@
 // Dependency file: contracts/PriceOracleAdapter.sol
 
 // SPDX-License-Identifier: UNLICENSED
-// pragma solidity 0.8.4;
+// pragma solidity >=0.8.4;
 
 abstract contract PriceOracleAdapter {
     /// @notice Event adapter interface updated
@@ -22,7 +22,7 @@ abstract contract PriceOracleAdapter {
 
 // Root file: contracts/PriceOracleAdapterMoc.sol
 
-pragma solidity 0.8.4;
+pragma solidity >=0.8.4;
 
 // import "contracts/PriceOracleAdapter.sol";
 

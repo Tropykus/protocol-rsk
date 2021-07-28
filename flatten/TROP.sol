@@ -1,7 +1,7 @@
 // Root file: contracts/Governance/TROP.sol
 
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.4;
+pragma solidity >=0.8.4;
 pragma experimental ABIEncoderV2;
 
 /**

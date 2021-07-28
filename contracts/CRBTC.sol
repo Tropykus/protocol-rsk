@@ -52,7 +52,7 @@ contract CRBTC is CToken {
      */
     function mint() external payable {
         (uint256 err, ) = mintInternal(msg.value);
-        requireNoError(err, "mint failed");
+        requireNoError(err, "RC01");
     }
 
     /**
@@ -80,7 +80,7 @@ contract CRBTC is CToken {
      */
     function repayBorrow() external payable {
         (uint256 err, ) = repayBorrowInternal(msg.value);
-        requireNoError(err, "repayBorrow failed");
+        requireNoError(err, "RC02");
     }
 
     /**
@@ -90,7 +90,7 @@ contract CRBTC is CToken {
      */
     function repayBorrowBehalf(address borrower) external payable {
         (uint256 err, ) = repayBorrowBehalfInternal(borrower, msg.value);
-        requireNoError(err, "repayBorrowBehalf failed");
+        requireNoError(err, "RC03");
     }
 
     /**
@@ -109,7 +109,7 @@ contract CRBTC is CToken {
             msg.value,
             cTokenCollateral
         );
-        requireNoError(err, "liquidateBorrow failed");
+        requireNoError(err, "RC04");
     }
 
     /**
@@ -125,7 +125,7 @@ contract CRBTC is CToken {
 
     function internalFallback() public payable {
         (uint256 err, ) = mintInternal(msg.value);
-        requireNoError(err, "mint failed");
+        requireNoError(err, "RC01");
     }
 
     /*** Safe Token ***/
@@ -142,7 +142,7 @@ contract CRBTC is CToken {
         );
         if (interestRateModel.isTropykusInterestRateModel())
             (err, startingBalance) = subUInt(startingBalance, subsidyFund);
-        require(err == MathError.NO_ERROR, "Math error");
+        require(err == MathError.NO_ERROR, "RC05");
         return startingBalance;
     }
 
@@ -158,8 +158,8 @@ contract CRBTC is CToken {
         returns (uint256)
     {
         // Sanity checks
-        require(msg.sender == from, "sender mismatch");
-        require(msg.value == amount, "value mismatch");
+        require(msg.sender == from, "RC06");
+        require(msg.value == amount, "RC07");
         return amount;
     }
 
