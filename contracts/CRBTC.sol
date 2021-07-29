@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.4;
+pragma solidity 0.8.6;
 
 import "./CToken.sol";
 
@@ -81,16 +81,6 @@ contract CRBTC is CToken {
     function repayBorrow() external payable {
         (uint256 err, ) = repayBorrowInternal(msg.value);
         requireNoError(err, "RC02");
-    }
-
-    /**
-     * @notice Sender repays a borrow belonging to borrower
-     * @dev Reverts upon any failure
-     * @param borrower the account with the debt being payed off
-     */
-    function repayBorrowBehalf(address borrower) external payable {
-        (uint256 err, ) = repayBorrowBehalfInternal(borrower, msg.value);
-        requireNoError(err, "RC03");
     }
 
     /**

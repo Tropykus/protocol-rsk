@@ -160,9 +160,6 @@ async function main() {
   console.log(`cRBTC = '${cRBTCdeployed.address}';`);
   // console.log('~~~~~~~~~~~~~~~~~~~~ /MARKETS cTOKENS ~~~~~~~~~~~~~~~~~~~~\n');
 
-  const maximillionContract = await ethers.getContractFactory('Maximillion');
-  const maximillion = await maximillionContract.deploy(cRBTCdeployed.address);
-  console.log(`Maximillion = '${maximillion.address}';`);
   const tropykusLensContract = await ethers.getContractFactory('TropykusLens');
   const tropykusLens = await tropykusLensContract.deploy();
   console.log(`TropykusLens = '${tropykusLens.address}';`);

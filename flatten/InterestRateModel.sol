@@ -1,7 +1,7 @@
 // Dependency file: contracts/CarefulMath.sol
 
 // SPDX-License-Identifier: UNLICENSED
-// pragma solidity >=0.8.4;
+// pragma solidity 0.8.6;
 
 /**
   * @title Careful Math
@@ -90,7 +90,7 @@ contract CarefulMath {
 
 // Dependency file: contracts/ExponentialNoError.sol
 
-// pragma solidity >=0.8.4;
+// pragma solidity 0.8.6;
 
 /**
  * @title Exponential module for storing fixed-precision decimals
@@ -289,7 +289,7 @@ contract ExponentialNoError {
 
 // Dependency file: contracts/Exponential.sol
 
-// pragma solidity >=0.8.4;
+// pragma solidity 0.8.6;
 
 // import "contracts/CarefulMath.sol";
 // import "contracts/ExponentialNoError.sol";
@@ -476,7 +476,7 @@ contract Exponential is CarefulMath, ExponentialNoError {
 
 // Dependency file: contracts/SafeMath.sol
 
-// pragma solidity >=0.8.4;
+// pragma solidity 0.8.6;
 
 // From https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/math/Math.sol
 // Subject to the MIT license.
@@ -666,7 +666,7 @@ library SafeMath {
 
 // Root file: contracts/InterestRateModel.sol
 
-pragma solidity >=0.8.4;
+pragma solidity 0.8.6;
 
 // import "contracts/Exponential.sol";
 // import "contracts/SafeMath.sol";

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.4;
+pragma solidity 0.8.6;
 
 import "./ComptrollerInterface.sol";
 import "./InterestRateModel.sol";
@@ -393,11 +393,6 @@ abstract contract CErc20Interface is CErc20Storage {
     function borrow(uint256 borrowAmount) external virtual returns (uint256);
 
     function repayBorrow(uint256 repayAmount)
-        external
-        virtual
-        returns (uint256);
-
-    function repayBorrowBehalf(address borrower, uint256 repayAmount)
         external
         virtual
         returns (uint256);

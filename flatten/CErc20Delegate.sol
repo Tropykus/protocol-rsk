@@ -1,7 +1,7 @@
 // Dependency file: contracts/ComptrollerInterface.sol
 
 // SPDX-License-Identifier: UNLICENSED
-// pragma solidity >=0.8.4;
+// pragma solidity 0.8.6;
 
 abstract contract ComptrollerInterface {
     /// @notice Indicator that this is a Comptroller contract (for inspection)
@@ -130,7 +130,7 @@ abstract contract ComptrollerInterface {
 
 // Dependency file: contracts/CarefulMath.sol
 
-// pragma solidity >=0.8.4;
+// pragma solidity 0.8.6;
 
 /**
   * @title Careful Math
@@ -219,7 +219,7 @@ contract CarefulMath {
 
 // Dependency file: contracts/ExponentialNoError.sol
 
-// pragma solidity >=0.8.4;
+// pragma solidity 0.8.6;
 
 /**
  * @title Exponential module for storing fixed-precision decimals
@@ -418,7 +418,7 @@ contract ExponentialNoError {
 
 // Dependency file: contracts/Exponential.sol
 
-// pragma solidity >=0.8.4;
+// pragma solidity 0.8.6;
 
 // import "contracts/CarefulMath.sol";
 // import "contracts/ExponentialNoError.sol";
@@ -605,7 +605,7 @@ contract Exponential is CarefulMath, ExponentialNoError {
 
 // Dependency file: contracts/SafeMath.sol
 
-// pragma solidity >=0.8.4;
+// pragma solidity 0.8.6;
 
 // From https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/math/Math.sol
 // Subject to the MIT license.
@@ -795,7 +795,7 @@ library SafeMath {
 
 // Dependency file: contracts/InterestRateModel.sol
 
-// pragma solidity >=0.8.4;
+// pragma solidity 0.8.6;
 
 // import "contracts/Exponential.sol";
 // import "contracts/SafeMath.sol";
@@ -910,7 +910,7 @@ abstract contract InterestRateModel is Exponential {
 
 // Dependency file: contracts/EIP20NonStandardInterface.sol
 
-// pragma solidity >=0.8.4;
+// pragma solidity 0.8.6;
 
 /**
  * @title EIP20NonStandardInterface
@@ -996,7 +996,7 @@ interface EIP20NonStandardInterface {
 
 // Dependency file: contracts/CTokenInterfaces.sol
 
-// pragma solidity >=0.8.4;
+// pragma solidity 0.8.6;
 
 // import "contracts/ComptrollerInterface.sol";
 // import "contracts/InterestRateModel.sol";
@@ -1458,7 +1458,7 @@ abstract contract CDelegateInterface is CDelegationStorage {
 
 // Dependency file: contracts/ErrorReporter.sol
 
-// pragma solidity >=0.8.4;
+// pragma solidity 0.8.6;
 
 contract ComptrollerErrorReporter {
     enum Error {
@@ -1679,7 +1679,7 @@ contract TokenErrorReporter {
 
 // Dependency file: contracts/EIP20Interface.sol
 
-// pragma solidity >=0.8.4;
+// pragma solidity 0.8.6;
 
 /**
  * @title ERC 20 Token Standard Interface
@@ -1762,7 +1762,7 @@ interface EIP20Interface {
 
 // Dependency file: contracts/CToken.sol
 
-// pragma solidity >=0.8.4;
+// pragma solidity 0.8.6;
 
 // import "contracts/ComptrollerInterface.sol";
 // import "contracts/CTokenInterfaces.sol";
@@ -3922,7 +3922,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
 // Dependency file: contracts/CErc20.sol
 
-// pragma solidity >=0.8.4;
+// pragma solidity 0.8.6;
 
 // import "contracts/CToken.sol";
 // import "contracts/CTokenInterfaces.sol";
@@ -4176,7 +4176,7 @@ contract CErc20 is CToken, CErc20Interface {
 
 // Root file: contracts/CErc20Delegate.sol
 
-pragma solidity >=0.8.4;
+pragma solidity 0.8.6;
 
 // import "contracts/CErc20.sol";
 

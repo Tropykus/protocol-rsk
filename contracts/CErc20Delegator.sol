@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.4;
+pragma solidity 0.8.6;
 
 import "./CTokenInterfaces.sol";
 
@@ -152,27 +152,6 @@ contract CErc20Delegator is
     {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature("repayBorrow(uint256)", repayAmount)
-        );
-        return abi.decode(data, (uint256));
-    }
-
-    /**
-     * @notice Sender repays a borrow belonging to borrower
-     * @param borrower the account with the debt being payed off
-     * @param repayAmount The amount to repay
-     * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
-     */
-    function repayBorrowBehalf(address borrower, uint256 repayAmount)
-        external
-        override
-        returns (uint256)
-    {
-        bytes memory data = delegateToImplementation(
-            abi.encodeWithSignature(
-                "repayBorrowBehalf(address,uint256)",
-                borrower,
-                repayAmount
-            )
         );
         return abi.decode(data, (uint256));
     }
