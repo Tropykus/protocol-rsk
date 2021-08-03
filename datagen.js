@@ -22,8 +22,6 @@ fs.writeFileSync('./abis/WhitePaperInterestRateModel.json', contracts.contracts[
 console.log('WhitePaperInterestRateModel.json created');
 fs.writeFileSync('./abis/HurricaneInterestRateModel.json', contracts.contracts['contracts/HurricaneInterestRateModel.sol:HurricaneInterestRateModel'].abi);
 console.log('HurricaneInterestRateModel.json created');
-fs.writeFileSync('./abis/Maximillion.json', contracts.contracts['contracts/Maximillion.sol:Maximillion'].abi);
-console.log('Maximillion.json created');
 fs.writeFileSync('./abis/PriceOracleProxy.json', contracts.contracts['contracts/PriceOracleProxy.sol:PriceOracleProxy'].abi);
 console.log('PriceOracleProxy.json created');
 fs.writeFileSync('./abis/PriceOracleAdapterMoc.json', contracts.contracts['contracts/PriceOracleAdapterMoc.sol:PriceOracleAdapterMoc'].abi);

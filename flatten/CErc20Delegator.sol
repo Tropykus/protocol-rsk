@@ -1394,11 +1394,6 @@ abstract contract CErc20Interface is CErc20Storage {
         virtual
         returns (uint256);
 
-    function repayBorrowBehalf(address borrower, uint256 repayAmount)
-        external
-        virtual
-        returns (uint256);
-
     function liquidateBorrow(
         address borrower,
         uint256 repayAmount,
@@ -1611,27 +1606,6 @@ contract CErc20Delegator is
     {
         bytes memory data = delegateToImplementation(
             abi.encodeWithSignature("repayBorrow(uint256)", repayAmount)
-        );
-        return abi.decode(data, (uint256));
-    }
-
-    /**
-     * @notice Sender repays a borrow belonging to borrower
-     * @param borrower the account with the debt being payed off
-     * @param repayAmount The amount to repay
-     * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
-     */
-    function repayBorrowBehalf(address borrower, uint256 repayAmount)
-        external
-        override
-        returns (uint256)
-    {
-        bytes memory data = delegateToImplementation(
-            abi.encodeWithSignature(
-                "repayBorrowBehalf(address,uint256)",
-                borrower,
-                repayAmount
-            )
         );
         return abi.decode(data, (uint256));
     }

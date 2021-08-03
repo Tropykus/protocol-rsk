@@ -1394,11 +1394,6 @@ abstract contract CErc20Interface is CErc20Storage {
         virtual
         returns (uint256);
 
-    function repayBorrowBehalf(address borrower, uint256 repayAmount)
-        external
-        virtual
-        returns (uint256);
-
     function liquidateBorrow(
         address borrower,
         uint256 repayAmount,

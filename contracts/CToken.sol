@@ -451,9 +451,18 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         if (_totalSupply == 0) {
             return (MathError.NO_ERROR, initialExchangeRateMantissa);
         } else {
+            MathError error;
+            uint256 exchangeRate;
             uint256 totalCash = getCashPrior();
-            return
-                interestRateModel.getExchangeRate(
+            if (interestRateModel.isTropykusInterestRateModel()) {
+                (error, exchangeRate) = tropykusExchangeRateStoredInternal(msg.sender);
+                if (error == MathError.NO_ERROR) {
+                    return (MathError.NO_ERROR, exchangeRate);
+                } else {
+                    return (MathError.NO_ERROR, initialExchangeRateMantissa);
+                }
+            }
+            return interestRateModel.getExchangeRate(
                     totalCash,
                     totalBorrows,
                     totalReserves,
@@ -471,22 +480,11 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             return (MathError.NO_ERROR, initialExchangeRateMantissa);
         } else {
             SupplySnapshot storage supplySnapshot = accountTokens[redeemer];
-            uint256 promisedSupplyRate = supplySnapshot.promisedSupplyRate;
-            Exp memory expectedSupplyRatePerBlock = Exp({
-                mantissa: promisedSupplyRate
-            });
-            (, uint256 delta) = subUInt(
-                accrualBlockNumber,
-                supplySnapshot.suppliedAt
-            );
-            (, Exp memory expectedSupplyRatePerBlockWithDelta) = mulScalar(
-                expectedSupplyRatePerBlock,
-                delta
-            );
-            (, Exp memory interestFactor) = addExp(
-                Exp({mantissa: 1e18}),
-                expectedSupplyRatePerBlockWithDelta
-            );
+            if (supplySnapshot.suppliedAt == 0) {
+                return (MathError.DIVISION_BY_ZERO, 0);
+            }
+            (,uint256 interestFactorMantissa,) = tropykusInterestAccrued(redeemer);
+            Exp memory interestFactor = Exp({mantissa: interestFactorMantissa});
             uint256 currentUnderlying = supplySnapshot.underlyingAmount;
             Exp memory redeemerUnderlying = Exp({mantissa: currentUnderlying});
             (, Exp memory realAmount) = mulExp(
@@ -499,6 +497,37 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             );
             return (MathError.NO_ERROR, exchangeRate.mantissa);
         }
+    }
+
+    function tropykusInterestAccrued(address account) internal view returns (MathError, uint256, uint256) {
+        SupplySnapshot storage supplySnapshot = accountTokens[account];
+        uint256 promisedSupplyRate = supplySnapshot.promisedSupplyRate;
+        Exp memory expectedSupplyRatePerBlock = Exp({
+            mantissa: promisedSupplyRate
+        });
+        (, uint256 delta) = subUInt(
+            accrualBlockNumber,
+            supplySnapshot.suppliedAt
+        );
+        (, Exp memory expectedSupplyRatePerBlockWithDelta) = mulScalar(
+            expectedSupplyRatePerBlock,
+            delta
+        );
+        (, Exp memory interestFactor) = addExp(
+            Exp({mantissa: 1e18}),
+            expectedSupplyRatePerBlockWithDelta
+        );
+        uint256 currentUnderlying = supplySnapshot.underlyingAmount;
+        Exp memory redeemerUnderlying = Exp({mantissa: currentUnderlying});
+        (, Exp memory realAmount) = mulExp(
+            interestFactor,
+            redeemerUnderlying
+        );
+        (, uint256 interestEarned) = subUInt(
+            realAmount.mantissa,
+            currentUnderlying
+        );
+        return (MathError.NO_ERROR, interestFactor.mantissa, interestEarned);
     }
 
     /**
@@ -818,23 +847,10 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         if (accountTokens[minter].tokens > 0) {
             Exp memory updatedUnderlying;
             if (isTropykusInterestRateModel) {
-                Exp memory promisedSupplyRatePerBlock = Exp({
-                    mantissa: accountTokens[minter].promisedSupplyRate
-                });
-                (, uint256 delta) = subUInt(
-                    accrualBlockNumber,
-                    accountTokens[minter].suppliedAt
-                );
-                (, Exp memory promisedSupplyRatePerBlockWithDelta) = mulScalar(
-                    promisedSupplyRatePerBlock,
-                    delta
-                );
-                (, Exp memory interestFactor) = addExp(
-                    Exp({mantissa: 1e18}),
-                    promisedSupplyRatePerBlockWithDelta
-                );
+                (, uint256 interestFactorMantissa,) = tropykusInterestAccrued(minter);
+                Exp memory interestFactor = Exp({ mantissa: interestFactorMantissa});
                 uint256 currentUnderlyingAmount = accountTokens[minter]
-                .underlyingAmount;
+                    .underlyingAmount;
                 MathError mErrorNewAmount;
                 (mErrorNewAmount, updatedUnderlying) = mulExp(
                     Exp({mantissa: currentUnderlyingAmount}),
@@ -952,33 +968,8 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         bool isTropykusInterestRateModel = interestRateModel
         .isTropykusInterestRateModel();
         if (isTropykusInterestRateModel) {
-            uint256 promisedSupplyRate = supplySnapshot.promisedSupplyRate;
-            Exp memory expectedSupplyRatePerBlock = Exp({
-                mantissa: promisedSupplyRate
-            });
-            (, uint256 delta) = subUInt(
-                accrualBlockNumber,
-                supplySnapshot.suppliedAt
-            );
-            (, Exp memory expectedSupplyRatePerBlockWithDelta) = mulScalar(
-                expectedSupplyRatePerBlock,
-                delta
-            );
-            (, Exp memory interestFactor) = addExp(
-                Exp({mantissa: 1e18}),
-                expectedSupplyRatePerBlockWithDelta
-            );
             currentUnderlying = supplySnapshot.underlyingAmount;
-            Exp memory redeemerUnderlying = Exp({mantissa: currentUnderlying});
-            (, Exp memory realAmount) = mulExp(
-                interestFactor,
-                redeemerUnderlying
-            );
-            supplySnapshot.underlyingAmount = realAmount.mantissa;
-            (, interestEarned) = subUInt(
-                realAmount.mantissa,
-                currentUnderlying
-            );
+            (,,interestEarned) = tropykusInterestAccrued(redeemer);
         }
         supplySnapshot.promisedSupplyRate = interestRateModel.getSupplyRate(
             getCashPrior(),
