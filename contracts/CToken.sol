@@ -813,7 +813,11 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 0
             );
         }
-
+        if (interestRateModel.isTropykusInterestRateModel()) {
+            SupplySnapshot storage supplySnapshot = accountTokens[minter];
+            uint256 newTotalSupply = addUInt(supplySnapshot.underlyingAmount, mintAmount);
+            require(newTotalSupply > 1e16, 'CT24');
+        }
         vars.actualMintAmount = doTransferIn(minter, mintAmount);
 
         (vars.mathErr, vars.mintTokens) = divScalarByExpTruncate(
@@ -1228,6 +1232,9 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             totalBorrows,
             borrowAmount
         );
+        if (interestRateModel.isTropykusInterestRateModel()) {
+            require(vars.totalBorrowsNew > 1e16, 'CT25');
+        }
         if (vars.mathErr != MathError.NO_ERROR) {
             return
                 failOpaque(
