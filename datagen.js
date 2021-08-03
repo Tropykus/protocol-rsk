@@ -3,6 +3,7 @@ const fs = require('fs');
 var contracts;
 if (fs.existsSync("./.build/contracts.json")) {
     contracts = JSON.parse(fs.readFileSync("./.build/contracts.json").toString());
+    console.log(contracts.contracts['contracts/Unitroller.sol:Unitroller'].abi);
 } else {
     console.log('Compile the contracts before running this script');
     process.exit()
