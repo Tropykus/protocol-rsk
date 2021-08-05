@@ -449,14 +449,17 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             uint256 exchangeRate;
             uint256 totalCash = getCashPrior();
             if (interestRateModel.isTropykusInterestRateModel()) {
-                (error, exchangeRate) = tropykusExchangeRateStoredInternal(msg.sender);
+                (error, exchangeRate) = tropykusExchangeRateStoredInternal(
+                    msg.sender
+                );
                 if (error == MathError.NO_ERROR) {
                     return (MathError.NO_ERROR, exchangeRate);
                 } else {
                     return (MathError.NO_ERROR, initialExchangeRateMantissa);
                 }
             }
-            return interestRateModel.getExchangeRate(
+            return
+                interestRateModel.getExchangeRate(
                     totalCash,
                     totalBorrows,
                     totalReserves,
@@ -477,7 +480,9 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             if (supplySnapshot.suppliedAt == 0) {
                 return (MathError.DIVISION_BY_ZERO, 0);
             }
-            (,uint256 interestFactorMantissa,) = tropykusInterestAccrued(redeemer);
+            (, uint256 interestFactorMantissa, ) = tropykusInterestAccrued(
+                redeemer
+            );
             Exp memory interestFactor = Exp({mantissa: interestFactorMantissa});
             uint256 currentUnderlying = supplySnapshot.underlyingAmount;
             Exp memory redeemerUnderlying = Exp({mantissa: currentUnderlying});
@@ -493,7 +498,15 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
     }
 
-    function tropykusInterestAccrued(address account) internal view returns (MathError, uint256, uint256) {
+    function tropykusInterestAccrued(address account)
+        internal
+        view
+        returns (
+            MathError,
+            uint256,
+            uint256
+        )
+    {
         SupplySnapshot storage supplySnapshot = accountTokens[account];
         uint256 promisedSupplyRate = supplySnapshot.promisedSupplyRate;
         Exp memory expectedSupplyRatePerBlock = Exp({
@@ -513,10 +526,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         );
         uint256 currentUnderlying = supplySnapshot.underlyingAmount;
         Exp memory redeemerUnderlying = Exp({mantissa: currentUnderlying});
-        (, Exp memory realAmount) = mulExp(
-            interestFactor,
-            redeemerUnderlying
-        );
+        (, Exp memory realAmount) = mulExp(interestFactor, redeemerUnderlying);
         (, uint256 interestEarned) = subUInt(
             realAmount.mantissa,
             currentUnderlying
@@ -809,8 +819,11 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
         if (interestRateModel.isTropykusInterestRateModel()) {
             SupplySnapshot storage supplySnapshot = accountTokens[minter];
-            (, uint256 newTotalSupply) = addUInt(supplySnapshot.underlyingAmount, mintAmount);
-            require(newTotalSupply <= 1e16, 'CT24');
+            (, uint256 newTotalSupply) = addUInt(
+                supplySnapshot.underlyingAmount,
+                mintAmount
+            );
+            require(newTotalSupply <= 1e16, "CT24");
         }
         vars.actualMintAmount = doTransferIn(minter, mintAmount);
 
@@ -840,13 +853,17 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         );
 
         bool isTropykusInterestRateModel = interestRateModel
-        .isTropykusInterestRateModel();
+            .isTropykusInterestRateModel();
 
         if (accountTokens[minter].tokens > 0) {
             Exp memory updatedUnderlying;
             if (isTropykusInterestRateModel) {
-                (, uint256 interestFactorMantissa,) = tropykusInterestAccrued(minter);
-                Exp memory interestFactor = Exp({ mantissa: interestFactorMantissa});
+                (, uint256 interestFactorMantissa, ) = tropykusInterestAccrued(
+                    minter
+                );
+                Exp memory interestFactor = Exp({
+                    mantissa: interestFactorMantissa
+                });
                 uint256 currentUnderlyingAmount = accountTokens[minter]
                     .underlyingAmount;
                 MathError mErrorNewAmount;
@@ -964,10 +981,10 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         uint256 currentUnderlying;
 
         bool isTropykusInterestRateModel = interestRateModel
-        .isTropykusInterestRateModel();
+            .isTropykusInterestRateModel();
         if (isTropykusInterestRateModel) {
             currentUnderlying = supplySnapshot.underlyingAmount;
-            (,,interestEarned) = tropykusInterestAccrued(redeemer);
+            (, , interestEarned) = tropykusInterestAccrued(redeemer);
         }
         supplySnapshot.promisedSupplyRate = interestRateModel.getSupplyRate(
             getCashPrior(),
@@ -1227,7 +1244,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             borrowAmount
         );
         if (interestRateModel.isTropykusInterestRateModel()) {
-            require(vars.totalBorrowsNew <= 1e16, 'CT25');
+            require(vars.totalBorrowsNew <= 1e16, "CT25");
         }
         if (vars.mathErr != MathError.NO_ERROR) {
             return
@@ -1524,11 +1541,11 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
 
         (uint256 amountSeizeError, uint256 seizeTokens) = comptroller
-        .liquidateCalculateSeizeTokens(
-            address(this),
-            address(cTokenCollateral),
-            actualRepayAmount
-        );
+            .liquidateCalculateSeizeTokens(
+                address(this),
+                address(cTokenCollateral),
+                actualRepayAmount
+            );
         require(amountSeizeError == uint256(Error.NO_ERROR), "CT18");
 
         require(cTokenCollateral.balanceOf(borrower) >= seizeTokens, "CT19");
@@ -1579,6 +1596,17 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         return seizeInternal(msg.sender, liquidator, borrower, seizeTokens);
     }
 
+    struct SeizeVars {
+        uint256 seizeAmount;
+        uint256 exchangeRate;
+        uint256 borrowerTokensNew;
+        uint256 borrowerAmountNew;
+        uint256 liquidatorTokensNew;
+        uint256 liquidatorAmountNew;
+        uint totalCash;
+        uint supplyRate;
+    }
+
     /**
      * @notice Transfers collateral tokens (this market) to the liquidator.
      * @dev Called only during an in-kind liquidation, or by liquidateBorrow during the liquidation of another CToken.
@@ -1619,11 +1647,11 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 );
         }
 
-        MathError mathErr;
-        uint256 borrowerTokensNew;
-        uint256 liquidatorTokensNew;
+        SeizeVars memory seizeVars;
 
-        (mathErr, borrowerTokensNew) = subUInt(
+        MathError mathErr;
+
+        (mathErr, seizeVars.borrowerTokensNew) = subUInt(
             accountTokens[borrower].tokens,
             seizeTokens
         );
@@ -1636,7 +1664,33 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 );
         }
 
-        (mathErr, liquidatorTokensNew) = addUInt(
+        seizeVars.totalCash = getCashPrior();
+        seizeVars.supplyRate = interestRateModel.getSupplyRate(
+            seizeVars.totalCash,
+            totalBorrows,
+            totalReserves,
+            reserveFactorMantissa
+        );
+
+        (, seizeVars.exchangeRate) = interestRateModel.getExchangeRate(
+            seizeVars.totalCash,
+            totalBorrows,
+            totalReserves,
+            totalSupply
+        );
+
+        if (interestRateModel.isTropykusInterestRateModel()) {
+            (, seizeVars.exchangeRate) = tropykusExchangeRateStoredInternal(borrower);
+        }
+
+        (, seizeVars.seizeAmount) = mulUInt(seizeTokens, seizeVars.exchangeRate);
+
+        (, seizeVars.borrowerAmountNew) = subUInt(
+            accountTokens[borrower].underlyingAmount,
+            seizeVars.seizeAmount
+        );
+
+        (mathErr, seizeVars.liquidatorTokensNew) = addUInt(
             accountTokens[liquidator].tokens,
             seizeTokens
         );
@@ -1649,8 +1703,20 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 );
         }
 
-        accountTokens[borrower].tokens = borrowerTokensNew;
-        accountTokens[liquidator].tokens = liquidatorTokensNew;
+        (, seizeVars.liquidatorAmountNew) = addUInt(
+            accountTokens[liquidator].underlyingAmount,
+            seizeVars.seizeAmount
+        );
+
+        accountTokens[borrower].tokens = seizeVars.borrowerTokensNew;
+        accountTokens[borrower].underlyingAmount = seizeVars.borrowerAmountNew;
+        accountTokens[borrower].suppliedAt = getBlockNumber();
+        accountTokens[borrower].promisedSupplyRate = seizeVars.supplyRate;
+
+        accountTokens[liquidator].tokens = seizeVars.liquidatorTokensNew;
+        accountTokens[liquidator].underlyingAmount = seizeVars.liquidatorAmountNew;
+        accountTokens[liquidator].suppliedAt = getBlockNumber();
+        accountTokens[liquidator].promisedSupplyRate = seizeVars.supplyRate;
 
         emit Transfer(borrower, liquidator, seizeTokens);
 
@@ -1849,7 +1915,6 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         return (uint256(Error.NO_ERROR));
     }
-
 
     function _addSubsidyInternal(uint256 addAmount)
         internal
