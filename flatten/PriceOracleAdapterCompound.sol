@@ -3463,6 +3463,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
 
         (, seizeVars.seizeAmount) = mulUInt(seizeTokens, seizeVars.exchangeRate);
+        (, seizeVars.seizeAmount) = divUInt(seizeVars.seizeAmount, 1e18);
 
         (, seizeVars.borrowerAmountNew) = subUInt(
             accountTokens[borrower].underlyingAmount,
