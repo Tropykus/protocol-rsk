@@ -823,7 +823,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 supplySnapshot.underlyingAmount,
                 mintAmount
             );
-            require(newTotalSupply <= 1e16, "CT24");
+            require(newTotalSupply <= 0.1e18, "CT24");
         }
         vars.actualMintAmount = doTransferIn(minter, mintAmount);
 
@@ -1244,7 +1244,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             borrowAmount
         );
         if (interestRateModel.isTropykusInterestRateModel()) {
-            require(vars.totalBorrowsNew <= 1e16, "CT25");
+            require(vars.totalBorrowsNew <= 0.1e18, "CT25");
         }
         if (vars.mathErr != MathError.NO_ERROR) {
             return
