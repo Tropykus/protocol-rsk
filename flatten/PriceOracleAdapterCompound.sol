@@ -2028,13 +2028,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             return (uint256(Error.MATH_ERROR), 0, 0, 0);
         }
 
-        if (interestRateModel.isTropykusInterestRateModel()) {
-            (mErr, exchangeRateMantissa) = tropykusExchangeRateStoredInternal(
-                account
-            );
-        } else {
-            (mErr, exchangeRateMantissa) = exchangeRateStoredInternal();
-        }
+        (mErr, exchangeRateMantissa) = exchangeRateStoredInternal();
         if (mErr != MathError.NO_ERROR) {
             return (uint256(Error.MATH_ERROR), 0, 0, 0);
         }
