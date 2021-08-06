@@ -21,7 +21,7 @@ const networks = {
 
 if (process.env.HDWALLET_MNEMONIC) {
   networks.rsktestnet = {
-    url: 'https://node-rbank.testnet.rsk.co/',
+    url: 'https://public-node.testnet.rsk.co',
     blockGasLimit: 6800000,
     gas: 6800000,
     allowUnlimitedContractSize: false,

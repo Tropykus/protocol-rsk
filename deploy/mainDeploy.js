@@ -167,7 +167,7 @@ async function main() {
   const cRIFdeployed = await cErc20Immutable.deploy(rifToken.address, comptrollerDeployed.address, rifInterestRateModel.address, config.initialExchangeRateMantissa, 'Tropykus kRIF', 'kRIF', 18, deployer.address);
   const cDOCdeployed = await cErc20Immutable.deploy(docToken.address, comptrollerDeployed.address, docInterestRateModel.address, config.initialExchangeRateMantissa, 'Tropykus kDOC', 'kDOC', 18, deployer.address);
   const cUSDTdeployed = await cErc20Immutable.deploy(usdtToken.address, comptrollerDeployed.address, usdtInterestRateModel.address, config.initialExchangeRateMantissa, 'Tropykus kUSDT', 'kUSDT', 18, deployer.address);
-  const cRBTCdeployed = await cRBTCContract.deploy(comptrollerDeployed.address, rbtcInterestRateModel.address, config.initialExchangeRateMantissa, 'Tropykus kRBTC', 'cRBTC', 18, deployer.address);
+  const cRBTCdeployed = await cRBTCContract.deploy(comptrollerDeployed.address, rbtcInterestRateModel.address, config.initialExchangeRateMantissa, 'Tropykus kRBTC', 'kRBTC', 18, deployer.address);
   const cSATdeployed = await cRBTCContract.deploy(comptrollerDeployed.address, satInterestRateModel.address, config.initialExchangeRateMantissa, 'Tropykus kSAT', 'kSAT', 18, deployer.address);
   console.log(`cRIF = '${cRIFdeployed.address}';`);
   console.log(`cDOC = '${cDOCdeployed.address}';`);
