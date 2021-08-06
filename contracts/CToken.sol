@@ -7,6 +7,7 @@ import "./ErrorReporter.sol";
 import "./Exponential.sol";
 import "./EIP20Interface.sol";
 import "./InterestRateModel.sol";
+import "./WhitelistInterface.sol";
 
 /**
  * @title tropykus CToken Contract
@@ -14,6 +15,8 @@ import "./InterestRateModel.sol";
  * @author tropykus
  */
 abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
+    address whitelist;
+
     /**
      * @notice Initialize the money market
      * @param comptroller_ The address of the Comptroller
@@ -51,6 +54,17 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         decimals = decimals_;
 
         _notEntered = true;
+    }
+
+    function addWhitelist(address _whitelist) external returns (uint256) {
+        if (msg.sender != admin) {
+            return
+                fail(
+                    Error.UNAUTHORIZED,
+                    FailureInfo.SET_INTEREST_RATE_MODEL_OWNER_CHECK
+                );
+        }
+        whitelist = _whitelist;
     }
 
     /**
@@ -747,6 +761,9 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         nonReentrant
         returns (uint256, uint256)
     {
+        if (WhitelistInterface(whitelist).enabled()) {
+            require(WhitelistInterface(whitelist).exist(msg.sender), "CT26");
+        }
         uint256 error = accrueInterest();
         if (error != uint256(Error.NO_ERROR)) {
             return (
@@ -1603,8 +1620,8 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         uint256 borrowerAmountNew;
         uint256 liquidatorTokensNew;
         uint256 liquidatorAmountNew;
-        uint totalCash;
-        uint supplyRate;
+        uint256 totalCash;
+        uint256 supplyRate;
     }
 
     /**
@@ -1680,10 +1697,15 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         );
 
         if (interestRateModel.isTropykusInterestRateModel()) {
-            (, seizeVars.exchangeRate) = tropykusExchangeRateStoredInternal(borrower);
+            (, seizeVars.exchangeRate) = tropykusExchangeRateStoredInternal(
+                borrower
+            );
         }
 
-        (, seizeVars.seizeAmount) = mulUInt(seizeTokens, seizeVars.exchangeRate);
+        (, seizeVars.seizeAmount) = mulUInt(
+            seizeTokens,
+            seizeVars.exchangeRate
+        );
         (, seizeVars.seizeAmount) = divUInt(seizeVars.seizeAmount, 1e18);
 
         (, seizeVars.borrowerAmountNew) = subUInt(
@@ -1715,7 +1737,8 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         accountTokens[borrower].promisedSupplyRate = seizeVars.supplyRate;
 
         accountTokens[liquidator].tokens = seizeVars.liquidatorTokensNew;
-        accountTokens[liquidator].underlyingAmount = seizeVars.liquidatorAmountNew;
+        accountTokens[liquidator].underlyingAmount = seizeVars
+            .liquidatorAmountNew;
         accountTokens[liquidator].suppliedAt = getBlockNumber();
         accountTokens[liquidator].promisedSupplyRate = seizeVars.supplyRate;
 

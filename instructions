@@ -8,6 +8,8 @@ load = async() => {
     cdoc = await ethers.getContractAt('CErc20Immutable', cDOC, dep);
     cusdt = await ethers.getContractAt('CErc20Immutable', cUSDT, dep);
     crbtc = await ethers.getContractAt('CRBTC', cRBTC, dep);
+    csat = await ethers.getContractAt('CRBTC', cSAT, dep);
+    whitelist = await ethers.getContractAt('Whitelist', Whitelist, dep);
 }
 
 load()
