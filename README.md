@@ -1,10 +1,14 @@
 
-tropykus Protocol
+Tropykus Protocol
 =================
 
-tropykus is an algorithmic distributed protocol deployed on the RSK network. As such, it's main motivation is to allow users to lend crypto currencies as collateral and to borrow crypto assets based on interest rates set by real-time supply and demand smart contracts. The tropykus Protocol is developed using RSK smart contracts for supplying or borrowing assets. Through the cToken contracts, accounts on the blockchain *supply* capital (rBTC or ERC-20 tokens) to receive cTokens or *borrow* assets from the protocol (holding other assets as collateral). The tropykus cToken contracts track these balances and algorithmically set interest rates for borrowers.
+Tropykus Finance offers simple digital lending, borrowing, microsavings and microloans products, focused on emerging economies such as Latin America. We seek to incentivize anyone who owns Bitcoin and USD Tokens to deposit to yield their funds while helping latinamericans to get access to fair loans. To achieve this, we leverage the strengths of  DEFI (Decentralized Finance), such as total control over your funds and your privacy, with better savings interest rates compared with the international markets, and lower loan interest rates compared to what latinamericans can find in the local financial institutions. We work to become a real alternative to the traditional financial system and promote change in developing countries, starting in Latin America.
 
-You can read the protocol documentation at [tropykus.app](https://tropykus.app/docs/introduction)
+You can read the protocol [whitepaper](https://firebasestorage.googleapis.com/v0/b/tropycofinance.appspot.com/o/Tropykus_Protocol%20V4.pdf?alt=media&token=7eb1cb52-ed88-4053-a927-c3d38874a284).
+
+![infographics](https://firebasestorage.googleapis.com/v0/b/tropycofinance.appspot.com/o/Tropykus_How%20it%20works__V6.png?alt=media&token=524a4f2e-7c0b-4722-bf94-92e8b5ffde44)
+
+[Infografía en español](https://firebasestorage.googleapis.com/v0/b/tropycofinance.appspot.com/o/Tropykus_C%C3%B3mo%20funciona_V6.pdf?alt=media&token=4ee2a777-9860-4c53-aa11-51ac94d776bd)
 
 Contracts
 =========
@@ -61,14 +65,6 @@ We detail a few of the core contracts in the tropykus protocol.
   <dd>Library for safely handling Erc20 interaction.</dd>
 </dl>
 
-#### Deployed Networks
-
-| Contract           | Mainnet       | Testnet  |
-| :------------------|:------------- |:-------- |
-| Unitroller (Comptroller Proxy)  | [0x57f3edae1d2a109f0d5e4e6269aca2f532cdbaaa](https://explorer.rsk.co/address/0x57f3edae1d2a109f0d5e4e6269aca2f532cdbaaa?__ctab=Code) | [0x3a983c7597b3ac4fbc3e0cf484d7631d70d04c05](https://explorer.testnet.rsk.co/address/0x3a983c7597b3ac4fbc3e0cf484d7631d70d04c05?__ctab=Code) |
-| cRIF           | [0xb7ff2c56c897562c0aa6747d2679d35f5e937492](https://explorer.rsk.co/address/0xb7ff2c56c897562c0aa6747d2679d35f5e937492?__ctab=Code) | [0x4664d4cbd5104a0e974354724cbc8e0d9bd1aca3](https://explorer.testnet.rsk.co/address/0x4664d4cbd5104a0e974354724cbc8e0d9bd1aca3?__ctab=Code) |
-| cRBTC          | [0x872664a885a1995d754e3666a23fad5c801401c4](https://explorer.rsk.co/address/0x872664a885a1995d754e3666a23fad5c801401c4?__ctab=Code) | [0xc19f0882bf318c9f8767c7d520018888e878417b](https://explorer.testnetrsk.co/address/0xc19f0882bf318c9f8767c7d520018888e878417b?__ctab=Code) |
-| crUSDT         | [0xd256c121a507cadd2687599e27fa45e31b7c3199](https://explorer.rsk.co/address/0xd256c121a507cadd2687599e27fa45e31b7c3199?__ctab=Code) | [0xfd09f3349fdab173d162cd0e4669b591ed5a78fb](https://explorer.testnet.rsk.co/address/0xfd09f3349fdab173d162cd0e4669b591ed5a78fb?__ctab=Code) |
 
 Installation
 ------------
