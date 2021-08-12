@@ -21,7 +21,7 @@ const networks = {
 
 if (process.env.HDWALLET_MNEMONIC) {
   networks.rsktestnet = {
-    url: 'https://public-node.testnet.rsk.co',
+    url: 'https://rsktestnet.tropykus.finance/rsk',
     blockGasLimit: 6800000,
     gas: 6800000,
     allowUnlimitedContractSize: false,
@@ -32,7 +32,7 @@ if (process.env.HDWALLET_MNEMONIC) {
     }
   }
   networks.rskmainnet = {
-    url: 'https://public-node.rsk.co',
+    url: 'https://rsknode-1.tropykus.finance/rsk',
     blockGasLimit: 6800000,
     gas: 6800000,
     allowUnlimitedContractSize: false,
