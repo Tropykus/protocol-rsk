@@ -1015,6 +1015,53 @@ contract ComptrollerG3 is
         }
     }
 
+    function getTotalBorrowsInOtherMarkets(address originMarket)
+        external
+        override
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        uint256 totalBorrows;
+        uint256 oraclePriceMantissa;
+        CToken[] memory assets = allMarkets;
+        for (uint256 i = 0; i < assets.length; i++) {
+            CToken asset = assets[i];
+            if (asset == CToken(originMarket)) continue;
+            Exp memory collateralFactor = Exp({
+                mantissa: markets[address(asset)].collateralFactorMantissa
+            });
+            Exp memory exchangeRate = Exp({
+                mantissa: asset.exchangeRateCurrent()
+            });
+            uint256 assetTotalBorrows = asset.totalBorrowsCurrent();
+            oraclePriceMantissa = oracle.getUnderlyingPrice(asset);
+            if (oraclePriceMantissa == 0) {
+                return (uint256(Error.PRICE_ERROR), 0, 0);
+            }
+            Exp memory oraclePrice = Exp({mantissa: oraclePriceMantissa});
+
+            // Pre-compute a conversion factor from tokens -> ether (normalized price value)
+            Exp memory tokensToDenom = mul_(
+                mul_(collateralFactor, exchangeRate),
+                oraclePrice
+            );
+
+            totalBorrows = mul_ScalarTruncateAddUInt(
+                tokensToDenom,
+                assetTotalBorrows,
+                totalBorrows
+            );
+        }
+        oraclePriceMantissa = oracle.getUnderlyingPrice(CToken(originMarket));
+        if (oraclePriceMantissa == 0) {
+            return (uint256(Error.PRICE_ERROR), 0, 0);
+        }
+        return (uint256(Error.NO_ERROR), totalBorrows, oraclePriceMantissa);
+    }
+
     /**
      * @notice Calculate number of tokens of collateral asset to seize given an underlying amount
      * @dev Used in liquidation (called in cToken.liquidateBorrowFresh)

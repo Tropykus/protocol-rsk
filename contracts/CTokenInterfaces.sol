@@ -94,6 +94,8 @@ contract CTokenStorage {
 
     uint256 public subsidyFund;
 
+    uint256 public marketCapThreshold;
+
     struct SupplySnapshot {
         uint256 tokens;
         uint256 underlyingAmount;
@@ -385,10 +387,7 @@ abstract contract CErc20Interface is CErc20Storage {
 
     function mint(uint256 mintAmount) external virtual returns (uint256);
 
-    function redeem(uint256 redeemAmount)
-        external
-        virtual
-        returns (uint256);
+    function redeem(uint256 redeemAmount) external virtual returns (uint256);
 
     function borrow(uint256 borrowAmount) external virtual returns (uint256);
 

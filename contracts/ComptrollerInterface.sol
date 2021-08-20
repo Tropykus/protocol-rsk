@@ -123,4 +123,13 @@ abstract contract ComptrollerInterface {
         address cTokenCollateral,
         uint256 repayAmount
     ) external view virtual returns (uint256, uint256);
+
+    function getTotalBorrowsInOtherMarkets(address originMarket)
+        external
+        virtual
+        returns (
+            uint256,
+            uint256,
+            uint256
+        );
 }

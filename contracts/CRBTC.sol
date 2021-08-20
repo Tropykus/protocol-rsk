@@ -189,4 +189,8 @@ contract CRBTC is CToken {
     function addSubsidy() external payable {
         _addSubsidyInternal(msg.value);
     }
+
+    function setMarketCapThreshold(uint256 _marketCapThreshold) external {
+        _setMarketCapThresholdInternal(_marketCapThreshold);
+    }
 }

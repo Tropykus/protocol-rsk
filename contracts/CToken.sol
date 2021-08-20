@@ -835,12 +835,30 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             );
         }
         if (interestRateModel.isTropykusInterestRateModel()) {
+            (
+                ,
+                uint256 totalBorrowsInOtherMarketsInUSD,
+                uint256 underlyingPrice
+            ) = comptroller.getTotalBorrowsInOtherMarkets(address(this));
+            (, uint256 limit) = mulUInt(
+                totalBorrowsInOtherMarketsInUSD,
+                marketCapThreshold
+            );
+            (, uint256 totalSupplyInUSD) = mulUInt(
+                totalSupply,
+                vars.exchangeRateMantissa
+            );
+            (, uint256 currentMarketCapInUSD) = mulUInt(
+                totalSupplyInUSD,
+                underlyingPrice
+            );
+            require(limit > currentMarketCapInUSD, "MARKET_CAP_LIMIT");
             SupplySnapshot storage supplySnapshot = accountTokens[minter];
-            (, uint256 newTotalSupply) = addUInt(
+            (, uint256 newSupply) = addUInt(
                 supplySnapshot.underlyingAmount,
                 mintAmount
             );
-            require(newTotalSupply <= 0.1e18, "CT24");
+            require(newSupply <= 0.1e18, "CT24");
         }
         vars.actualMintAmount = doTransferIn(minter, mintAmount);
 
@@ -1938,6 +1956,13 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         emit ReservesAdded(msg.sender, actualAddAmount, totalReservesNew);
 
         return (uint256(Error.NO_ERROR));
+    }
+
+    function _setMarketCapThresholdInternal(uint256 _marketCapThreshold)
+        internal
+        nonReentrant
+    {
+        marketCapThreshold = _marketCapThreshold;
     }
 
     function _addSubsidyInternal(uint256 addAmount)
