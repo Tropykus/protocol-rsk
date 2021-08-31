@@ -56,13 +56,12 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         _notEntered = true;
     }
 
-    function addWhitelist(address _whitelist) external returns (uint256) {
+    function addWhitelist(address _whitelist) external {
         if (msg.sender != admin) {
-            return
-                fail(
-                    Error.UNAUTHORIZED,
-                    FailureInfo.SET_INTEREST_RATE_MODEL_OWNER_CHECK
-                );
+            fail(
+                Error.UNAUTHORIZED,
+                FailureInfo.SET_INTEREST_RATE_MODEL_OWNER_CHECK
+            );
         }
         whitelist = _whitelist;
     }
@@ -841,29 +840,20 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 mintAmount
             );
             require(newSupply <= 0.1e18, "CT24");
-            (
-                ,
-                uint256 totalBorrowsInOtherMarketsInUSD,
-                uint256 underlyingPrice
-            ) = comptroller.getTotalBorrowsInOtherMarkets(address(this));
-            Exp memory limit = mul_(
-                Exp({mantissa: totalBorrowsInOtherMarketsInUSD}),
-                Exp({mantissa: marketCapThreshold})
-            );
+            (, uint256 limitMantissa, uint256 underlyingPrice) = comptroller
+                .getTotalBorrowsInOtherMarkets(address(this));
             (, vars.mintTokens) = divScalarByExpTruncate(
                 mintAmount,
                 Exp({mantissa: vars.exchangeRateMantissa})
             );
-
-            Exp memory totalSupplyInUSD = mul_(
-                Exp({mantissa: add_(totalSupply, vars.mintTokens)}),
-                Exp({mantissa: vars.exchangeRateMantissa})
-            );
             Exp memory currentMarketCapInUSD = mul_(
-                totalSupplyInUSD,
+                mul_(
+                    Exp({mantissa: add_(totalSupply, vars.mintTokens)}),
+                    Exp({mantissa: vars.exchangeRateMantissa})
+                ),
                 Exp({mantissa: underlyingPrice})
             );
-            require(limit.mantissa > currentMarketCapInUSD.mantissa, "ML");
+            require(limitMantissa > currentMarketCapInUSD.mantissa, "CT24");
         }
         vars.actualMintAmount = doTransferIn(minter, mintAmount);
 
@@ -1098,7 +1088,6 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                     );
             }
         }
-        //        }
 
         uint256 allowed = comptroller.redeemAllowed(
             address(this),
@@ -1963,13 +1952,6 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         return (uint256(Error.NO_ERROR));
     }
 
-    function _setMarketCapThresholdInternal(uint256 _marketCapThreshold)
-        internal
-        nonReentrant
-    {
-        marketCapThreshold = _marketCapThreshold;
-    }
-
     function _addSubsidyInternal(uint256 addAmount)
         internal
         nonReentrant
@@ -2003,7 +1985,6 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         emit SubsidyAdded(msg.sender, actualAddAmount, subsidyFundNew);
 
-        /* Return (NO_ERROR, actualAddAmount) */
         return (uint256(Error.NO_ERROR));
     }
 

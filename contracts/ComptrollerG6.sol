@@ -1037,7 +1037,13 @@ contract ComptrollerG6 is
         if (oraclePriceMantissa == 0) {
             return (uint256(Error.PRICE_ERROR), 0, 0);
         }
-        return (uint256(Error.NO_ERROR), totalBorrows, oraclePriceMantissa);
+
+        Exp memory limit = mul_(
+            Exp({mantissa: totalBorrows}),
+            Exp({mantissa: marketCapThresholdMantissa})
+        );
+
+        return (uint256(Error.NO_ERROR), limit.mantissa, oraclePriceMantissa);
     }
 
     /**
@@ -1885,5 +1891,10 @@ contract ComptrollerG6 is
      */
     function getCompAddress() public view virtual returns (address) {
         return 0xc00e94Cb662C3520282E6f5717214004A7f26888;
+    }
+
+    function setMarketCapThreshold(uint256 _marketCapThreshold) external {
+        require(msg.sender == admin, "only admin can set market cap");
+        marketCapThresholdMantissa = _marketCapThreshold;
     }
 }

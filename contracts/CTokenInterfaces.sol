@@ -94,8 +94,6 @@ contract CTokenStorage {
 
     uint256 public subsidyFund;
 
-    uint256 public marketCapThreshold;
-
     struct SupplySnapshot {
         uint256 tokens;
         uint256 underlyingAmount;
