@@ -835,30 +835,35 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             );
         }
         if (interestRateModel.isTropykusInterestRateModel()) {
-            (
-                ,
-                uint256 totalBorrowsInOtherMarketsInUSD,
-                uint256 underlyingPrice
-            ) = comptroller.getTotalBorrowsInOtherMarkets(address(this));
-            (, uint256 limit) = mulUInt(
-                totalBorrowsInOtherMarketsInUSD,
-                marketCapThreshold
-            );
-            (, uint256 totalSupplyInUSD) = mulUInt(
-                totalSupply,
-                vars.exchangeRateMantissa
-            );
-            (, uint256 currentMarketCapInUSD) = mulUInt(
-                totalSupplyInUSD,
-                underlyingPrice
-            );
-            require(limit > currentMarketCapInUSD, "MARKET_CAP_LIMIT");
             SupplySnapshot storage supplySnapshot = accountTokens[minter];
             (, uint256 newSupply) = addUInt(
                 supplySnapshot.underlyingAmount,
                 mintAmount
             );
             require(newSupply <= 0.1e18, "CT24");
+            (
+                ,
+                uint256 totalBorrowsInOtherMarketsInUSD,
+                uint256 underlyingPrice
+            ) = comptroller.getTotalBorrowsInOtherMarkets(address(this));
+            Exp memory limit = mul_(
+                Exp({mantissa: totalBorrowsInOtherMarketsInUSD}),
+                Exp({mantissa: marketCapThreshold})
+            );
+            (, vars.mintTokens) = divScalarByExpTruncate(
+                mintAmount,
+                Exp({mantissa: vars.exchangeRateMantissa})
+            );
+
+            Exp memory totalSupplyInUSD = mul_(
+                Exp({mantissa: add_(totalSupply, vars.mintTokens)}),
+                Exp({mantissa: vars.exchangeRateMantissa})
+            );
+            Exp memory currentMarketCapInUSD = mul_(
+                totalSupplyInUSD,
+                Exp({mantissa: underlyingPrice})
+            );
+            require(limit.mantissa > currentMarketCapInUSD.mantissa, "ML");
         }
         vars.actualMintAmount = doTransferIn(minter, mintAmount);
 
