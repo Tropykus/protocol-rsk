@@ -31,8 +31,18 @@ if (process.env.HDWALLET_MNEMONIC) {
       mnemonic: process.env.HDWALLET_MNEMONIC
     }
   }
-  networks.rskmainnet = {
+  networks.rskmainnet1 = {
     url: 'https://rsknode-1.tropykus.finance/rsk',
+    blockGasLimit: 6800000,
+    gas: 6800000,
+    allowUnlimitedContractSize: false,
+    chainId: 30,
+    accounts: {
+      mnemonic: process.env.HDWALLET_MNEMONIC
+    }
+  }
+  networks.rskmainnet2 = {
+    url: 'https://rsknode-2.tropykus.finance/rsk',
     blockGasLimit: 6800000,
     gas: 6800000,
     allowUnlimitedContractSize: false,
