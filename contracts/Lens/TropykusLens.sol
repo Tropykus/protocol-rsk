@@ -48,7 +48,7 @@ contract TropykusLens {
         address underlyingAssetAddress;
         uint underlyingDecimals;
 
-        if (compareStrings(cToken.symbol(), "cRBTC")) {
+        if (compareStrings(cToken.symbol(), "kRBTC") || compareStrings(cToken.symbol(), "kSAT")) {
             underlyingAssetAddress = address(0);
             underlyingDecimals = 18;
         } else {
@@ -100,7 +100,7 @@ contract TropykusLens {
         uint tokenBalance;
         uint tokenAllowance;
 
-        if (compareStrings(cToken.symbol(), "cRBTC")) {
+        if (compareStrings(cToken.symbol(), "kRBTC") || compareStrings(cToken.symbol(), "kSAT")) {
             tokenBalance = account.balance;
             tokenAllowance = account.balance;
         } else {
