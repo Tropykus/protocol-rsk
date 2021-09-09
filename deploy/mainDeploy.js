@@ -77,7 +77,7 @@ async function main() {
   // console.log(`MultiSig = ${multiSig.address}`);
   const priceOracleProxyContract = await ethers.getContractFactory('PriceOracleProxy');
   const priceOracleProxyDeploy = await priceOracleProxyContract.deploy(deployer.address);
-  console.log(`PriceOracleProxy = '${priceOracleProxyDeploy.address}'`);
+  console.log(`PriceOracleProxy = '${priceOracleProxyDeploy.address}';`);
   const unitrollerContract = await ethers.getContractFactory('Unitroller');
   const unitrollerDeployed = await unitrollerContract.deploy();
   // console.log(`Unitroller = ${unitrollerDeployed.address}`);
@@ -87,7 +87,7 @@ async function main() {
 
   const Whitelist = await ethers.getContractFactory('Whitelist');
   const whitelistDeployed = await Whitelist.deploy();
-  console.log(`Whitelist = '${whitelistDeployed.address}'`);
+  console.log(`Whitelist = '${whitelistDeployed.address}';`);
 
   // console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~ TOKENS ~~~~~~~~~~~~~~~~~~~~~~~~');
   const standardTokenContract = await ethers.getContractFactory('StandardToken');

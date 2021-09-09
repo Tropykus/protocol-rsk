@@ -1392,7 +1392,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             );
         }
 
-        if (repayAmount == type(uint256).max) {
+        if (repayAmount == 0) {
             vars.repayAmount = vars.accountBorrows;
         } else {
             vars.repayAmount = repayAmount;
