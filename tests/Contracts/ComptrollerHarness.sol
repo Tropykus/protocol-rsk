@@ -269,6 +269,18 @@ contract BoolComptroller is ComptrollerInterface {
     uint256 noError = 0;
     uint256 opaqueError = noError + 11; // an arbitrary, opaque error code
 
+    function getTotalBorrowsInOtherMarkets(address originMarket)
+        external
+        override
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        return (0, 0, 0);
+    }
+
     /*** Assets You Are In ***/
 
     function enterMarkets(address[] calldata _cTokens)

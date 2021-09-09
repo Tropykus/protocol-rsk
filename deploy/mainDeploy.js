@@ -251,6 +251,8 @@ async function main() {
   await cRBTC._setReserveFactor(rbtc.reserveFactor);
   await cSAT._setReserveFactor(sat.reserveFactor);
   // console.log(`cRBTC reserveFactor: ${Number(rbtc.reserveFactor) / 1e18}`);
+
+  await comptroller.setMarketCapThreshold(parseEther('0.8'));
 }
 
 main()
