@@ -817,6 +817,8 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             );
         }
 
+        require(accountBorrows[minter].principal == 0, "CT25");
+
         MintLocalVars memory vars;
 
         (
