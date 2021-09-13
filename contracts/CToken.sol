@@ -987,8 +987,6 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         internal
         returns (uint256)
     {
-        require(redeemAmountIn > 0, "CT15");
-
         RedeemLocalVars memory vars;
 
         SupplySnapshot storage supplySnapshot = accountTokens[redeemer];
@@ -1062,7 +1060,12 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             );
         }
 
-        vars.redeemAmount = redeemAmountIn;
+        if (redeemAmountIn == 0) {
+            vars.redeemAmount = supplySnapshot.underlyingAmount;
+            redeemAmountIn = supplySnapshot.underlyingAmount;
+        } else {
+            vars.redeemAmount = redeemAmountIn;
+        }
 
         if (isTropykusInterestRateModel) {
             (, Exp memory num) = mulExp(
