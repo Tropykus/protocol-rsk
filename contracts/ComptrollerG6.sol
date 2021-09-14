@@ -308,6 +308,10 @@ contract ComptrollerG6 is
         minter;
         mintAmount;
 
+        if (oracle.getUnderlyingPrice(CToken(cToken)) == 0) {
+            return uint256(Error.PRICE_ERROR);
+        }
+
         if (!markets[cToken].isListed) {
             return uint256(Error.MARKET_NOT_LISTED);
         }
@@ -361,6 +365,9 @@ contract ComptrollerG6 is
             return allowed;
         }
 
+        if (oracle.getUnderlyingPrice(CToken(cToken)) == 0) {
+            return uint256(Error.PRICE_ERROR);
+        }
         // Keep the flywheel moving
         updateCompSupplyIndex(cToken);
         distributeSupplierComp(cToken, redeemer, false);
@@ -534,6 +541,10 @@ contract ComptrollerG6 is
         payer;
         borrower;
         repayAmount;
+
+        if (oracle.getUnderlyingPrice(CToken(cToken)) == 0) {
+            return uint256(Error.PRICE_ERROR);
+        }
 
         if (!markets[cToken].isListed) {
             return uint256(Error.MARKET_NOT_LISTED);

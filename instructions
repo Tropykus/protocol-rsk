@@ -10,6 +10,7 @@ load = async() => {
     crbtc = await ethers.getContractAt('CRBTC', cRBTC, dep);
     csat = await ethers.getContractAt('CRBTC', cSAT, dep);
     priceOracleProxy = await ethers.getContractAt('PriceOracleProxy', PriceOracleProxy, dep);
+    rbtcOracle = await ethers.getContractAt('MockPriceProviderMoC', RBTCOracle, dep);
     whitelist = await ethers.getContractAt('Whitelist', Whitelist, dep);
 }
 
