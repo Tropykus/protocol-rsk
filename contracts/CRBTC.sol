@@ -149,7 +149,9 @@ contract CRBTC is CToken {
     {
         // Sanity checks
         require(msg.sender == from, "RC06");
-        require(msg.value == amount, "RC07");
+        if (msg.value != 0) {
+            require(msg.value == amount, "RC07");
+        }
         return amount;
     }
 

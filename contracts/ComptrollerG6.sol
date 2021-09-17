@@ -227,7 +227,7 @@ contract ComptrollerG6 is
         CToken cToken = CToken(cTokenAddress);
         /* Get sender tokensHeld and amountOwed underlying from the cToken */
         (uint256 oErr, uint256 tokensHeld, uint256 amountOwed, ) = cToken
-        .getAccountSnapshot(msg.sender);
+            .getAccountSnapshot(msg.sender);
         require(oErr == 0, "exitMarket: getAccountSnapshot failed"); // semi-opaque error code
 
         /* Fail if the sender has a borrow balance */
@@ -308,6 +308,10 @@ contract ComptrollerG6 is
         minter;
         mintAmount;
 
+        if (oracle.getUnderlyingPrice(CToken(cToken)) == 0) {
+            return uint256(Error.PRICE_ERROR);
+        }
+
         if (!markets[cToken].isListed) {
             return uint256(Error.MARKET_NOT_LISTED);
         }
@@ -361,6 +365,9 @@ contract ComptrollerG6 is
             return allowed;
         }
 
+        if (oracle.getUnderlyingPrice(CToken(cToken)) == 0) {
+            return uint256(Error.PRICE_ERROR);
+        }
         // Keep the flywheel moving
         updateCompSupplyIndex(cToken);
         distributeSupplierComp(cToken, redeemer, false);
@@ -388,11 +395,11 @@ contract ComptrollerG6 is
             ,
             uint256 shortfall
         ) = getHypotheticalAccountLiquidityInternal(
-            redeemer,
-            CToken(cToken),
-            redeemTokens,
-            0
-        );
+                redeemer,
+                CToken(cToken),
+                redeemTokens,
+                0
+            );
         if (err != Error.NO_ERROR) {
             return uint256(err);
         }
@@ -534,6 +541,10 @@ contract ComptrollerG6 is
         payer;
         borrower;
         repayAmount;
+
+        if (oracle.getUnderlyingPrice(CToken(cToken)) == 0) {
+            return uint256(Error.PRICE_ERROR);
+        }
 
         if (!markets[cToken].isListed) {
             return uint256(Error.MARKET_NOT_LISTED);
@@ -823,11 +834,11 @@ contract ComptrollerG6 is
             uint256 liquidity,
             uint256 shortfall
         ) = getHypotheticalAccountLiquidityInternal(
-            account,
-            CToken(address(0)),
-            0,
-            0
-        );
+                account,
+                CToken(address(0)),
+                0,
+                0
+            );
 
         return (uint256(err), liquidity, shortfall);
     }
@@ -885,11 +896,11 @@ contract ComptrollerG6 is
             uint256 liquidity,
             uint256 shortfall
         ) = getHypotheticalAccountLiquidityInternal(
-            account,
-            CToken(cTokenModify),
-            redeemTokens,
-            borrowAmount
-        );
+                account,
+                CToken(cTokenModify),
+                redeemTokens,
+                borrowAmount
+            );
         return (uint256(err), liquidity, shortfall);
     }
 
@@ -1006,6 +1017,46 @@ contract ComptrollerG6 is
         }
     }
 
+    function getTotalBorrowsInOtherMarkets(address originMarket)
+        external
+        override
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        uint256 totalBorrows;
+        uint256 oraclePriceMantissa;
+        CToken[] memory assets = allMarkets;
+        for (uint256 i = 0; i < assets.length; i++) {
+            CToken asset = assets[i];
+            if (asset == CToken(originMarket)) continue;
+            uint256 assetTotalBorrows = asset.totalBorrowsCurrent();
+            oraclePriceMantissa = oracle.getUnderlyingPrice(asset);
+            if (oraclePriceMantissa == 0) {
+                return (uint256(Error.PRICE_ERROR), 0, 0);
+            }
+            Exp memory oraclePrice = Exp({mantissa: oraclePriceMantissa});
+            totalBorrows = mul_ScalarTruncateAddUInt(
+                oraclePrice,
+                assetTotalBorrows,
+                totalBorrows
+            );
+        }
+        oraclePriceMantissa = oracle.getUnderlyingPrice(CToken(originMarket));
+        if (oraclePriceMantissa == 0) {
+            return (uint256(Error.PRICE_ERROR), 0, 0);
+        }
+
+        Exp memory limit = mul_(
+            Exp({mantissa: totalBorrows}),
+            Exp({mantissa: marketCapThresholdMantissa})
+        );
+
+        return (uint256(Error.NO_ERROR), limit.mantissa, oraclePriceMantissa);
+    }
+
     /**
      * @notice Calculate number of tokens of collateral asset to seize given an underlying amount
      * @dev Used in liquidation (called in cToken.liquidateBorrowFresh)
@@ -1037,7 +1088,7 @@ contract ComptrollerG6 is
          *   = actualRepayAmount * (liquidationIncentive * priceBorrowed) / (priceCollateral * exchangeRate)
          */
         uint256 exchangeRateMantissa = CToken(cTokenCollateral)
-        .exchangeRateStored(); // Note: reverts on error
+            .exchangeRateStored(); // Note: reverts on error
         uint256 seizeTokens;
         Exp memory numerator;
         Exp memory denominator;
@@ -1851,5 +1902,10 @@ contract ComptrollerG6 is
      */
     function getCompAddress() public view virtual returns (address) {
         return 0xc00e94Cb662C3520282E6f5717214004A7f26888;
+    }
+
+    function setMarketCapThreshold(uint256 _marketCapThreshold) external {
+        require(msg.sender == admin, "only admin can set market cap");
+        marketCapThresholdMantissa = _marketCapThreshold;
     }
 }

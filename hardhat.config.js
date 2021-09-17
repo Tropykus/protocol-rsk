@@ -3,6 +3,10 @@ require("@nomiclabs/hardhat-waffle");
 require('hardhat-contract-sizer');
 require("hardhat-deploy");
 
+const { ethers } = require("ethers");
+
+ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR);
+
 const networks = require('./hardhat.networks')
 
 const config = {
@@ -24,7 +28,8 @@ const config = {
   paths: {
     sources: "./contracts",
     cache: "./cache",
-    artifacts: "./build"
+    artifacts: "./build",
+    tests: "./tests/repayBorrow/"
   },
   networks,
   namedAccounts: {

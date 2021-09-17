@@ -58,4 +58,17 @@ contract MockPriceProviderMoC {
             uint256(rbtcPrice)
         );
     }
+
+    /**
+     * @notice Set a new has state
+     * @param _has bool value for new has state
+     */
+    function setHasState(bool _has) public {
+        require(
+            msg.sender == guardian,
+            "MockPriceProviderMoC: only guardian may set the address"
+        );
+
+        has = _has;
+    }
 }

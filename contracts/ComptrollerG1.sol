@@ -917,6 +917,19 @@ contract ComptrollerG1 is
         }
     }
 
+    function getTotalBorrowsInOtherMarkets(address originMarket)
+        external
+        override
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        originMarket;
+        return (uint256(Error.REJECTION), 0, 0);
+    }
+
     /**
      * @notice Calculate number of tokens of collateral asset to seize given an underlying amount
      * @dev Used in liquidation (called in cToken.liquidateBorrowFresh)

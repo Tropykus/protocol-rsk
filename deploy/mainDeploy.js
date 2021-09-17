@@ -77,17 +77,13 @@ async function main() {
   // console.log(`MultiSig = ${multiSig.address}`);
   const priceOracleProxyContract = await ethers.getContractFactory('PriceOracleProxy');
   const priceOracleProxyDeploy = await priceOracleProxyContract.deploy(deployer.address);
-  console.log(`PriceOracleProxy = '${priceOracleProxyDeploy.address}'`);
+  console.log(`PriceOracleProxy = '${priceOracleProxyDeploy.address}';`);
   const unitrollerContract = await ethers.getContractFactory('Unitroller');
   const unitrollerDeployed = await unitrollerContract.deploy();
   // console.log(`Unitroller = ${unitrollerDeployed.address}`);
   const comptrollerContract = await ethers.getContractFactory('ComptrollerG6');
   const comptrollerDeployed = await comptrollerContract.deploy();
   // console.log(`Comptroller = ${comptrollerDeployed.address}`);
-
-  const Whitelist = await ethers.getContractFactory('Whitelist');
-  const whitelistDeployed = await Whitelist.deploy();
-  console.log(`Whitelist = '${whitelistDeployed.address}'`);
 
   // console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~ TOKENS ~~~~~~~~~~~~~~~~~~~~~~~~');
   const standardTokenContract = await ethers.getContractFactory('StandardToken');
@@ -174,12 +170,7 @@ async function main() {
   console.log(`cUSDT = '${cUSDTdeployed.address}';`);
   console.log(`cRBTC = '${cRBTCdeployed.address}';`);
   console.log(`cSAT = '${cSATdeployed.address}';`);
-  
-  await cRIFdeployed.addWhitelist(whitelistDeployed.address);
-  await cDOCdeployed.addWhitelist(whitelistDeployed.address);
-  await cUSDTdeployed.addWhitelist(whitelistDeployed.address);
-  await cRBTCdeployed.addWhitelist(whitelistDeployed.address);
-  await cSATdeployed.addWhitelist(whitelistDeployed.address);
+
   // console.log('~~~~~~~~~~~~~~~~~~~~ /MARKETS cTOKENS ~~~~~~~~~~~~~~~~~~~~\n');
 
   const tropykusLensContract = await ethers.getContractFactory('TropykusLens');
@@ -251,6 +242,8 @@ async function main() {
   await cRBTC._setReserveFactor(rbtc.reserveFactor);
   await cSAT._setReserveFactor(sat.reserveFactor);
   // console.log(`cRBTC reserveFactor: ${Number(rbtc.reserveFactor) / 1e18}`);
+
+  await comptroller.setMarketCapThreshold(parseEther('0.8'));
 }
 
 main()

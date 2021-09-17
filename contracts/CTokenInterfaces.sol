@@ -385,10 +385,7 @@ abstract contract CErc20Interface is CErc20Storage {
 
     function mint(uint256 mintAmount) external virtual returns (uint256);
 
-    function redeem(uint256 redeemAmount)
-        external
-        virtual
-        returns (uint256);
+    function redeem(uint256 redeemAmount) external virtual returns (uint256);
 
     function borrow(uint256 borrowAmount) external virtual returns (uint256);
 

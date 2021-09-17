@@ -214,7 +214,7 @@ contract ComptrollerG2 is
         CToken cToken = CToken(cTokenAddress);
         /* Get sender tokensHeld and amountOwed underlying from the cToken */
         (uint256 oErr, uint256 tokensHeld, uint256 amountOwed, ) = cToken
-        .getAccountSnapshot(msg.sender);
+            .getAccountSnapshot(msg.sender);
         require(oErr == 0, "exitMarket: getAccountSnapshot failed"); // semi-opaque error code
 
         /* Fail if the sender has a borrow balance */
@@ -366,11 +366,11 @@ contract ComptrollerG2 is
             ,
             uint256 shortfall
         ) = getHypotheticalAccountLiquidityInternal(
-            redeemer,
-            CToken(cToken),
-            redeemTokens,
-            0
-        );
+                redeemer,
+                CToken(cToken),
+                redeemTokens,
+                0
+            );
         if (err != Error.NO_ERROR) {
             return uint256(err);
         }
@@ -786,11 +786,11 @@ contract ComptrollerG2 is
             uint256 liquidity,
             uint256 shortfall
         ) = getHypotheticalAccountLiquidityInternal(
-            account,
-            CToken(address(0)),
-            0,
-            0
-        );
+                account,
+                CToken(address(0)),
+                0,
+                0
+            );
 
         return (uint256(err), liquidity, shortfall);
     }
@@ -848,11 +848,11 @@ contract ComptrollerG2 is
             uint256 liquidity,
             uint256 shortfall
         ) = getHypotheticalAccountLiquidityInternal(
-            account,
-            CToken(cTokenModify),
-            redeemTokens,
-            borrowAmount
-        );
+                account,
+                CToken(cTokenModify),
+                redeemTokens,
+                borrowAmount
+            );
         return (uint256(err), liquidity, shortfall);
     }
 
@@ -986,6 +986,19 @@ contract ComptrollerG2 is
         }
     }
 
+    function getTotalBorrowsInOtherMarkets(address originMarket)
+        external
+        override
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        originMarket;
+        return (uint256(Error.REJECTION), 0, 0);
+    }
+
     /**
      * @notice Calculate number of tokens of collateral asset to seize given an underlying amount
      * @dev Used in liquidation (called in cToken.liquidateBorrowFresh)
@@ -1017,7 +1030,7 @@ contract ComptrollerG2 is
          *   = actualRepayAmount * (liquidationIncentive * priceBorrowed) / (priceCollateral * exchangeRate)
          */
         uint256 exchangeRateMantissa = CToken(cTokenCollateral)
-        .exchangeRateStored(); // Note: reverts on error
+            .exchangeRateStored(); // Note: reverts on error
         uint256 seizeTokens;
         Exp memory numerator;
         Exp memory denominator;

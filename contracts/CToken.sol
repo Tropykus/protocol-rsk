@@ -7,7 +7,6 @@ import "./ErrorReporter.sol";
 import "./Exponential.sol";
 import "./EIP20Interface.sol";
 import "./InterestRateModel.sol";
-import "./WhitelistInterface.sol";
 
 /**
  * @title tropykus CToken Contract
@@ -15,8 +14,6 @@ import "./WhitelistInterface.sol";
  * @author tropykus
  */
 abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
-    address whitelist;
-
     /**
      * @notice Initialize the money market
      * @param comptroller_ The address of the Comptroller
@@ -54,17 +51,6 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         decimals = decimals_;
 
         _notEntered = true;
-    }
-
-    function addWhitelist(address _whitelist) external returns (uint256) {
-        if (msg.sender != admin) {
-            return
-                fail(
-                    Error.UNAUTHORIZED,
-                    FailureInfo.SET_INTEREST_RATE_MODEL_OWNER_CHECK
-                );
-        }
-        whitelist = _whitelist;
     }
 
     /**
@@ -761,9 +747,6 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         nonReentrant
         returns (uint256, uint256)
     {
-        if (WhitelistInterface(whitelist).enabled()) {
-            require(WhitelistInterface(whitelist).exist(msg.sender), "CT26");
-        }
         uint256 error = accrueInterest();
         if (error != uint256(Error.NO_ERROR)) {
             return (
@@ -818,6 +801,8 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             );
         }
 
+        require(accountBorrows[minter].principal == 0, "CT25");
+
         MintLocalVars memory vars;
 
         (
@@ -836,11 +821,25 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
         if (interestRateModel.isTropykusInterestRateModel()) {
             SupplySnapshot storage supplySnapshot = accountTokens[minter];
-            (, uint256 newTotalSupply) = addUInt(
+            (, uint256 newSupply) = addUInt(
                 supplySnapshot.underlyingAmount,
                 mintAmount
             );
-            require(newTotalSupply <= 0.1e18, "CT24");
+            require(newSupply <= 0.1e18, "CT24");
+            (, uint256 limitMantissa, uint256 underlyingPrice) = comptroller
+                .getTotalBorrowsInOtherMarkets(address(this));
+            (, vars.mintTokens) = divScalarByExpTruncate(
+                mintAmount,
+                Exp({mantissa: vars.exchangeRateMantissa})
+            );
+            Exp memory currentMarketCapInUSD = mul_(
+                mul_(
+                    Exp({mantissa: add_(totalSupply, vars.mintTokens)}),
+                    Exp({mantissa: vars.exchangeRateMantissa})
+                ),
+                Exp({mantissa: underlyingPrice})
+            );
+            require(limitMantissa > currentMarketCapInUSD.mantissa, "CT24");
         }
         vars.actualMintAmount = doTransferIn(minter, mintAmount);
 
@@ -974,8 +973,6 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         internal
         returns (uint256)
     {
-        require(redeemAmountIn > 0, "CT15");
-
         RedeemLocalVars memory vars;
 
         SupplySnapshot storage supplySnapshot = accountTokens[redeemer];
@@ -1049,7 +1046,12 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             );
         }
 
-        vars.redeemAmount = redeemAmountIn;
+        if (redeemAmountIn == 0) {
+            vars.redeemAmount = supplySnapshot.underlyingAmount;
+            redeemAmountIn = supplySnapshot.underlyingAmount;
+        } else {
+            vars.redeemAmount = redeemAmountIn;
+        }
 
         if (isTropykusInterestRateModel) {
             (, Exp memory num) = mulExp(
@@ -1075,7 +1077,6 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                     );
             }
         }
-        //        }
 
         uint256 allowed = comptroller.redeemAllowed(
             address(this),
@@ -1380,7 +1381,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             );
         }
 
-        if (repayAmount == type(uint256).max) {
+        if (repayAmount == 0) {
             vars.repayAmount = vars.accountBorrows;
         } else {
             vars.repayAmount = repayAmount;
@@ -1973,7 +1974,6 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         emit SubsidyAdded(msg.sender, actualAddAmount, subsidyFundNew);
 
-        /* Return (NO_ERROR, actualAddAmount) */
         return (uint256(Error.NO_ERROR));
     }
 
