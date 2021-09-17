@@ -7,7 +7,6 @@ import "./ErrorReporter.sol";
 import "./Exponential.sol";
 import "./EIP20Interface.sol";
 import "./InterestRateModel.sol";
-import "./WhitelistInterface.sol";
 
 /**
  * @title tropykus CToken Contract
@@ -15,8 +14,6 @@ import "./WhitelistInterface.sol";
  * @author tropykus
  */
 abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
-    address whitelist;
-
     /**
      * @notice Initialize the money market
      * @param comptroller_ The address of the Comptroller
@@ -54,16 +51,6 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         decimals = decimals_;
 
         _notEntered = true;
-    }
-
-    function addWhitelist(address _whitelist) external {
-        if (msg.sender != admin) {
-            fail(
-                Error.UNAUTHORIZED,
-                FailureInfo.SET_INTEREST_RATE_MODEL_OWNER_CHECK
-            );
-        }
-        whitelist = _whitelist;
     }
 
     /**
@@ -760,9 +747,6 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         nonReentrant
         returns (uint256, uint256)
     {
-        if (WhitelistInterface(whitelist).enabled()) {
-            require(WhitelistInterface(whitelist).exist(msg.sender), "CT26");
-        }
         uint256 error = accrueInterest();
         if (error != uint256(Error.NO_ERROR)) {
             return (

@@ -87,10 +87,6 @@ describe('Repay Borrow Test', async () => {
     // const comptrollerDeployed = await comptrollerContract.deploy();
     // // console.log(`Comptroller = ${comptrollerDeployed.address}`);
   
-    // const Whitelist = await ethers.getContractFactory('Whitelist');
-    // const whitelistDeployed = await Whitelist.deploy();
-    // console.log(`Whitelist = '${whitelistDeployed.address}';`);
-  
     // console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~ TOKENS ~~~~~~~~~~~~~~~~~~~~~~~~');
     // const standardTokenContract = await ethers.getContractFactory('StandardToken');
     // let rifToken = {
@@ -177,11 +173,6 @@ describe('Repay Borrow Test', async () => {
     // console.log(`cRBTC = '${cRBTCdeployed.address}';`);
     // console.log(`cSAT = '${cSATdeployed.address}';`);
     
-    // await cRIFdeployed.addWhitelist(whitelistDeployed.address);
-    // await cDOCdeployed.addWhitelist(whitelistDeployed.address);
-    // await cUSDTdeployed.addWhitelist(whitelistDeployed.address);
-    // await cRBTCdeployed.addWhitelist(whitelistDeployed.address);
-    // await cSATdeployed.addWhitelist(whitelistDeployed.address);
     // // console.log('~~~~~~~~~~~~~~~~~~~~ /MARKETS cTOKENS ~~~~~~~~~~~~~~~~~~~~\n');
   
     // const tropykusLensContract = await ethers.getContractFactory('TropykusLens');

@@ -34,5 +34,3 @@ fs.writeFileSync('./abis/StandardToken.json', JSON.stringify(contracts.contracts
 console.log('StandardToken.json created');
 fs.writeFileSync('./abis/CErc20Immutable.json', JSON.stringify(contracts.contracts['contracts/CErc20Immutable.sol:CErc20Immutable'].abi));
 console.log('CErc20Immutable.json created');
-fs.writeFileSync('./abis/Whitelist.json', JSON.stringify(contracts.contracts['contracts/Whitelist.sol:Whitelist'].abi));
-console.log('CErc20Immutable.json created');

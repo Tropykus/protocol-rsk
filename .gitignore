@@ -1,4 +1,7 @@
 allFiredEvents
+abis/
+flatten/
+deployments/
 .build-temp
 build
 build_
