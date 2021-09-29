@@ -114,7 +114,8 @@ contract CErc20Harness is CErc20Immutable {
         public
         returns (uint256)
     {
-        (uint256 err, ) = super.mintFresh(account, mintAmount);
+        account;
+        (uint256 err, ) = super.mintInternal(mintAmount);
         return err;
     }
 
@@ -412,7 +413,8 @@ contract CErc20DelegateHarness is CErc20Delegate {
         public
         returns (uint256)
     {
-        (uint256 err, ) = super.mintFresh(account, mintAmount);
+        account;
+        (uint256 err, ) = super.mintInternal(mintAmount);
         return err;
     }
 

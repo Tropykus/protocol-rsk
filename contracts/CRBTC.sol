@@ -55,6 +55,68 @@ contract CRBTC is CToken {
         requireNoError(err, "RC01");
     }
 
+    function internalVerifications(address minter, MintLocalVars memory vars)
+        internal
+        override
+    {
+        if (interestRateModel.isTropykusInterestRateModel()) {
+            SupplySnapshot storage supplySnapshot = accountTokens[minter];
+            (, uint256 newSupply) = addUInt(
+                supplySnapshot.underlyingAmount,
+                vars.mintAmount
+            );
+            require(newSupply <= 0.1e18, "CT24");
+            (, uint256 limitMantissa, uint256 underlyingPrice) = comptroller
+                .getTotalBorrowsInOtherMarkets(address(this));
+            (, vars.mintTokens) = divScalarByExpTruncate(
+                vars.mintAmount,
+                Exp({mantissa: vars.exchangeRateMantissa})
+            );
+            Exp memory currentMarketCapInUSD = mul_(
+                mul_(
+                    Exp({mantissa: add_(totalSupply, vars.mintTokens)}),
+                    Exp({mantissa: vars.exchangeRateMantissa})
+                ),
+                Exp({mantissa: underlyingPrice})
+            );
+            require(limitMantissa > currentMarketCapInUSD.mantissa, "CT28");
+        }
+    }
+
+    function internalUnderlyingUpdate(address minter, MintLocalVars memory vars)
+        internal
+        override
+        returns (MintLocalVars memory)
+    {
+        if (accountTokens[minter].tokens > 0) {
+            Exp memory updatedUnderlying;
+            if (interestRateModel.isTropykusInterestRateModel()) {
+                (, uint256 interestFactorMantissa, ) = tropykusInterestAccrued(
+                    minter
+                );
+                Exp memory interestFactor = Exp({
+                    mantissa: interestFactorMantissa
+                });
+                uint256 currentUnderlyingAmount = accountTokens[minter]
+                    .underlyingAmount;
+                MathError mErrorNewAmount;
+                (mErrorNewAmount, updatedUnderlying) = mulExp(
+                    Exp({mantissa: currentUnderlyingAmount}),
+                    interestFactor
+                );
+                require(mErrorNewAmount == MathError.NO_ERROR);
+            } else {
+                super.internalUnderlyingUpdate(minter, vars);
+            }
+            vars.updatedUnderlying = updatedUnderlying.mantissa;
+            (, vars.mintAmount) = addUInt(
+                vars.updatedUnderlying,
+                vars.mintAmount
+            );
+        }
+        return vars;
+    }
+
     /**
      * @notice Sender redeems cTokens in exchange for a specified amount of underlying asset
      * @dev Accrues interest whether or not the operation succeeds, unless reverted

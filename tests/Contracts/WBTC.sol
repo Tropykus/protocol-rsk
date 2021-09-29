@@ -688,6 +688,7 @@ contract WBTCToken is
         returns (bool result)
     {
         StandardToken.approve(_spender, _value);
+        return true;
     }
 
     function decreaseApproval(address _spender, uint256 _subtractedValue)
@@ -696,6 +697,7 @@ contract WBTCToken is
         returns (bool result)
     {
         StandardToken.decreaseApproval(_spender, _subtractedValue);
+        return true;
     }
 
     function increaseApproval(address _spender, uint256 _addedValue)
@@ -704,6 +706,7 @@ contract WBTCToken is
         returns (bool result)
     {
         StandardToken.increaseApproval(_spender, _addedValue);
+        return true;
     }
 
     function transfer(address _to, uint256 _value)
@@ -712,6 +715,7 @@ contract WBTCToken is
         returns (bool result)
     {
         BasicToken.transfer(_to, _value);
+        return true;
     }
 
     function transferFrom(
@@ -724,6 +728,7 @@ contract WBTCToken is
         returns (bool)
     {
         StandardToken.transferFrom(_from, _to, _value);
+        return true;
     }
 
     function transferOwnership(address _newOwner)

@@ -740,71 +740,24 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
      * @notice Sender supplies assets into the market and receives cTokens in exchange
      * @dev Accrues interest whether or not the operation succeeds, unless reverted
      * @param mintAmount The amount of the underlying asset to supply
-     * @return (uint, uint) An error code (0=success, otherwise a failure, see ErrorReporter.sol), and the actual mint amount.
+     * @return (uint256, uint256) An error code (0=success, otherwise a failure, see ErrorReporter.sol), and the actual mint amount.
      */
     function mintInternal(uint256 mintAmount)
         internal
         nonReentrant
         returns (uint256, uint256)
     {
-        uint256 error = accrueInterest();
+        uint256 error;
+        MintLocalVars memory vars;
+        vars.mintAmount = mintAmount;
+        error = accrueInterest();
         if (error != uint256(Error.NO_ERROR)) {
             return (
                 fail(Error(error), FailureInfo.MINT_ACCRUE_INTEREST_FAILED),
                 0
             );
         }
-        return mintFresh(msg.sender, mintAmount);
-    }
-
-    struct MintLocalVars {
-        Error err;
-        MathError mathErr;
-        uint256 exchangeRateMantissa;
-        uint256 mintTokens;
-        uint256 totalSupplyNew;
-        uint256 accountTokensNew;
-        uint256 actualMintAmount;
-    }
-
-    /**
-     * @notice User supplies assets into the market and receives cTokens in exchange
-     * @dev Assumes interest has already been accrued up to the current block
-     * @param minter The address of the account which is supplying the assets
-     * @param mintAmount The amount of the underlying asset to supply
-     * @return (uint, uint) An error code (0=success, otherwise a failure, see ErrorReporter.sol), and the actual mint amount.
-     */
-    function mintFresh(address minter, uint256 mintAmount)
-        internal
-        returns (uint256, uint256)
-    {
-        uint256 allowed = comptroller.mintAllowed(
-            address(this),
-            minter,
-            mintAmount
-        );
-        if (allowed != 0) {
-            return (
-                failOpaque(
-                    Error.COMPTROLLER_REJECTION,
-                    FailureInfo.MINT_COMPTROLLER_REJECTION,
-                    allowed
-                ),
-                0
-            );
-        }
-
-        if (accrualBlockNumber != getBlockNumber()) {
-            return (
-                fail(Error.MARKET_NOT_FRESH, FailureInfo.MINT_FRESHNESS_CHECK),
-                0
-            );
-        }
-
-        require(accountBorrows[minter].principal == 0, "CT25");
-
-        MintLocalVars memory vars;
-
+        commonVerifications(msg.sender, mintAmount);
         (
             vars.mathErr,
             vars.exchangeRateMantissa
@@ -819,29 +772,57 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 0
             );
         }
-        if (interestRateModel.isTropykusInterestRateModel()) {
-            SupplySnapshot storage supplySnapshot = accountTokens[minter];
-            (, uint256 newSupply) = addUInt(
-                supplySnapshot.underlyingAmount,
-                mintAmount
-            );
-            require(newSupply <= 0.1e18, "CT24");
-            (, uint256 limitMantissa, uint256 underlyingPrice) = comptroller
-                .getTotalBorrowsInOtherMarkets(address(this));
-            (, vars.mintTokens) = divScalarByExpTruncate(
-                mintAmount,
-                Exp({mantissa: vars.exchangeRateMantissa})
-            );
-            Exp memory currentMarketCapInUSD = mul_(
-                mul_(
-                    Exp({mantissa: add_(totalSupply, vars.mintTokens)}),
-                    Exp({mantissa: vars.exchangeRateMantissa})
-                ),
-                Exp({mantissa: underlyingPrice})
-            );
-            require(limitMantissa > currentMarketCapInUSD.mantissa, "CT24");
-        }
-        vars.actualMintAmount = doTransferIn(minter, mintAmount);
+        internalVerifications(msg.sender, vars);
+        (error, vars) = mintFresh(msg.sender, vars);
+        vars = internalUnderlyingUpdate(msg.sender, vars);
+        writeMintLocalVars(msg.sender, vars);
+        return (uint256(Error.NO_ERROR), vars.accountTokensNew);
+    }
+
+    struct MintLocalVars {
+        Error err;
+        MathError mathErr;
+        uint256 exchangeRateMantissa;
+        uint256 mintTokens;
+        uint256 totalSupplyNew;
+        uint256 accountTokensNew;
+        uint256 actualMintAmount;
+        uint256 mintAmount;
+        uint256 updatedUnderlying;
+        uint256 currentSupplyRate;
+    }
+
+    function commonVerifications(address minter, uint256 mintAmount) internal {
+        uint256 allowed = comptroller.mintAllowed(
+            address(this),
+            minter,
+            mintAmount
+        );
+        require(allowed == 0);
+        require(accrualBlockNumber == getBlockNumber());
+        require(accountBorrows[minter].principal == 0, "CT25");
+    }
+
+    function internalVerifications(address minter, MintLocalVars memory vars)
+        internal
+        virtual
+    {
+        minter;
+        vars;
+    }
+
+    /**
+     * @notice User supplies assets into the market and receives cTokens in exchange
+     * @dev Assumes interest has already been accrued up to the current block
+     * @param minter The address of the account which is supplying the assets
+     * @param vars The MintLocalVars where the amount is kept
+     * @return (uint, MintLocalVars) An error code (0=success, otherwise a failure, see ErrorReporter.sol), and the actual mint amount.
+     */
+    function mintFresh(address minter, MintLocalVars memory vars)
+        internal
+        returns (uint256, MintLocalVars memory)
+    {
+        vars.actualMintAmount = doTransferIn(minter, vars.mintAmount);
 
         (vars.mathErr, vars.mintTokens) = divScalarByExpTruncate(
             vars.actualMintAmount,
@@ -861,75 +842,52 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         );
         require(vars.mathErr == MathError.NO_ERROR, "CT14");
 
-        uint256 currentSupplyRate = interestRateModel.getSupplyRate(
+        vars.currentSupplyRate = interestRateModel.getSupplyRate(
             getCashPrior(),
             totalBorrows,
             totalReserves,
             reserveFactorMantissa
         );
 
-        bool isTropykusInterestRateModel = interestRateModel
-            .isTropykusInterestRateModel();
-
-        if (accountTokens[minter].tokens > 0) {
-            Exp memory updatedUnderlying;
-            if (isTropykusInterestRateModel) {
-                (, uint256 interestFactorMantissa, ) = tropykusInterestAccrued(
-                    minter
-                );
-                Exp memory interestFactor = Exp({
-                    mantissa: interestFactorMantissa
-                });
-                uint256 currentUnderlyingAmount = accountTokens[minter]
-                    .underlyingAmount;
-                MathError mErrorNewAmount;
-                (mErrorNewAmount, updatedUnderlying) = mulExp(
-                    Exp({mantissa: currentUnderlyingAmount}),
-                    interestFactor
-                );
-                if (mErrorNewAmount != MathError.NO_ERROR) {
-                    return (
-                        failOpaque(
-                            Error.MATH_ERROR,
-                            FailureInfo.MINT_EXCHANGE_CALCULATION_FAILED,
-                            uint256(mErrorNewAmount)
-                        ),
-                        0
-                    );
-                }
-            } else {
-                uint256 currentTokens = accountTokens[minter].tokens;
-                MathError mErrorUpdatedUnderlying;
-                (mErrorUpdatedUnderlying, updatedUnderlying) = mulExp(
-                    Exp({mantissa: currentTokens}),
-                    Exp({mantissa: vars.exchangeRateMantissa})
-                );
-                if (mErrorUpdatedUnderlying != MathError.NO_ERROR) {
-                    return (
-                        failOpaque(
-                            Error.MATH_ERROR,
-                            FailureInfo.MINT_EXCHANGE_CALCULATION_FAILED,
-                            uint256(mErrorUpdatedUnderlying)
-                        ),
-                        0
-                    );
-                }
-            }
-            (, mintAmount) = addUInt(updatedUnderlying.mantissa, mintAmount);
-        }
-
-        totalSupply = vars.totalSupplyNew;
-        accountTokens[minter] = SupplySnapshot({
-            tokens: vars.accountTokensNew,
-            underlyingAmount: mintAmount,
-            suppliedAt: accrualBlockNumber,
-            promisedSupplyRate: currentSupplyRate
-        });
-
         emit Mint(minter, vars.actualMintAmount, vars.mintTokens);
         emit Transfer(address(this), minter, vars.mintTokens);
 
-        return (uint256(Error.NO_ERROR), vars.actualMintAmount);
+        return (uint256(Error.NO_ERROR), vars);
+    }
+
+    function internalUnderlyingUpdate(address minter, MintLocalVars memory vars)
+        internal
+        virtual
+        returns (MintLocalVars memory)
+    {
+        Exp memory updatedUnderlying;
+        if (accountTokens[minter].tokens > 0) {
+            uint256 currentTokens = accountTokens[minter].tokens;
+            MathError mErrorUpdatedUnderlying;
+            (mErrorUpdatedUnderlying, updatedUnderlying) = mulExp(
+                Exp({mantissa: currentTokens}),
+                Exp({mantissa: vars.exchangeRateMantissa})
+            );
+            require(mErrorUpdatedUnderlying == MathError.NO_ERROR);
+            vars.updatedUnderlying = updatedUnderlying.mantissa;
+            (, vars.mintAmount) = addUInt(
+                vars.updatedUnderlying,
+                vars.mintAmount
+            );
+        }
+        return vars;
+    }
+
+    function writeMintLocalVars(address minter, MintLocalVars memory vars)
+        internal
+    {
+        totalSupply = vars.totalSupplyNew;
+        accountTokens[minter] = SupplySnapshot({
+            tokens: vars.accountTokensNew,
+            underlyingAmount: vars.mintAmount,
+            suppliedAt: accrualBlockNumber,
+            promisedSupplyRate: vars.currentSupplyRate
+        });
     }
 
     /**

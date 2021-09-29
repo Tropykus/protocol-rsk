@@ -271,6 +271,7 @@ contract BoolComptroller is ComptrollerInterface {
 
     function getTotalBorrowsInOtherMarkets(address originMarket)
         external
+        pure
         override
         returns (
             uint256,
@@ -278,6 +279,7 @@ contract BoolComptroller is ComptrollerInterface {
             uint256
         )
     {
+        originMarket;
         return (0, 0, 0);
     }
 

@@ -104,7 +104,8 @@ contract CRBTCHarness is CRBTC {
         public
         returns (uint256)
     {
-        (uint256 err, ) = super.mintFresh(account, mintAmount);
+        account;
+        (uint256 err, ) = super.mintInternal(mintAmount);
         return err;
     }
 

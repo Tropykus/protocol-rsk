@@ -988,6 +988,7 @@ contract ComptrollerG2 is
 
     function getTotalBorrowsInOtherMarkets(address originMarket)
         external
+        pure
         override
         returns (
             uint256,
