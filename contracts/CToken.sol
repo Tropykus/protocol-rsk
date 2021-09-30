@@ -757,7 +757,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 0
             );
         }
-        commonVerifications(msg.sender, mintAmount);
+        mintCommonVerifications(msg.sender, mintAmount);
         (
             vars.mathErr,
             vars.exchangeRateMantissa
@@ -772,9 +772,9 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 0
             );
         }
-        internalVerifications(msg.sender, vars);
+        mintInternalVerifications(msg.sender, vars);
         (error, vars) = mintFresh(msg.sender, vars);
-        vars = internalUnderlyingUpdate(msg.sender, vars);
+        vars = mintInternalUnderlyingUpdate(msg.sender, vars);
         writeMintLocalVars(msg.sender, vars);
         return (uint256(Error.NO_ERROR), vars.accountTokensNew);
     }
@@ -792,7 +792,9 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         uint256 currentSupplyRate;
     }
 
-    function commonVerifications(address minter, uint256 mintAmount) internal {
+    function mintCommonVerifications(address minter, uint256 mintAmount)
+        internal
+    {
         uint256 allowed = comptroller.mintAllowed(
             address(this),
             minter,
@@ -803,10 +805,10 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         require(accountBorrows[minter].principal == 0, "CT25");
     }
 
-    function internalVerifications(address minter, MintLocalVars memory vars)
-        internal
-        virtual
-    {
+    function mintInternalVerifications(
+        address minter,
+        MintLocalVars memory vars
+    ) internal virtual {
         minter;
         vars;
     }
@@ -855,11 +857,10 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         return (uint256(Error.NO_ERROR), vars);
     }
 
-    function internalUnderlyingUpdate(address minter, MintLocalVars memory vars)
-        internal
-        virtual
-        returns (MintLocalVars memory)
-    {
+    function mintInternalUnderlyingUpdate(
+        address minter,
+        MintLocalVars memory vars
+    ) internal virtual returns (MintLocalVars memory) {
         Exp memory updatedUnderlying;
         if (accountTokens[minter].tokens > 0) {
             uint256 currentTokens = accountTokens[minter].tokens;
@@ -1133,12 +1134,16 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         nonReentrant
         returns (uint256)
     {
+        BorrowLocalVars memory vars;
+        vars.borrowAmount = borrowAmount;
         uint256 error = accrueInterest();
         if (error != uint256(Error.NO_ERROR)) {
             return
                 fail(Error(error), FailureInfo.BORROW_ACCRUE_INTEREST_FAILED);
         }
-        return borrowFresh(payable(msg.sender), borrowAmount);
+        vars = borrowCommonValidations(payable(msg.sender), vars);
+        vars = borrowInternalValidations(payable(msg.sender), vars);
+        return borrowFresh(payable(msg.sender), vars);
     }
 
     struct BorrowLocalVars {
@@ -1146,92 +1151,61 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         uint256 accountBorrows;
         uint256 accountBorrowsNew;
         uint256 totalBorrowsNew;
+        uint256 borrowAmount;
     }
 
-    /**
-     * @notice Users borrow assets from the protocol to their own address
-     * @param borrowAmount The amount of the underlying asset to borrow
-     * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
-     */
-    function borrowFresh(address payable borrower, uint256 borrowAmount)
-        internal
-        returns (uint256)
-    {
+    function borrowCommonValidations(
+        address payable borrower,
+        BorrowLocalVars memory vars
+    ) internal returns (BorrowLocalVars memory) {
         uint256 allowed = comptroller.borrowAllowed(
             address(this),
             borrower,
-            borrowAmount
+            vars.borrowAmount
         );
-        if (allowed != 0) {
-            return
-                failOpaque(
-                    Error.COMPTROLLER_REJECTION,
-                    FailureInfo.BORROW_COMPTROLLER_REJECTION,
-                    allowed
-                );
-        }
-
-        if (accrualBlockNumber != getBlockNumber()) {
-            return
-                fail(
-                    Error.MARKET_NOT_FRESH,
-                    FailureInfo.BORROW_FRESHNESS_CHECK
-                );
-        }
-
-        if (getCashPrior() < borrowAmount) {
-            return
-                fail(
-                    Error.TOKEN_INSUFFICIENT_CASH,
-                    FailureInfo.BORROW_CASH_NOT_AVAILABLE
-                );
-        }
-
-        BorrowLocalVars memory vars;
+        require(allowed == 0);
+        require(accrualBlockNumber == getBlockNumber());
+        require(getCashPrior() >= vars.borrowAmount);
 
         (vars.mathErr, vars.accountBorrows) = borrowBalanceStoredInternal(
             borrower
         );
-        if (vars.mathErr != MathError.NO_ERROR) {
-            return
-                failOpaque(
-                    Error.MATH_ERROR,
-                    FailureInfo.BORROW_ACCUMULATED_BALANCE_CALCULATION_FAILED,
-                    uint256(vars.mathErr)
-                );
-        }
+        require(vars.mathErr == MathError.NO_ERROR);
 
         (vars.mathErr, vars.accountBorrowsNew) = addUInt(
             vars.accountBorrows,
-            borrowAmount
+            vars.borrowAmount
         );
-        if (vars.mathErr != MathError.NO_ERROR) {
-            return
-                failOpaque(
-                    Error.MATH_ERROR,
-                    FailureInfo
-                        .BORROW_NEW_ACCOUNT_BORROW_BALANCE_CALCULATION_FAILED,
-                    uint256(vars.mathErr)
-                );
-        }
+        require(vars.mathErr == MathError.NO_ERROR);
 
         (vars.mathErr, vars.totalBorrowsNew) = addUInt(
             totalBorrows,
-            borrowAmount
+            vars.borrowAmount
         );
-        if (interestRateModel.isTropykusInterestRateModel()) {
-            require(vars.totalBorrowsNew <= 0.1e18, "CT25");
-        }
-        if (vars.mathErr != MathError.NO_ERROR) {
-            return
-                failOpaque(
-                    Error.MATH_ERROR,
-                    FailureInfo.BORROW_NEW_TOTAL_BALANCE_CALCULATION_FAILED,
-                    uint256(vars.mathErr)
-                );
-        }
+        require(vars.mathErr == MathError.NO_ERROR);
 
-        doTransferOut(borrower, borrowAmount);
+        return vars;
+    }
+
+    function borrowInternalValidations(
+        address payable borrower,
+        BorrowLocalVars memory vars
+    ) internal virtual returns (BorrowLocalVars memory) {
+        borrower;
+        return vars;
+    }
+
+    /**
+     * @notice Users borrow assets from the protocol to their own address
+     * @param borrower The borrower address
+     * @param vars BorrowLocalVars struct where computed borrow vars are
+     * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
+     */
+    function borrowFresh(address payable borrower, BorrowLocalVars memory vars)
+        internal
+        returns (uint256)
+    {
+        doTransferOut(borrower, vars.borrowAmount);
 
         accountBorrows[borrower].principal = vars.accountBorrowsNew;
         accountBorrows[borrower].interestIndex = borrowIndex;
@@ -1239,7 +1213,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         emit Borrow(
             borrower,
-            borrowAmount,
+            vars.borrowAmount,
             vars.accountBorrowsNew,
             vars.totalBorrowsNew
         );

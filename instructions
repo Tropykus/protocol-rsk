@@ -3,9 +3,11 @@ load = async() => {
     comptroller = await ethers.getContractAt('ComptrollerG6', Comptroller, dep);
     rif = await ethers.getContractAt('StandardToken', RIF, dep);
     doc = await ethers.getContractAt('StandardToken', DOC, dep);
+    rdoc = await ethers.getContractAt('StandardToken', RDOC, dep);
     usdt = await ethers.getContractAt('StandardToken', USDT, dep);
     crif = await ethers.getContractAt('CErc20Immutable', cRIF, dep);
     cdoc = await ethers.getContractAt('CErc20Immutable', cDOC, dep);
+    crdoc = await ethers.getContractAt('CRDOC', cRDOC, dep);
     cusdt = await ethers.getContractAt('CErc20Immutable', cUSDT, dep);
     crbtc = await ethers.getContractAt('CRBTC', cRBTC, dep);
     csat = await ethers.getContractAt('CRBTC', cSAT, dep);

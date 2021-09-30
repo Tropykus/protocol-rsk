@@ -43,15 +43,12 @@ contract CRDOC is CErc20 {
         admin = admin_;
     }
 
-    function internalVerifications(address minter, MintLocalVars memory vars)
-        internal
-        view
-        override {
-            SupplySnapshot storage supplySnapshot = accountTokens[minter];
-            (, uint256 newSupply) = addUInt(
-                supplySnapshot.underlyingAmount,
-                vars.mintAmount
-            );
-            require(newSupply <= 1000e18, "CT30");
-        }
+    function borrowInternalValidations(
+        address payable borrower,
+        BorrowLocalVars memory vars
+    ) internal pure override returns (BorrowLocalVars memory) {
+        borrower;
+        require(vars.totalBorrowsNew <= 1000e18, "CT25");
+        return vars;
+    }
 }

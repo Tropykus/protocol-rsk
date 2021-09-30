@@ -154,7 +154,8 @@ contract CErc20Harness is CErc20Immutable {
         public
         returns (uint256)
     {
-        return borrowFresh(account, borrowAmount);
+        account;
+        return borrowInternal(borrowAmount);
     }
 
     function harnessRepayBorrowFresh(
@@ -453,7 +454,8 @@ contract CErc20DelegateHarness is CErc20Delegate {
         public
         returns (uint256)
     {
-        return borrowFresh(account, borrowAmount);
+        account;
+        return borrowInternal(borrowAmount);
     }
 
     function harnessRepayBorrowFresh(

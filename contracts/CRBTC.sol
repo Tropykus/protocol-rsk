@@ -55,10 +55,10 @@ contract CRBTC is CToken {
         requireNoError(err, "RC01");
     }
 
-    function internalVerifications(address minter, MintLocalVars memory vars)
-        internal
-        override
-    {
+    function mintInternalVerifications(
+        address minter,
+        MintLocalVars memory vars
+    ) internal override {
         if (interestRateModel.isTropykusInterestRateModel()) {
             SupplySnapshot storage supplySnapshot = accountTokens[minter];
             (, uint256 newSupply) = addUInt(
@@ -83,11 +83,10 @@ contract CRBTC is CToken {
         }
     }
 
-    function internalUnderlyingUpdate(address minter, MintLocalVars memory vars)
-        internal
-        override
-        returns (MintLocalVars memory)
-    {
+    function mintInternalUnderlyingUpdate(
+        address minter,
+        MintLocalVars memory vars
+    ) internal override returns (MintLocalVars memory) {
         if (accountTokens[minter].tokens > 0) {
             Exp memory updatedUnderlying;
             if (interestRateModel.isTropykusInterestRateModel()) {
@@ -106,7 +105,7 @@ contract CRBTC is CToken {
                 );
                 require(mErrorNewAmount == MathError.NO_ERROR);
             } else {
-                super.internalUnderlyingUpdate(minter, vars);
+                super.mintInternalUnderlyingUpdate(minter, vars);
             }
             vars.updatedUnderlying = updatedUnderlying.mantissa;
             (, vars.mintAmount) = addUInt(
@@ -134,6 +133,17 @@ contract CRBTC is CToken {
      */
     function borrow(uint256 borrowAmount) external returns (uint256) {
         return borrowInternal(borrowAmount);
+    }
+
+    function borrowInternalValidations(
+        address payable borrower,
+        BorrowLocalVars memory vars
+    ) internal view override returns (BorrowLocalVars memory) {
+        borrower;
+        if (interestRateModel.isTropykusInterestRateModel()) {
+            require(vars.totalBorrowsNew <= 0.1e18, "CT25");
+        }
+        return vars;
     }
 
     /**

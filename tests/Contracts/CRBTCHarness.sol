@@ -144,7 +144,8 @@ contract CRBTCHarness is CRBTC {
         public
         returns (uint256)
     {
-        return borrowFresh(account, borrowAmount);
+        account;
+        return borrowInternal(borrowAmount);
     }
 
     function harnessRepayBorrowFresh(
