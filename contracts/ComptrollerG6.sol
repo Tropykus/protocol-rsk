@@ -1019,6 +1019,7 @@ contract ComptrollerG6 is
 
     function getTotalBorrowsInOtherMarkets(address originMarket)
         external
+        view
         override
         returns (
             uint256,
@@ -1032,7 +1033,7 @@ contract ComptrollerG6 is
         for (uint256 i = 0; i < assets.length; i++) {
             CToken asset = assets[i];
             if (asset == CToken(originMarket)) continue;
-            uint256 assetTotalBorrows = asset.totalBorrowsCurrent();
+            uint256 assetTotalBorrows = asset.totalBorrows();
             oraclePriceMantissa = oracle.getUnderlyingPrice(asset);
             if (oraclePriceMantissa == 0) {
                 return (uint256(Error.PRICE_ERROR), 0, 0);
