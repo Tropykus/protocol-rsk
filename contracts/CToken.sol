@@ -499,7 +499,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     }
 
     function tropykusInterestAccrued(address account)
-        internal
+        public
         view
         returns (
             MathError,
