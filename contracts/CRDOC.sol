@@ -48,7 +48,7 @@ contract CRDOC is CErc20 {
         BorrowLocalVars memory vars
     ) internal pure override returns (BorrowLocalVars memory) {
         borrower;
-        require(vars.totalBorrowsNew <= 1000e18, "CT25");
+        require(vars.totalBorrowsNew <= 1000e18, "RD1");
         return vars;
     }
 }

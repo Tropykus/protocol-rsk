@@ -52,7 +52,7 @@ contract CRBTC is CToken {
      */
     function mint() external payable {
         (uint256 err, ) = mintInternal(msg.value);
-        requireNoError(err, "RC01");
+        requireNoError(err, "R1");
     }
 
     function mintInternalVerifications(
@@ -65,7 +65,7 @@ contract CRBTC is CToken {
                 supplySnapshot.underlyingAmount,
                 vars.mintAmount
             );
-            require(newSupply <= 0.1e18, "CT24");
+            require(newSupply <= 0.1e18, "R8");
             (, uint256 limitMantissa, uint256 underlyingPrice) = comptroller
                 .getTotalBorrowsInOtherMarkets(address(this));
             (, vars.mintTokens) = divScalarByExpTruncate(
@@ -79,7 +79,7 @@ contract CRBTC is CToken {
                 ),
                 Exp({mantissa: underlyingPrice})
             );
-            require(limitMantissa > currentMarketCapInUSD.mantissa, "CT28");
+            require(limitMantissa > currentMarketCapInUSD.mantissa, "R9");
         }
     }
 
@@ -141,7 +141,7 @@ contract CRBTC is CToken {
     ) internal view override returns (BorrowLocalVars memory) {
         borrower;
         if (interestRateModel.isTropykusInterestRateModel()) {
-            require(vars.totalBorrowsNew <= 0.1e18, "CT25");
+            require(vars.totalBorrowsNew <= 0.1e18, "R3");
         }
         return vars;
     }
@@ -152,7 +152,7 @@ contract CRBTC is CToken {
      */
     function repayBorrow() external payable {
         (uint256 err, ) = repayBorrowInternal(msg.value);
-        requireNoError(err, "RC02");
+        requireNoError(err, "R2");
     }
 
     /**
@@ -171,7 +171,7 @@ contract CRBTC is CToken {
             msg.value,
             cTokenCollateral
         );
-        requireNoError(err, "RC04");
+        requireNoError(err, "R4");
     }
 
     /**
@@ -187,7 +187,7 @@ contract CRBTC is CToken {
 
     function internalFallback() public payable {
         (uint256 err, ) = mintInternal(msg.value);
-        requireNoError(err, "RC01");
+        requireNoError(err, "R1");
     }
 
     /*** Safe Token ***/
@@ -204,7 +204,7 @@ contract CRBTC is CToken {
         );
         if (interestRateModel.isTropykusInterestRateModel())
             (err, startingBalance) = subUInt(startingBalance, subsidyFund);
-        require(err == MathError.NO_ERROR, "RC05");
+        require(err == MathError.NO_ERROR, "R5");
         return startingBalance;
     }
 
@@ -220,9 +220,9 @@ contract CRBTC is CToken {
         returns (uint256)
     {
         // Sanity checks
-        require(msg.sender == from, "RC06");
+        require(msg.sender == from, "R6");
         if (msg.value != 0) {
-            require(msg.value == amount, "RC07");
+            require(msg.value == amount, "R7");
         }
         return amount;
     }
