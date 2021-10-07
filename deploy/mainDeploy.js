@@ -97,22 +97,27 @@ async function main() {
 
   // console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~ TOKENS ~~~~~~~~~~~~~~~~~~~~~~~~');
   const standardTokenContract = await ethers.getContractFactory('StandardToken');
+
   let rifToken = {
-    address: namedAccounts.rif[chainId],
+    address: '0xc370cd19517b5a8a9f6df0958679e8cd4874c048',
   };
   let docToken = {
-    address: namedAccounts.doc[chainId],
+    address: '0x494154243ac77c6ab90dfa0d4d42dd411e1df5f3',
   };
   let usdtToken = {
-    address: namedAccounts.usdt[chainId],
+    address: '0xcf5137f039578cb10070b91bb30fd3d260bcddde',
   };
-  if (chainId !== 31 && chainId !== 30) {
-    rifToken = await standardTokenContract.deploy(parseEther('2000000'), 'Test RIF Tropykus', 18, 'tRIF');
-    await rifToken.deployTransaction.wait();
-  }
+  let rdocToken = {
+    address: '0xc486ac998afbf1b477533dda94d950bd2190ceb5',
+  };
+
+  // if (chainId !== 31 && chainId !== 30) {
+  rifToken = await standardTokenContract.deploy(parseEther('2000000'), 'Test RIF Tropykus', 18, 'tRIF');
+  await rifToken.deployTransaction.wait();
+  // }
   docToken = await standardTokenContract.deploy(parseEther('2000000'), 'Test DOC Tropykus', 18, 'tDOC');
   await docToken.deployTransaction.wait();
-  const rdocToken = await standardTokenContract.deploy(parseEther('2000000'), 'Test RDOC Tropykus', 18, 'tRDOC');
+  rdocToken = await standardTokenContract.deploy(parseEther('2000000'), 'Test RDOC Tropykus', 18, 'tRDOC');
   await rdocToken.deployTransaction.wait();
   usdtToken = await standardTokenContract.deploy(parseEther('2000000'), 'Test rUSDT Tropykus', 18, 'trUSDT');
   await usdtToken.deployTransaction.wait();
@@ -124,23 +129,23 @@ async function main() {
 
   // console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~ ORACLES ~~~~~~~~~~~~~~~~~~~~~~~~');
   const mockPriceProviderMoC = await ethers.getContractFactory('MockPriceProviderMoC');
-  let rifOracle = {
-    address: namedAccounts.rifOracle[chainId],
-  };
-  let rbtcOracle = {
-    address: namedAccounts.rbtcOracle[chainId],
-  };
-  if (chainId !== 31 && chainId !== 30) {
-    rifOracle = await mockPriceProviderMoC.deploy(deployer.address, parseEther('0.33'));
-    await rifOracle.deployTransaction.wait();
-    rbtcOracle = await mockPriceProviderMoC.deploy(deployer.address, parseEther('34000'));
-    await rbtcOracle.deployTransaction.wait();
-  }
-  const docOracle = await mockPriceProviderMoC.deploy(deployer.address, parseEther('1.1'));
+  // let rifOracle = {
+  //   address: namedAccounts.rifOracle[chainId],
+  // };
+  // let rbtcOracle = {
+  //   address: namedAccounts.rbtcOracle[chainId],
+  // };
+  // if (chainId !== 31 && chainId !== 30) {
+  const rifOracle = await mockPriceProviderMoC.deploy(deployer.address, parseEther('0.252'));
+  await rifOracle.deployTransaction.wait();
+  const rbtcOracle = await mockPriceProviderMoC.deploy(deployer.address, parseEther('54556.9'));
+  await rbtcOracle.deployTransaction.wait();
+  // }
+  const docOracle = await mockPriceProviderMoC.deploy(deployer.address, parseEther('1'));
   await docOracle.deployTransaction.wait();
-  const rdocOracle = await mockPriceProviderMoC.deploy(deployer.address, parseEther('9.9998'));
+  const rdocOracle = await mockPriceProviderMoC.deploy(deployer.address, parseEther('1'));
   await rdocOracle.deployTransaction.wait();
-  const usdtOracle = await mockPriceProviderMoC.deploy(deployer.address, parseEther('1.05'));
+  const usdtOracle = await mockPriceProviderMoC.deploy(deployer.address, parseEther('1'));
   await usdtOracle.deployTransaction.wait();
   console.log(`RIFOracle = '${rifOracle.address}';`);
   console.log(`RBTCOracle = '${rbtcOracle.address}';`);
