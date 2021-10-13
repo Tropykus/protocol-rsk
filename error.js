@@ -196,6 +196,28 @@ load = async () => {
         console.log(`Detail: ${detail} | (Check the associated detail) | ${comptrollerError[detail]}`);
         console.log('===========================');
     });
+
+    comptroller.on('Algo', (redeemer, redeemTokens, shortfall) => {
+        console.log('=== Comptroller Algo ===');
+        console.log(`Redeemer: ${redeemer}`);
+        console.log(`Redeem Tokens: ${Number(redeemTokens)/1e18}`);
+        console.log(`shortfall: ${Number(shortfall)/1e18}`);
+        console.log('===========================');
+    });
+
+    crbtc.on('ExchangeRate', (exchangeRate, amount) => {
+        console.log('=== CRBTC ExchangeRate ===');
+        console.log(`Exchange Rate: ${Number(exchangeRate)/1e18}`);
+        console.log(`Amount: ${Number(amount)/1e18}`);
+        console.log('===========================');
+    });
+
+    cdoc.on('ExchangeRate', (exchangeRate, amount) => {
+        console.log('=== CDOC ExchangeRate ===');
+        console.log(`Exchange Rate: ${Number(exchangeRate)/1e18}`);
+        console.log(`Amount: ${Number(amount)/1e18}`);
+        console.log('===========================');
+    });
 };
 
 load();

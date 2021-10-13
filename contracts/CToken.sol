@@ -827,6 +827,8 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         uint256 newSubsidyFund;
     }
 
+    event ExchangeRate(uint exchangeRate, uint amount);
+
     /**
      * @notice User redeems cTokens in exchange for the underlying asset
      * @dev Assumes interest has already been accrued up to the current block
@@ -905,8 +907,12 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
 
         if (redeemAmountIn == 0) {
-            vars.redeemAmount = supplySnapshot.underlyingAmount;
-            redeemAmountIn = supplySnapshot.underlyingAmount;
+            (, vars.redeemAmount) = mulScalarTruncate(
+                Exp({mantissa: vars.exchangeRateMantissa}),
+                supplySnapshot.tokens
+            );
+            redeemAmountIn = vars.redeemAmount;
+            emit ExchangeRate(vars.exchangeRateMantissa, vars.redeemAmount);
         } else {
             vars.redeemAmount = redeemAmountIn;
         }
@@ -941,7 +947,14 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             redeemer,
             vars.redeemTokens
         );
-        require(allowed == 0);
+        if (allowed != 0) {
+            return
+                failOpaque(
+                    Error.COMPTROLLER_REJECTION,
+                    FailureInfo.REDEEM_COMPTROLLER_REJECTION,
+                    allowed
+                );
+        }
 
         require(accrualBlockNumber == getBlockNumber());
 
@@ -1626,7 +1639,7 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         returns (uint256)
     {
         uint256 error = accrueInterest();
-        require (error == uint256(Error.NO_ERROR));
+        require(error == uint256(Error.NO_ERROR));
         return _setInterestRateModelFresh(newInterestRateModel);
     }
 
@@ -1642,8 +1655,8 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     {
         InterestRateModel oldInterestRateModel;
 
-        require (msg.sender == admin);
-        require (accrualBlockNumber == getBlockNumber());
+        require(msg.sender == admin);
+        require(accrualBlockNumber == getBlockNumber());
 
         oldInterestRateModel = interestRateModel;
 

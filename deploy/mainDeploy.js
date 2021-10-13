@@ -70,6 +70,7 @@ async function main() {
         optimal: parseEther('0.5'),
         borrowRateSlope: parseEther('0.04'),
         supplyRateSlope: parseEther('0.02'),
+        initialSubsidy: parseEther('1'),
       },
     },
   };
@@ -280,6 +281,7 @@ async function main() {
   await cUSDT._setReserveFactor(usdt.reserveFactor).then((tx) => tx.wait());
   await cRBTC._setReserveFactor(rbtc.reserveFactor).then((tx) => tx.wait());
   await cSAT._setReserveFactor(sat.reserveFactor).then((tx) => tx.wait());
+  await cSAT.addSubsidy({ value: sat.initialSubsidy }).then((tx) => tx.wait());
 
   await comptroller.setMarketCapThreshold(parseEther('0.8')).then((tx) => tx.wait());
   console.log('// Finished')
