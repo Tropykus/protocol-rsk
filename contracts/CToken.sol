@@ -827,8 +827,6 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         uint256 newSubsidyFund;
     }
 
-    event ExchangeRate(uint exchangeRate, uint amount);
-
     /**
      * @notice User redeems cTokens in exchange for the underlying asset
      * @dev Assumes interest has already been accrued up to the current block
@@ -912,7 +910,6 @@ abstract contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 supplySnapshot.tokens
             );
             redeemAmountIn = vars.redeemAmount;
-            emit ExchangeRate(vars.exchangeRateMantissa, vars.redeemAmount);
         } else {
             vars.redeemAmount = redeemAmountIn;
         }

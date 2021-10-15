@@ -1,4 +1,4 @@
-load = async() => {
+load = async () => {
     [dep, alice, bob, eve] = await ethers.getSigners();
     comptroller = await ethers.getContractAt('ComptrollerG6', Comptroller, dep);
     rif = await ethers.getContractAt('StandardToken', RIF, dep);
@@ -13,6 +13,8 @@ load = async() => {
     csat = await ethers.getContractAt('CRBTC', cSAT, dep);
     priceOracleProxy = await ethers.getContractAt('PriceOracleProxy', PriceOracleProxy, dep);
     rbtcOracle = await ethers.getContractAt('MockPriceProviderMoC', RBTCOracle, dep);
+    mkts = await comptroller.getAllMarkets();
+    users = [dep, alice, bob, eve];
 }
 
-load()
+load();

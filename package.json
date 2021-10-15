@@ -40,7 +40,8 @@
     "table": "^6.0.3"
   },
   "dependencies": {
-    "eth-saddle": "^0.1.21"
+    "eth-saddle": "^0.1.21",
+    "lodash": "^4.17.21"
   },
   "resolutions": {
     "scrypt.js": "https://registry.npmjs.org/@compound-finance/ethereumjs-wallet/-/ethereumjs-wallet-0.6.3.tgz",

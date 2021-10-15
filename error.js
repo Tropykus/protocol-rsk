@@ -218,6 +218,14 @@ load = async () => {
         console.log(`Amount: ${Number(amount)/1e18}`);
         console.log('===========================');
     });
+
+    cdoc.on('Mint', (minter, mintAmount, mintTokens) => {
+        console.log('=== CDOC Mint ===');
+        console.log(`Minter: ${minter}`);
+        console.log(`Mint Amount: ${Number(mintAmount)/1e18}`);
+        console.log(`CDOCs Minted: ${Number(mintTokens)/1e18}`);
+        console.log('===========================');
+    })
 };
 
 load();
