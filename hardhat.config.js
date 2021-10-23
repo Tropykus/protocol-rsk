@@ -7,7 +7,7 @@ const networks = require('./hardhat.networks')
 const config = {
   defaultNetwork: "hardhat",
   solidity: {
-    version: "0.5.17",
+    version: "0.5.16",
     settings: {
       optimizer: {
         enabled: true,
