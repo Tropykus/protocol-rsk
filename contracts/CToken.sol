@@ -82,8 +82,12 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         uint256 tokens
     ) internal returns (uint256) {
         /* Fail if transfer not allowed */
-        uint256 allowed =
-            comptroller.transferAllowed(address(this), src, dst, tokens);
+        uint256 allowed = comptroller.transferAllowed(
+            address(this),
+            src,
+            dst,
+            tokens
+        );
         if (allowed != 0) {
             return
                 failOpaque(
@@ -227,8 +231,10 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
      */
     function balanceOfUnderlying(address owner) external returns (uint256) {
         Exp memory exchangeRate = Exp({mantissa: exchangeRateCurrent()});
-        (MathError mErr, uint256 balance) =
-            mulScalarTruncate(exchangeRate, accountTokens[owner].tokens);
+        (MathError mErr, uint256 balance) = mulScalarTruncate(
+            exchangeRate,
+            accountTokens[owner].tokens
+        );
         require(mErr == MathError.NO_ERROR, "balance could not be calculated");
         return balance;
     }
@@ -501,23 +507,31 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         } else {
             SupplySnapshot storage supplySnapshot = accountTokens[redeemer];
             uint256 promisedSupplyRate = supplySnapshot.promisedSupplyRate;
-            Exp memory expectedSupplyRatePerBlock =
-                Exp({mantissa: promisedSupplyRate});
-            (, uint256 delta) =
-                subUInt(accrualBlockNumber, supplySnapshot.suppliedAt);
-            (, Exp memory expectedSupplyRatePerBlockWithDelta) =
-                mulScalar(expectedSupplyRatePerBlock, delta);
-            (, Exp memory interestFactor) =
-                addExp(
-                    Exp({mantissa: 1e18}),
-                    expectedSupplyRatePerBlockWithDelta
-                );
+            Exp memory expectedSupplyRatePerBlock = Exp({
+                mantissa: promisedSupplyRate
+            });
+            (, uint256 delta) = subUInt(
+                accrualBlockNumber,
+                supplySnapshot.suppliedAt
+            );
+            (, Exp memory expectedSupplyRatePerBlockWithDelta) = mulScalar(
+                expectedSupplyRatePerBlock,
+                delta
+            );
+            (, Exp memory interestFactor) = addExp(
+                Exp({mantissa: 1e18}),
+                expectedSupplyRatePerBlockWithDelta
+            );
             uint256 currentUnderlying = supplySnapshot.underlyingAmount;
             Exp memory redeemerUnderlying = Exp({mantissa: currentUnderlying});
-            (, Exp memory realAmount) =
-                mulExp(interestFactor, redeemerUnderlying);
-            (, Exp memory exchangeRate) =
-                getExp(realAmount.mantissa, supplySnapshot.tokens);
+            (, Exp memory realAmount) = mulExp(
+                interestFactor,
+                redeemerUnderlying
+            );
+            (, Exp memory exchangeRate) = getExp(
+                realAmount.mantissa,
+                supplySnapshot.tokens
+            );
             return (MathError.NO_ERROR, exchangeRate.mantissa);
         }
     }
@@ -552,20 +566,21 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         uint256 borrowIndexPrior = borrowIndex;
 
         /* Calculate the current borrow interest rate */
-        uint256 borrowRateMantissa =
-            interestRateModel.getBorrowRate(
-                cashPrior,
-                borrowsPrior,
-                reservesPrior
-            );
+        uint256 borrowRateMantissa = interestRateModel.getBorrowRate(
+            cashPrior,
+            borrowsPrior,
+            reservesPrior
+        );
         require(
             borrowRateMantissa <= borrowRateMaxMantissa,
             "borrow rate is absurdly high"
         );
 
         /* Calculate the number of blocks elapsed since the last accrual */
-        (MathError mathErr, uint256 blockDelta) =
-            subUInt(currentBlockNumber, accrualBlockNumberPrior);
+        (MathError mathErr, uint256 blockDelta) = subUInt(
+            currentBlockNumber,
+            accrualBlockNumberPrior
+        );
         require(
             mathErr == MathError.NO_ERROR,
             "could not calculate block delta"
@@ -703,19 +718,17 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         uint256 interestAccumulated
     ) internal view returns (MathError mathErr, uint256 totalReservesNew) {
         uint256 newReserveFactorMantissa;
-        uint256 utilizationRate =
-            interestRateModel.utilizationRate(
-                cashPrior,
-                borrowsPrior,
-                reservesPrior
-            );
-        uint256 expectedSupplyRate =
-            interestRateModel.getSupplyRate(
-                cashPrior,
-                borrowsPrior,
-                reservesPrior,
-                reserveFactorMantissa
-            );
+        uint256 utilizationRate = interestRateModel.utilizationRate(
+            cashPrior,
+            borrowsPrior,
+            reservesPrior
+        );
+        uint256 expectedSupplyRate = interestRateModel.getSupplyRate(
+            cashPrior,
+            borrowsPrior,
+            reservesPrior,
+            reserveFactorMantissa
+        );
         if (
             interestRateModel.isAboveOptimal(
                 cashPrior,
@@ -751,7 +764,6 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
     }
 
-
     /**
      * @notice Sender supplies assets into the market and receives cTokens in exchange
      * @dev Accrues interest whether or not the operation succeeds, unless reverted
@@ -780,6 +792,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         MathError mathErr;
         uint256 exchangeRateMantissa;
         uint256 mintTokens;
+        uint256 mintAmount;
         uint256 totalSupplyNew;
         uint256 accountTokensNew;
         uint256 actualMintAmount;
@@ -797,8 +810,11 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         returns (uint256, uint256)
     {
         /* Fail if mint not allowed */
-        uint256 allowed =
-            comptroller.mintAllowed(address(this), minter, mintAmount);
+        uint256 allowed = comptroller.mintAllowed(
+            address(this),
+            minter,
+            mintAmount
+        );
         if (allowed != 0) {
             return (
                 failOpaque(
@@ -834,6 +850,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 0
             );
         }
+        vars.mintAmount = mintAmount;
+        mintInternalVerifications(minter, vars);
 
         /////////////////////////
         // EFFECTS & INTERACTIONS
@@ -886,36 +904,36 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             "MINT_NEW_ACCOUNT_BALANCE_CALCULATION_FAILED"
         );
 
-        uint256 currentSupplyRate =
-            interestRateModel.getSupplyRate(
-                getCashPrior(),
-                totalBorrows,
-                totalReserves,
-                reserveFactorMantissa
-            );
+        uint256 currentSupplyRate = interestRateModel.getSupplyRate(
+            getCashPrior(),
+            totalBorrows,
+            totalReserves,
+            reserveFactorMantissa
+        );
 
-        bool isTropykusInterestRateModel =
-            interestRateModel.isTropykusInterestRateModel();
+        bool isTropykusInterestRateModel = interestRateModel
+            .isTropykusInterestRateModel();
 
         if (accountTokens[minter].tokens > 0) {
             Exp memory updatedUnderlying;
             if (isTropykusInterestRateModel) {
-                Exp memory promisedSupplyRatePerBlock =
-                    Exp({mantissa: accountTokens[minter].promisedSupplyRate});
-                (, uint256 delta) =
-                    subUInt(
-                        accrualBlockNumber,
-                        accountTokens[minter].suppliedAt
-                    );
-                (, Exp memory promisedSupplyRatePerBlockWithDelta) =
-                    mulScalar(promisedSupplyRatePerBlock, delta);
-                (, Exp memory interestFactor) =
-                    addExp(
-                        Exp({mantissa: 1e18}),
-                        promisedSupplyRatePerBlockWithDelta
-                    );
-                uint256 currentUnderlyingAmount =
-                    accountTokens[minter].underlyingAmount;
+                Exp memory promisedSupplyRatePerBlock = Exp({
+                    mantissa: accountTokens[minter].promisedSupplyRate
+                });
+                (, uint256 delta) = subUInt(
+                    accrualBlockNumber,
+                    accountTokens[minter].suppliedAt
+                );
+                (, Exp memory promisedSupplyRatePerBlockWithDelta) = mulScalar(
+                    promisedSupplyRatePerBlock,
+                    delta
+                );
+                (, Exp memory interestFactor) = addExp(
+                    Exp({mantissa: 1e18}),
+                    promisedSupplyRatePerBlockWithDelta
+                );
+                uint256 currentUnderlyingAmount = accountTokens[minter]
+                    .underlyingAmount;
                 MathError mErrorNewAmount;
                 (mErrorNewAmount, updatedUnderlying) = mulExp(
                     Exp({mantissa: currentUnderlyingAmount}),
@@ -970,6 +988,14 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         // comptroller.mintVerify(address(this), minter, vars.actualMintAmount, vars.mintTokens);
 
         return (uint256(Error.NO_ERROR), vars.actualMintAmount);
+    }
+
+    function mintInternalVerifications(
+        address minter,
+        MintLocalVars memory vars
+    ) internal {
+        minter;
+        vars;
     }
 
     /**
@@ -1065,25 +1091,31 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         uint256 subsidyFundPortion;
         uint256 currentUnderlying;
 
-        bool isTropykusInterestRateModel =
-            interestRateModel.isTropykusInterestRateModel();
+        bool isTropykusInterestRateModel = interestRateModel
+            .isTropykusInterestRateModel();
         if (isTropykusInterestRateModel) {
             uint256 promisedSupplyRate = supplySnapshot.promisedSupplyRate;
-            Exp memory expectedSupplyRatePerBlock =
-                Exp({mantissa: promisedSupplyRate});
-            (, uint256 delta) =
-                subUInt(accrualBlockNumber, supplySnapshot.suppliedAt);
-            (, Exp memory expectedSupplyRatePerBlockWithDelta) =
-                mulScalar(expectedSupplyRatePerBlock, delta);
-            (, Exp memory interestFactor) =
-                addExp(
-                    Exp({mantissa: 1e18}),
-                    expectedSupplyRatePerBlockWithDelta
-                );
+            Exp memory expectedSupplyRatePerBlock = Exp({
+                mantissa: promisedSupplyRate
+            });
+            (, uint256 delta) = subUInt(
+                accrualBlockNumber,
+                supplySnapshot.suppliedAt
+            );
+            (, Exp memory expectedSupplyRatePerBlockWithDelta) = mulScalar(
+                expectedSupplyRatePerBlock,
+                delta
+            );
+            (, Exp memory interestFactor) = addExp(
+                Exp({mantissa: 1e18}),
+                expectedSupplyRatePerBlockWithDelta
+            );
             currentUnderlying = supplySnapshot.underlyingAmount;
             Exp memory redeemerUnderlying = Exp({mantissa: currentUnderlying});
-            (, Exp memory realAmount) =
-                mulExp(interestFactor, redeemerUnderlying);
+            (, Exp memory realAmount) = mulExp(
+                interestFactor,
+                redeemerUnderlying
+            );
             supplySnapshot.underlyingAmount = realAmount.mantissa;
             (, interestEarned) = subUInt(
                 realAmount.mantissa,
@@ -1105,29 +1137,31 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 totalReserves
             )
         ) {
-            uint256 borrowRate =
-                interestRateModel.getBorrowRate(
-                    getCashPrior(),
-                    totalBorrows,
-                    totalReserves
-                );
+            uint256 borrowRate = interestRateModel.getBorrowRate(
+                getCashPrior(),
+                totalBorrows,
+                totalReserves
+            );
 
-            uint256 utilizationRate =
-                interestRateModel.utilizationRate(
-                    getCashPrior(),
-                    totalBorrows,
-                    totalReserves
-                );
+            uint256 utilizationRate = interestRateModel.utilizationRate(
+                getCashPrior(),
+                totalBorrows,
+                totalReserves
+            );
 
-            (, uint256 estimatedEarning) =
-                mulScalarTruncate(Exp({mantissa: borrowRate}), utilizationRate);
+            (, uint256 estimatedEarning) = mulScalarTruncate(
+                Exp({mantissa: borrowRate}),
+                utilizationRate
+            );
 
             (, subsidyFundPortion) = subUInt(
                 supplySnapshot.promisedSupplyRate,
                 estimatedEarning
             );
-            (, Exp memory subsidyFactor) =
-                getExp(subsidyFundPortion, supplySnapshot.promisedSupplyRate);
+            (, Exp memory subsidyFactor) = getExp(
+                subsidyFundPortion,
+                supplySnapshot.promisedSupplyRate
+            );
             (, subsidyFundPortion) = mulScalarTruncate(
                 subsidyFactor,
                 interestEarned
@@ -1138,10 +1172,14 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         if (redeemTokensIn > 0) {
             vars.redeemTokens = redeemTokensIn;
             if (isTropykusInterestRateModel) {
-                (, Exp memory num) =
-                    mulExp(vars.redeemTokens, currentUnderlying);
-                (, Exp memory realUnderlyingWithdrawAmount) =
-                    getExp(num.mantissa, supplySnapshot.tokens);
+                (, Exp memory num) = mulExp(
+                    vars.redeemTokens,
+                    currentUnderlying
+                );
+                (, Exp memory realUnderlyingWithdrawAmount) = getExp(
+                    num.mantissa,
+                    supplySnapshot.tokens
+                );
                 vars.redeemAmount = realUnderlyingWithdrawAmount.mantissa;
             } else {
                 /*
@@ -1167,10 +1205,14 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             vars.redeemAmount = redeemAmountIn;
 
             if (isTropykusInterestRateModel) {
-                (, Exp memory num) =
-                    mulExp(vars.redeemAmount, supplySnapshot.tokens);
-                (, Exp memory realTokensWithdrawAmount) =
-                    getExp(num.mantissa, currentUnderlying);
+                (, Exp memory num) = mulExp(
+                    vars.redeemAmount,
+                    supplySnapshot.tokens
+                );
+                (, Exp memory realTokensWithdrawAmount) = getExp(
+                    num.mantissa,
+                    currentUnderlying
+                );
                 vars.redeemTokens = realTokensWithdrawAmount.mantissa;
             } else {
                 /*
@@ -1196,12 +1238,11 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
 
         /* Fail if redeem not allowed */
-        uint256 allowed =
-            comptroller.redeemAllowed(
-                address(this),
-                redeemer,
-                vars.redeemTokens
-            );
+        uint256 allowed = comptroller.redeemAllowed(
+            address(this),
+            redeemer,
+            vars.redeemTokens
+        );
         if (allowed != 0) {
             return
                 failOpaque(
@@ -1284,7 +1325,10 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         subsidyFund = vars.newSubsidyFund;
         supplySnapshot.tokens = vars.accountTokensNew;
         supplySnapshot.suppliedAt = accrualBlockNumber;
-        (, supplySnapshot.underlyingAmount) = subUInt(supplySnapshot.underlyingAmount, vars.redeemAmount);
+        (, supplySnapshot.underlyingAmount) = subUInt(
+            supplySnapshot.underlyingAmount,
+            vars.redeemAmount
+        );
 
         /* We emit a Transfer event, and a Redeem event */
         emit Transfer(redeemer, address(this), vars.redeemTokens);
@@ -1338,8 +1382,11 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         returns (uint256)
     {
         /* Fail if borrow not allowed */
-        uint256 allowed =
-            comptroller.borrowAllowed(address(this), borrower, borrowAmount);
+        uint256 allowed = comptroller.borrowAllowed(
+            address(this),
+            borrower,
+            borrowAmount
+        );
         if (allowed != 0) {
             return
                 failOpaque(
@@ -1530,13 +1577,12 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         uint256 repayAmount
     ) internal returns (uint256, uint256) {
         /* Fail if repayBorrow not allowed */
-        uint256 allowed =
-            comptroller.repayBorrowAllowed(
-                address(this),
-                payer,
-                borrower,
-                repayAmount
-            );
+        uint256 allowed = comptroller.repayBorrowAllowed(
+            address(this),
+            payer,
+            borrower,
+            repayAmount
+        );
         if (allowed != 0) {
             return (
                 failOpaque(
@@ -1707,14 +1753,13 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         CTokenInterface cTokenCollateral
     ) internal returns (uint256, uint256) {
         /* Fail if liquidate not allowed */
-        uint256 allowed =
-            comptroller.liquidateBorrowAllowed(
-                address(this),
-                address(cTokenCollateral),
-                liquidator,
-                borrower,
-                repayAmount
-            );
+        uint256 allowed = comptroller.liquidateBorrowAllowed(
+            address(this),
+            address(cTokenCollateral),
+            liquidator,
+            borrower,
+            repayAmount
+        );
         if (allowed != 0) {
             return (
                 failOpaque(
@@ -1782,8 +1827,10 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
 
         /* Fail if repayBorrow fails */
-        (uint256 repayBorrowError, uint256 actualRepayAmount) =
-            repayBorrowFresh(liquidator, borrower, repayAmount);
+        (
+            uint256 repayBorrowError,
+            uint256 actualRepayAmount
+        ) = repayBorrowFresh(liquidator, borrower, repayAmount);
         if (repayBorrowError != uint256(Error.NO_ERROR)) {
             return (
                 fail(
@@ -1799,8 +1846,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         // (No safe failures beyond this point)
 
         /* We calculate the number of collateral tokens that will be seized */
-        (uint256 amountSeizeError, uint256 seizeTokens) =
-            comptroller.liquidateCalculateSeizeTokens(
+        (uint256 amountSeizeError, uint256 seizeTokens) = comptroller
+            .liquidateCalculateSeizeTokens(
                 address(this),
                 address(cTokenCollateral),
                 actualRepayAmount
@@ -1886,14 +1933,13 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         uint256 seizeTokens
     ) internal returns (uint256) {
         /* Fail if seize not allowed */
-        uint256 allowed =
-            comptroller.seizeAllowed(
-                address(this),
-                seizerToken,
-                liquidator,
-                borrower,
-                seizeTokens
-            );
+        uint256 allowed = comptroller.seizeAllowed(
+            address(this),
+            seizerToken,
+            liquidator,
+            borrower,
+            seizeTokens
+        );
         if (allowed != 0) {
             return
                 failOpaque(

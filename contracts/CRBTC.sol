@@ -56,6 +56,20 @@ contract CRBTC is CToken {
         requireNoError(err, "mint failed");
     }
 
+    function mintInternalVerifications(
+        address minter,
+        MintLocalVars memory vars
+    ) internal {
+        if (interestRateModel.isTropykusInterestRateModel()) {
+            SupplySnapshot storage supplySnapshot = accountTokens[minter];
+            (, uint256 newSupply) = addUInt(
+                supplySnapshot.underlyingAmount,
+                vars.mintAmount
+            );
+            require(newSupply <= 0.025e18, "R8");
+        }
+    }
+
     /**
      * @notice Sender redeems cTokens in exchange for the underlying asset
      * @dev Accrues interest whether or not the operation succeeds, unless reverted
