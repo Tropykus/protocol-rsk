@@ -1,8 +1,10 @@
 require("@nomiclabs/hardhat-ethers");
 require("@nomiclabs/hardhat-waffle");
 require("hardhat-deploy");
+const { ethers } = require("ethers");
+const networks = require('./hardhat.networks');
 
-const networks = require('./hardhat.networks')
+ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR);
 
 const config = {
   defaultNetwork: "hardhat",

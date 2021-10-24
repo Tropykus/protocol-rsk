@@ -59,25 +59,17 @@ async function main() {
       },
     },
   };
-  // console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
-  // console.log('Tropykus Contracts - Deploy Script');
-  // console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n');
 
   const chainId = getChainId(process.env.HARDHAT_NETWORK);
-  // console.log(`Network = ${chainId}`);
-  // console.log(`Deployer = ${deployer.address}`);
   const multiSigWalletContract = await ethers.getContractFactory('MultiSigWallet');
   const multiSig = await multiSigWalletContract.deploy([deployer.address], 1);
-  // console.log(`MultiSig = ${multiSig.address}`);
   const priceOracleProxyContract = await ethers.getContractFactory('PriceOracleProxy');
   const priceOracleProxyDeploy = await priceOracleProxyContract.deploy(deployer.address);
-  // console.log(`PriceOracleProxy = ${priceOracleProxyDeploy.address}`);
+  console.log(`PriceOracleProxy = '${priceOracleProxyDeploy.address}'`);
   const unitrollerContract = await ethers.getContractFactory('Unitroller');
   const unitrollerDeployed = await unitrollerContract.deploy();
-  // console.log(`Unitroller = ${unitrollerDeployed.address}`);
   const comptrollerContract = await ethers.getContractFactory('ComptrollerG6');
   const comptrollerDeployed = await comptrollerContract.deploy();
-  // console.log(`Comptroller = ${comptrollerDeployed.address}`);
 
   // console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~ TOKENS ~~~~~~~~~~~~~~~~~~~~~~~~');
   const standardTokenContract = await ethers.getContractFactory('StandardToken');
