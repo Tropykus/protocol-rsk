@@ -157,7 +157,7 @@ load = async () => {
         console.log('===========================');
     });
 
-    crif.on('TokenFailure', (error, info, detail) => {
+    crif.on('Failure', (error, info, detail) => {
         console.log('=== cRIF Failure ===');
         console.log(`Error: ${tokenError[error]}`);
         console.log(`Info: ${tokenFailureInfo[info]}`);
@@ -165,7 +165,7 @@ load = async () => {
         console.log('===========================');
     });
 
-    cdoc.on('TokenFailure', (error, info, detail) => {
+    cdoc.on('Failure', (error, info, detail) => {
         console.log('=== cDOC Failure ===');
         console.log(`Error: ${tokenError[error]}`);
         console.log(`Info: ${tokenFailureInfo[info]}`);
@@ -173,7 +173,7 @@ load = async () => {
         console.log('===========================');
     });
 
-    cusdt.on('TokenFailure', (error, info, detail) => {
+    cusdt.on('Failure', (error, info, detail) => {
         console.log('=== cUSDT Failure ===');
         console.log(`Error: ${tokenError[error]}`);
         console.log(`Info: ${tokenFailureInfo[info]}`);
@@ -181,7 +181,7 @@ load = async () => {
         console.log('===========================');
     });
 
-    crbtc.on('TokenFailure', (error, info, detail) => {
+    crbtc.on('Failure', (error, info, detail) => {
         console.log('=== crBTC Failure ===');
         console.log(`Error: ${tokenError[error]}`);
         console.log(`Info: ${tokenFailureInfo[info]}`);

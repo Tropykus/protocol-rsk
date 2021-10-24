@@ -8,6 +8,8 @@ import "./CToken.sol";
  * @author tropykus
  */
 contract CRBTC is CToken {
+    uint256 marketCapThresholdMantissa;
+
     /**
      * @notice Construct a new CRBTC money market
      * @param comptroller_ The address of the Comptroller
@@ -113,8 +115,11 @@ contract CRBTC is CToken {
         external
         payable
     {
-        (uint256 err, ) =
-            liquidateBorrowInternal(borrower, msg.value, cTokenCollateral);
+        (uint256 err, ) = liquidateBorrowInternal(
+            borrower,
+            msg.value,
+            cTokenCollateral
+        );
         requireNoError(err, "liquidateBorrow failed");
     }
 
@@ -134,8 +139,10 @@ contract CRBTC is CToken {
      * @return The quantity of Ether owned by this contract
      */
     function getCashPrior() internal view returns (uint256) {
-        (MathError err, uint256 startingBalance) =
-            subUInt(address(this).balance, msg.value);
+        (MathError err, uint256 startingBalance) = subUInt(
+            address(this).balance,
+            msg.value
+        );
         if (interestRateModel.isTropykusInterestRateModel())
             (err, startingBalance) = subUInt(startingBalance, subsidyFund);
         require(err == MathError.NO_ERROR, "Math error");
@@ -189,5 +196,10 @@ contract CRBTC is CToken {
 
     function addSubsidy() external payable {
         _addSubsidyInternal(msg.value);
+    }
+
+    function setMarketCapThreshold(uint256 _marketCapThreshold) external {
+        require(msg.sender == admin, "only admin can set market cap");
+        marketCapThresholdMantissa = _marketCapThreshold;
     }
 }

@@ -283,7 +283,7 @@ async function main() {
   await cSAT._setReserveFactor(sat.reserveFactor).then((tx) => tx.wait());
   await cSAT.addSubsidy({ value: sat.initialSubsidy }).then((tx) => tx.wait());
 
-  await comptroller.setMarketCapThreshold(parseEther('0.8')).then((tx) => tx.wait());
+  await cSAT.setMarketCapThreshold(parseEther('0.8')).then((tx) => tx.wait());
   console.log('// Finished')
 }
 
