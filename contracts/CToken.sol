@@ -1413,6 +1413,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 );
         }
 
+        vars = borrowInternalValidations(borrower, vars);
+
         /////////////////////////
         // EFFECTS & INTERACTIONS
         // (No safe failures beyond this point)
@@ -1443,6 +1445,14 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         // comptroller.borrowVerify(address(this), borrower, borrowAmount);
 
         return uint256(Error.NO_ERROR);
+    }
+
+    function borrowInternalValidations(
+        address borrower,
+        BorrowLocalVars memory vars
+    ) internal returns (BorrowLocalVars memory) {
+        borrower;
+        return vars;
     }
 
     /**

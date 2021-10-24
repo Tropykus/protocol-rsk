@@ -20,7 +20,7 @@ load = async () => {
         17: 'TOO_MUCH_REPAY',
     };
 
-    const comtrollerFailureInfo = {
+    const comptrollerFailureInfo = {
         0: 'ACCEPT_ADMIN_PENDING_ADMIN_CHECK',
         1: 'ACCEPT_PENDING_IMPLEMENTATION_ADDRESS_CHECK',
         2: 'EXIT_MARKET_BALANCE_OWED',
@@ -152,7 +152,7 @@ load = async () => {
     comptroller.on('Failure', (error, info, detail) => {
         console.log('=== Comptroller Failure ===');
         console.log(`Error: ${comptrollerError[error]}`);
-        console.log(`Info: ${comtrollerFailureInfo[info]}`);
+        console.log(`Info: ${comptrollerFailureInfo[info]}`);
         console.log(`Detail: ${detail} | (Check the associated detail) | ${comptrollerError[detail]}`);
         console.log('===========================');
     });

@@ -31,4 +31,12 @@ contract CRDOC is CErc20 {
         // Set the proper admin now that initialization is done
         admin = admin_;
     }
+
+    function borrowInternalValidations(
+        address borrower,
+        BorrowLocalVars memory vars
+    ) internal returns (BorrowLocalVars memory) {
+        borrower;
+        require(vars.totalBorrowsNew <= 1000e18, "RD1");
+    }
 }
