@@ -1,6 +1,7 @@
 require("@nomiclabs/hardhat-ethers");
 require("@nomiclabs/hardhat-waffle");
 require("hardhat-deploy");
+require("hardhat-contract-sizer");
 const { ethers } = require("ethers");
 const networks = require('./hardhat.networks');
 
@@ -8,6 +9,11 @@ ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR);
 
 const config = {
   defaultNetwork: "hardhat",
+  contractSizer: {
+    alphaSort: true,
+    runOnCompile: true,
+    disambiguatePaths: false,
+  },
   solidity: {
     version: "0.5.16",
     settings: {
