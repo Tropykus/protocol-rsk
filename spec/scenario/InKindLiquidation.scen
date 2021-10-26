@@ -433,7 +433,7 @@ Test "when seize is paused"
     From Coburn (Comptroller SetGuardianPaused "Seize" True)
     AllowFailures
     Liquidate Torrey "->" Geoff 2e18 cBAT "Seizing" cBAT
-    Assert Revert "revert seize is paused"
+    Assert Revert "revert C8"
     -- unpause and check correct values
     Invariant Success
     Comptroller SetGuardianPaused "Seize" False

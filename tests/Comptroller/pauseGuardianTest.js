@@ -83,7 +83,7 @@ describe('Comptroller', () => {
           state = await call(comptroller, `${camelCase}GuardianPaused`);
           expect(state).toEqual(true);
 
-          await expect(send(comptroller, `_set${method}Paused`, [false], {from: pauseGuardian})).rejects.toRevert("revert only admin can unpause");
+          await expect(send(comptroller, `_set${method}Paused`, [false], {from: pauseGuardian})).rejects.toRevert("revert C16");
           result = await send(comptroller, `_set${method}Paused`, [false]);
 
           expect(result).toHaveLog(`ActionPaused`, {action: method, pauseState: false});
@@ -98,13 +98,13 @@ describe('Comptroller', () => {
           case "Transfer":
             await expect(
               send(comptroller, 'transferAllowed', [address(1), address(2), address(3), 1])
-            ).rejects.toRevert(`revert ${method.toLowerCase()} is paused`);
+            ).rejects.toRevert('revert C9');
             break;
 
           case "Seize":
             await expect(
               send(comptroller, 'seizeAllowed', [address(1), address(2), address(3), address(4), 1])
-            ).rejects.toRevert(`revert ${method.toLowerCase()} is paused`);
+            ).rejects.toRevert('revert C8');
             break;
 
           default:
@@ -137,7 +137,7 @@ describe('Comptroller', () => {
           state = await call(comptroller, `${camelCase}GuardianPaused`, [cToken._address]);
           expect(state).toEqual(true);
 
-          await expect(send(comptroller, `_set${method}Paused`, [cToken._address, false], {from: pauseGuardian})).rejects.toRevert("revert only admin can unpause");
+          await expect(send(comptroller, `_set${method}Paused`, [cToken._address, false], {from: pauseGuardian})).rejects.toRevert("revert C16");
           result = await send(comptroller, `_set${method}Paused`, [cToken._address, false]);
 
           expect(result).toHaveLog(`ActionPaused`, {cToken: cToken._address, action: method, pauseState: false});
@@ -151,12 +151,12 @@ describe('Comptroller', () => {
           switch (method) {
           case "Mint":
             expect(await call(comptroller, 'mintAllowed', [address(1), address(2), 1])).toHaveTrollError('MARKET_NOT_LISTED');
-            await expect(send(comptroller, 'mintAllowed', [cToken._address, address(2), 1])).rejects.toRevert(`revert ${method.toLowerCase()} is paused`);
+            await expect(send(comptroller, 'mintAllowed', [cToken._address, address(2), 1])).rejects.toRevert('revert C2');
             break;
 
           case "Borrow":
             expect(await call(comptroller, 'borrowAllowed', [address(1), address(2), 1])).toHaveTrollError('MARKET_NOT_LISTED');
-            await expect(send(comptroller, 'borrowAllowed', [cToken._address, address(2), 1])).rejects.toRevert(`revert ${method.toLowerCase()} is paused`);
+            await expect(send(comptroller, 'borrowAllowed', [cToken._address, address(2), 1])).rejects.toRevert('revert C4');
             break;
 
           default:

@@ -101,5 +101,5 @@ Test "mint reverts if mint is paused"
     From Coburn (Comptroller SetGuardianMarketPaused cZRX "Mint" True)
     AllowFailures
     Mint Geoff 2e18 cZRX
-    Assert Revert "revert mint is paused"
+    Assert Revert "revert C2"
     Comptroller SetGuardianMarketPaused cZRX "Mint" False
