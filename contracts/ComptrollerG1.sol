@@ -180,7 +180,7 @@ contract ComptrollerG1 is ComptrollerV1Storage, ComptrollerInterface, Comptrolle
         CToken cToken = CToken(cTokenAddress);
         /* Get sender tokensHeld and amountOwed underlying from the cToken */
         (uint oErr, uint tokensHeld, uint amountOwed, ) = cToken.getAccountSnapshot(msg.sender);
-        require(oErr == 0, "exitMarket: getAccountSnapshot failed"); // semi-opaque error code
+        require(oErr == 0, "C1"); // semi-opaque error code
 
         /* Fail if the sender has a borrow balance */
         if (amountOwed != 0) {
@@ -318,7 +318,7 @@ contract ComptrollerG1 is ComptrollerV1Storage, ComptrollerInterface, Comptrolle
 
         // Require tokens is zero or amount is also zero
         if (redeemTokens == 0 && redeemAmount > 0) {
-            revert("redeemTokens zero");
+            revert("C3");
         }
     }
 
@@ -948,10 +948,10 @@ contract ComptrollerG1 is ComptrollerV1Storage, ComptrollerInterface, Comptrolle
     }
 
     function _become(Unitroller unitroller, PriceOracle _oracle, uint _closeFactorMantissa, uint _maxAssets, bool reinitializing) public {
-        require(msg.sender == unitroller.admin(), "only unitroller admin can change brains");
+        require(msg.sender == unitroller.admin(), "C17");
         uint changeStatus = unitroller._acceptImplementation();
 
-        require(changeStatus == 0, "change not authorized");
+        require(changeStatus == 0, "C18");
 
         if (!reinitializing) {
             ComptrollerG1 freshBrainedComptroller = ComptrollerG1(address(unitroller));

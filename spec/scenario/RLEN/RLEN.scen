@@ -297,4 +297,4 @@ Test "Check transfer reverts when block number exceeds 32 bits"
     AllowFailures
     SetBlockNumber 5000000000
     From Geoff (TROP Transfer Jared 10000000e18)
-    Assert Revert "revert TROP::_writeCheckpoint: block number exceeds 32 bits"
+    Assert Revert "revert TROP::_writeCheckpoint: C21"

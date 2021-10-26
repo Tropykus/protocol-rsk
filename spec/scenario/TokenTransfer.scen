@@ -97,7 +97,7 @@ Test "cToken Transfer paused"
     From Coburn (Comptroller SetGuardianPaused "Transfer" True)
     AllowFailures
     Transfer Geoff Torrey 10e9 cZRX
-    Assert Revert "revert transfer is paused"
+    Assert Revert "revert C9"
     Assert Equal (Erc20 cZRX TokenBalance Geoff) (Exactly 50e9)
     Assert Equal (Erc20 cZRX TokenBalance Coburn) Zero
     -- unPause and complete transfer

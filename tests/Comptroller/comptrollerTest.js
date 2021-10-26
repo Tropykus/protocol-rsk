@@ -195,7 +195,7 @@ describe('Comptroller', () => {
     it('should not allow you to redeem 5 underlying for 0 tokens', async () => {
       const comptroller = await makeComptroller();
       const cToken = await makeCToken({comptroller: comptroller});
-      await expect(call(comptroller, 'redeemVerify', [cToken._address, accounts[0], 5, 0])).rejects.toRevert("revert redeemTokens zero");
+      await expect(call(comptroller, 'redeemVerify', [cToken._address, accounts[0], 5, 0])).rejects.toRevert("revert C3");
     });
   })
 });

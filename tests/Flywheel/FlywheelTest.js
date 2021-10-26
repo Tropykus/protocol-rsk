@@ -71,7 +71,7 @@ describe('Flywheel upgrade', () => {
           unitroller,
           otherMarkets: [allMarkets[0]._address]
         })
-      ).rejects.toRevert('revert market already added');
+      ).rejects.toRevert('revert C10');
     });
   });
 });
