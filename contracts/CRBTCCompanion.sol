@@ -53,7 +53,7 @@ contract CRBTCCompanion is
     }
 
     function getTotalBorrowsInOtherMarkets()
-        external
+        public
         view
         returns (
             uint256,
@@ -85,7 +85,34 @@ contract CRBTCCompanion is
         if (oraclePriceMantissa == 0) {
             return (uint256(Error.PRICE_ERROR), 0, 0);
         }
-
         return (uint256(Error.NO_ERROR), totalBorrows, oraclePriceMantissa);
+    }
+
+    function verifySupplyMarketCapLimit(
+        uint256 totalSupply,
+        uint256 mintAmount,
+        uint256 exchangeRateMantissa
+    ) external {
+        (
+            ,
+            uint256 borrowsInOtherMarkets,
+            uint256 underlyingPrice
+        ) = getTotalBorrowsInOtherMarkets();
+        (, uint256 mintTokens) = divScalarByExpTruncate(
+            mintAmount,
+            Exp({mantissa: exchangeRateMantissa})
+        );
+        Exp memory totalSupplyInUSD = mul_(
+            mul_(
+                Exp({mantissa: add_(totalSupply, mintTokens)}),
+                Exp({mantissa: exchangeRateMantissa})
+            ),
+            Exp({mantissa: underlyingPrice})
+        );
+        Exp memory limit = mul_(
+            Exp({mantissa: borrowsInOtherMarkets}),
+            Exp({mantissa: marketCapThresholdMantissa})
+        );
+        require(limit.mantissa > totalSupplyInUSD.mantissa, "R9");
     }
 }

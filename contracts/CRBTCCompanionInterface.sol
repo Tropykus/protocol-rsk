@@ -16,4 +16,10 @@ interface CRBTCCompanionInterface {
             uint256,
             uint256
         );
+
+    function verifySupplyMarketCapLimit(
+        uint256 totalSupply,
+        uint256 mintAmount,
+        uint256 exchangeRateMantissa
+    ) external;
 }

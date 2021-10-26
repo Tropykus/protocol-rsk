@@ -67,6 +67,11 @@ contract CRBTC is CToken {
                     supplySnapshot.underlyingAmount,
                     vars.mintAmount
                 );
+            CRBTCCompanionInterface(crbtcCompanion).verifySupplyMarketCapLimit(
+                totalSupply,
+                vars.mintAmount,
+                vars.exchangeRateMantissa
+            );
         }
     }
 
