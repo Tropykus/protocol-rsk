@@ -1168,6 +1168,17 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             );
         }
 
+        if (redeemAmountIn == uint256(-1)) {
+            (, vars.redeemAmount) = mulScalarTruncate(
+                Exp({mantissa: vars.exchangeRateMantissa}),
+                supplySnapshot.tokens
+            );
+            redeemAmountIn = vars.redeemAmount;
+            redeemTokensIn = 0;
+        } else {
+            vars.redeemAmount = redeemAmountIn;
+        }
+
         /* If redeemTokensIn > 0: */
         if (redeemTokensIn > 0) {
             vars.redeemTokens = redeemTokensIn;
