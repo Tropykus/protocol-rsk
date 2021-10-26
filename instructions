@@ -11,6 +11,7 @@ load = async () => {
     cusdt = await ethers.getContractAt('CErc20Immutable', cUSDT, dep);
     crbtc = await ethers.getContractAt('CRBTC', cRBTC, dep);
     csat = await ethers.getContractAt('CRBTC', cSAT, dep);
+    csatCompanion = await ethers.getContractAt('CRBTCCompanion', cRBTCCompanion, dep);
     priceOracleProxy = await ethers.getContractAt('PriceOracleProxy', PriceOracleProxy, dep);
     rbtcOracle = await ethers.getContractAt('MockPriceProviderMoC', RBTCOracle, dep);
     mkts = await comptroller.getAllMarkets();

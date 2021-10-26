@@ -219,7 +219,7 @@ async function main() {
   await cRBTCdeployed.deployTransaction.wait();
   const cSATdeployed = await cRBTCContract.deploy(comptrollerDeployed.address, satInterestRateModel.address, config.initialExchangeRateMantissa, 'Tropykus kSAT', 'kSAT', 18, deployer.address);
   await cSATdeployed.deployTransaction.wait();
-  const cRBTCCompanionDeployed = await cRBTCCompanionContract.deploy(comptrollerDeployed.address, cSATdeployed.address);
+  const cRBTCCompanionDeployed = await cRBTCCompanionContract.deploy(comptrollerDeployed.address, cSATdeployed.address, priceOracleProxyDeploy.address);
   await cRBTCCompanionDeployed.deployTransaction.wait();
 
   console.log(`cRIF = '${cRIFdeployed.address}';`);
