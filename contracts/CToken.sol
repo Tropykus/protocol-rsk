@@ -809,6 +809,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         internal
         returns (uint256, uint256)
     {
+        require(accountBorrows[minter].principal == 0, "T1");
         /* Fail if mint not allowed */
         uint256 allowed = comptroller.mintAllowed(
             address(this),
