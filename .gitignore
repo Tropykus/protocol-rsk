@@ -1,6 +1,10 @@
 allFiredEvents
 .build-temp
 build
+.build
+abis/
+flatten/
+deployments/
 build_
 node_modules
 .env

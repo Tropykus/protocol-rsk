@@ -205,6 +205,7 @@ async function main() {
   // console.log('\n~~~~~~~~~~~~~~~~~~~~ MARKETS cTOKENS ~~~~~~~~~~~~~~~~~~~');
   const cErc20Immutable = await ethers.getContractFactory('CErc20Immutable');
   const cRBTCContract = await ethers.getContractFactory('CRBTC');
+  const cRBTCCompanionContract = await ethers.getContractFactory('CRBTCCompanion');
   const cRDOCContract = await ethers.getContractFactory('CRDOC');
   const cRIFdeployed = await cErc20Immutable.deploy(rifToken.address, comptrollerDeployed.address, rifInterestRateModel.address, config.initialExchangeRateMantissa, 'Tropykus kRIF', 'kRIF', 18, deployer.address);
   await cRIFdeployed.deployTransaction.wait();
@@ -218,6 +219,8 @@ async function main() {
   await cRBTCdeployed.deployTransaction.wait();
   const cSATdeployed = await cRBTCContract.deploy(comptrollerDeployed.address, satInterestRateModel.address, config.initialExchangeRateMantissa, 'Tropykus kSAT', 'kSAT', 18, deployer.address);
   await cSATdeployed.deployTransaction.wait();
+  const cRBTCCompanionDeployed = await cRBTCCompanionContract.deploy(comptrollerDeployed.address, cSATdeployed.address);
+  await cRBTCCompanionDeployed.deployTransaction.wait();
 
   console.log(`cRIF = '${cRIFdeployed.address}';`);
   console.log(`cDOC = '${cDOCdeployed.address}';`);
@@ -283,7 +286,10 @@ async function main() {
   await cSAT._setReserveFactor(sat.reserveFactor).then((tx) => tx.wait());
   await cSAT.addSubsidy({ value: sat.initialSubsidy }).then((tx) => tx.wait());
 
-  await cSAT.setMarketCapThreshold(parseEther('0.8')).then((tx) => tx.wait());
+  const crbtcCompanion = await ethers.getContractAt('CRBTCCompanion', cRBTCCompanionDeployed.address, deployer);
+  await crbtcCompanion.setMarketCapThreshold(parseEther('0.8')).then((tx) => tx.wait());
+  await cSAT.setCompanion(crbtcCompanion.address).then((tx) => tx.wait());
+  console.log(`cRBTCCompanion = '${crbtcCompanion.address}'`);
   console.log('// Finished')
 }
 

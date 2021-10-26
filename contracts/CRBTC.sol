@@ -1,6 +1,7 @@
 pragma solidity ^0.5.16;
 
 import "./CToken.sol";
+import "./CRBTCCompanionInterface.sol";
 
 /**
  * @title tropykus CRBTC Contract
@@ -8,7 +9,7 @@ import "./CToken.sol";
  * @author tropykus
  */
 contract CRBTC is CToken {
-    uint256 marketCapThresholdMantissa;
+    address crbtcCompanion;
 
     /**
      * @notice Construct a new CRBTC money market
@@ -62,11 +63,10 @@ contract CRBTC is CToken {
     ) internal {
         if (interestRateModel.isTropykusInterestRateModel()) {
             SupplySnapshot storage supplySnapshot = accountTokens[minter];
-            (, uint256 newSupply) = addUInt(
-                supplySnapshot.underlyingAmount,
-                vars.mintAmount
-            );
-            require(newSupply <= 0.025e18, "R8");
+            CRBTCCompanionInterface(crbtcCompanion).verifySupplyPerAccountLimit(
+                    supplySnapshot.underlyingAmount,
+                    vars.mintAmount
+                );
         }
     }
 
@@ -212,8 +212,8 @@ contract CRBTC is CToken {
         _addSubsidyInternal(msg.value);
     }
 
-    function setMarketCapThreshold(uint256 _marketCapThreshold) external {
-        require(msg.sender == admin, "only admin can set market cap");
-        marketCapThresholdMantissa = _marketCapThreshold;
+    function setCompanion(address crbtcCompanion_) external {
+        require(msg.sender == admin, "only admin may set the companion");
+        crbtcCompanion = crbtcCompanion_;
     }
 }
