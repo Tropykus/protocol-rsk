@@ -189,13 +189,20 @@ load = async () => {
         console.log('===========================');
     });
 
-    cdoc.on('Mint', (minter, mintAmount, mintTokens) => {
-        console.log('=== CDOC Mint ===');
-        console.log(`Minter: ${minter}`);
-        console.log(`Mint Amount: ${Number(mintAmount)/1e18}`);
-        console.log(`CDOCs Minted: ${Number(mintTokens)/1e18}`);
+    csat.on('Failure', (error, info, detail) => {
+        console.log('=== cSAT Failure ===');
+        console.log(`Error: ${tokenError[error]}`);
+        console.log(`Info: ${tokenFailureInfo[info]}`);
+        console.log(`Detail: ${detail} | (Check the associated detail) | ${comptrollerError[detail]}`);
         console.log('===========================');
-    })
+    });
+
+    csat.on('RedeemAux', (currentTotalSupply, redeemTokens) => {
+        console.log('=== CSAT RedeemAux ===');
+        console.log(`currentTotalSupply: ${Number(currentTotalSupply) / 1e18}`);
+        console.log(`redeemTokens: ${Number(redeemTokens) / 1e18}`);
+        console.log('===========================');
+    });
 };
 
 load();
