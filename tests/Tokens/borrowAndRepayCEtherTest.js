@@ -115,7 +115,7 @@ describe('CRBTC', function () {
 
     it("reverts if transfer out fails", async () => {
       await send(cToken, 'harnessSetFailTransferToAddress', [borrower, true]);
-      await expect(borrowFresh(cToken, borrower, borrowAmount)).rejects.toRevert("revert TOKEN_TRANSFER_OUT_FAILED");
+      await expect(borrowFresh(cToken, borrower, borrowAmount)).rejects.toRevert("revert E4");
     });
 
     xit("reverts if borrowVerify fails", async() => {

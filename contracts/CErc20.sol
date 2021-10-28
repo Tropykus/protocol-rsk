@@ -115,7 +115,7 @@ contract CErc20 is CToken, CErc20Interface {
      * @param token The address of the ERC-20 token to sweep
      */
     function sweepToken(EIP20NonStandardInterface token) external {
-    	require(address(token) != underlying, "CErc20::sweepToken: can not sweep underlying token");
+    	require(address(token) != underlying, "E1");
     	uint256 balance = token.balanceOf(address(this));
     	token.transfer(admin, balance);
     }
@@ -169,11 +169,11 @@ contract CErc20 is CToken, CErc20Interface {
                     revert(0, 0)
                 }
         }
-        require(success, "TOKEN_TRANSFER_IN_FAILED");
+        require(success, "E2");
 
         // Calculate the amount that was *actually* transferred
         uint balanceAfter = EIP20Interface(underlying).balanceOf(address(this));
-        require(balanceAfter >= balanceBefore, "TOKEN_TRANSFER_IN_OVERFLOW");
+        require(balanceAfter >= balanceBefore, "E3");
         return balanceAfter - balanceBefore;   // underflow already checked above, just subtract
     }
 
@@ -204,6 +204,6 @@ contract CErc20 is CToken, CErc20Interface {
                     revert(0, 0)
                 }
         }
-        require(success, "TOKEN_TRANSFER_OUT_FAILED");
+        require(success, "E4");
     }
 }

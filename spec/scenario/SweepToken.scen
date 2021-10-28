@@ -8,7 +8,7 @@ Test "Attempt to sweep underlying token"
     Support cBAT collateralFactor:0.5
     AllowFailures
     cToken cBAT SweepToken BAT
-    Assert Revert "revert CErc20::sweepToken: can not sweep underlying token"
+    Assert Revert "revert E1"
 
 Test "Succesfully Sweep standard non-underlying token from CErc20"
     NewComptroller price:1.0

@@ -112,7 +112,7 @@ describe('CToken', function () {
 
     it("fails if transferring in fails", async () => {
       await send(cToken.underlying, 'harnessSetFailTransferFromAddress', [minter, true]);
-      await expect(mintFresh(cToken, minter, mintAmount)).rejects.toRevert('revert TOKEN_TRANSFER_IN_FAILED');
+      await expect(mintFresh(cToken, minter, mintAmount)).rejects.toRevert('revert E2');
     });
 
     it("transfers the underlying cash, tokens, and emits Mint, Transfer events", async () => {
@@ -208,7 +208,7 @@ describe('CToken', function () {
 
       it("fails if transferring out fails", async () => {
         await send(cToken.underlying, 'harnessSetFailTransferToAddress', [redeemer, true]);
-        await expect(redeemFresh(cToken, redeemer, redeemTokens, redeemAmount)).rejects.toRevert("revert TOKEN_TRANSFER_OUT_FAILED");
+        await expect(redeemFresh(cToken, redeemer, redeemTokens, redeemAmount)).rejects.toRevert("revert E4");
       });
 
       it("fails if total supply < redemption amount", async () => {

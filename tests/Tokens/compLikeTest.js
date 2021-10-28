@@ -8,7 +8,7 @@ describe('CCompLikeDelegate', function () {
     it("does not delegate if not the admin", async () => {
       const [root, a1] = saddle.accounts;
       const cToken = await makeCToken({kind: 'ccomp'});
-      await expect(send(cToken, '_delegateCompLikeTo', [a1], {from: a1})).rejects.toRevert('revert only the admin may set the comp-like delegate');
+      await expect(send(cToken, '_delegateCompLikeTo', [a1], {from: a1})).rejects.toRevert('revert E7');
     });
 
     it("delegates successfully if the admin", async () => {

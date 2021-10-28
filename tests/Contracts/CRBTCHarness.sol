@@ -26,7 +26,7 @@ contract CRBTCHarness is CRBTC {
     admin_) public {}
 
     function doTransferOut(address payable to, uint amount) internal {
-        require(failTransferToAddresses[to] == false, "TOKEN_TRANSFER_OUT_FAILED");
+        require(failTransferToAddresses[to] == false, "E4");
         return super.doTransferOut(to, amount);
     }
 

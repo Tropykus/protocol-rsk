@@ -75,7 +75,7 @@ Test "Mint transfer in fails"
     Invariant Static (Erc20 EVL TotalSupply)
     AllowFailures
     Mint Geoff 2e18 cEVL
-    Assert Revert "revert TOKEN_TRANSFER_IN_FAILED"
+    Assert Revert "revert E2"
 
 Test "Denied by comptroller because unlisted"
     NewComptroller

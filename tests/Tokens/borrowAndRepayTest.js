@@ -116,7 +116,7 @@ describe('CToken', function () {
 
     it("reverts if transfer out fails", async () => {
       await send(cToken, 'harnessSetFailTransferToAddress', [borrower, true]);
-      await expect(borrowFresh(cToken, borrower, borrowAmount)).rejects.toRevert("revert TOKEN_TRANSFER_OUT_FAILED");
+      await expect(borrowFresh(cToken, borrower, borrowAmount)).rejects.toRevert("revert E4");
     });
 
     xit("reverts if borrowVerify fails", async() => {
@@ -221,7 +221,7 @@ describe('CToken', function () {
 
         it("reverts if doTransferIn fails", async () => {
           await send(cToken.underlying, 'harnessSetFailTransferFromAddress', [payer, true]);
-          await expect(repayBorrowFresh(cToken, payer, borrower, repayAmount)).rejects.toRevert("revert TOKEN_TRANSFER_IN_FAILED");
+          await expect(repayBorrowFresh(cToken, payer, borrower, repayAmount)).rejects.toRevert("revert E2");
         });
 
         xit("reverts if repayBorrowVerify fails", async() => {
