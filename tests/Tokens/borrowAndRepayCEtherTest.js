@@ -205,12 +205,12 @@ describe('CRBTC', function () {
 
         it("returns an error if calculating account new account borrow balance fails", async () => {
           await pretendBorrow(cToken, borrower, 1, 1, 1);
-          await expect(repayBorrowFresh(cToken, payer, borrower, repayAmount)).rejects.toRevert('revert REPAY_BORROW_NEW_ACCOUNT_BORROW_BALANCE_CALCULATION_FAILED');
+          await expect(repayBorrowFresh(cToken, payer, borrower, repayAmount)).rejects.toRevert('revert T17');
         });
 
         it("returns an error if calculation of new total borrow balance fails", async () => {
           await send(cToken, 'harnessSetTotalBorrows', [1]);
-          await expect(repayBorrowFresh(cToken, payer, borrower, repayAmount)).rejects.toRevert('revert REPAY_BORROW_NEW_TOTAL_BALANCE_CALCULATION_FAILED');
+          await expect(repayBorrowFresh(cToken, payer, borrower, repayAmount)).rejects.toRevert('revert T18');
         });
 
         it("reverts if checkTransferIn fails", async () => {
@@ -294,7 +294,7 @@ describe('CRBTC', function () {
     it("reverts if overpaying", async () => {
       const beforeAccountBorrowSnap = await borrowSnapshot(cToken, borrower);
       let tooMuch = new BigNumber(beforeAccountBorrowSnap.principal).plus(1);
-      await expect(repayBorrow(cToken, borrower, tooMuch)).rejects.toRevert("revert REPAY_BORROW_NEW_ACCOUNT_BORROW_BALANCE_CALCULATION_FAILED");
+      await expect(repayBorrow(cToken, borrower, tooMuch)).rejects.toRevert("revert T17");
       // await assert.toRevertWithError(repayBorrow(cToken, borrower, tooMuch), 'MATH_ERROR', "revert repayBorrow failed");
     });
   });

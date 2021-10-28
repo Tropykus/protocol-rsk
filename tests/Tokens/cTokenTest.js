@@ -22,7 +22,7 @@ describe('CToken', function () {
     });
 
     it("fails when 0 initial exchange rate", async () => {
-      await expect(makeCToken({ exchangeRate: 0 })).rejects.toRevert("revert initial exchange rate must be greater than zero.");
+      await expect(makeCToken({ exchangeRate: 0 })).rejects.toRevert("revert T3");
     });
 
     it("succeeds with erc-20 underlying and non-zero exchange rate", async () => {
@@ -162,12 +162,12 @@ describe('CToken', function () {
 
     it("reverts on overflow of principal", async () => {
       await pretendBorrow(cToken, borrower, 1, 3, UInt256Max());
-      await expect(call(cToken, 'borrowBalanceStored', [borrower])).rejects.toRevert("revert borrowBalanceStored: borrowBalanceStoredInternal failed");
+      await expect(call(cToken, 'borrowBalanceStored', [borrower])).rejects.toRevert("revert T8");
     });
 
     it("reverts on non-zero stored principal with zero account index", async () => {
       await pretendBorrow(cToken, borrower, 0, 3, 5);
-      await expect(call(cToken, 'borrowBalanceStored', [borrower])).rejects.toRevert("revert borrowBalanceStored: borrowBalanceStoredInternal failed");
+      await expect(call(cToken, 'borrowBalanceStored', [borrower])).rejects.toRevert("revert T8");
     });
   });
 

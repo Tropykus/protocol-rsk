@@ -107,7 +107,7 @@ describe('CToken', function () {
 
     it("fails if exchange calculation fails", async () => {
       expect(await send(cToken, 'harnessSetExchangeRate', [0])).toSucceed();
-      await expect(mintFresh(cToken, minter, mintAmount)).rejects.toRevert('revert MINT_EXCHANGE_CALCULATION_FAILED');
+      await expect(mintFresh(cToken, minter, mintAmount)).rejects.toRevert('revert T13');
     });
 
     it("fails if transferring in fails", async () => {

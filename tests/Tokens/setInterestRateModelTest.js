@@ -46,7 +46,7 @@ describe('CToken', function () {
     it("reverts if passed a contract that implements isInterestRateModel as false", async () => {
       // extremely unlikely to occur, of course, but let's be exhaustive
       const badModel = await makeInterestRateModel({kind: 'false-marker'});
-      await expect(send(cToken, 'harnessSetInterestRateModelFresh', [badModel._address])).rejects.toRevert("revert marker method returned false");
+      await expect(send(cToken, 'harnessSetInterestRateModelFresh', [badModel._address])).rejects.toRevert("revert T22");
       expect(await call(cToken, 'interestRateModel')).toEqual(oldModel._address);
     });
 

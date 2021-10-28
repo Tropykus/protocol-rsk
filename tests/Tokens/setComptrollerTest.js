@@ -30,7 +30,7 @@ describe('CToken', function () {
     it("reverts if passed a contract that implements isComptroller as false", async () => {
       // extremely unlikely to occur, of course, but let's be exhaustive
       const badComptroller = await makeComptroller({ kind: 'false-marker' });
-      await expect(send(cToken, '_setComptroller', [badComptroller._address])).rejects.toRevert("revert marker method returned false");
+      await expect(send(cToken, '_setComptroller', [badComptroller._address])).rejects.toRevert("revert T22");
       expect(await call(cToken, 'comptroller')).toEqual(oldComptroller._address);
     });
 

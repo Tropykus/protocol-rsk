@@ -41,7 +41,7 @@ describe('CToken', () => {
       await pretendBlock(cToken, blockNumber, 1);
       expect(await call(cToken, 'getBorrowRateMaxMantissa')).toEqualNumber(etherMantissa(0.000005)); // 0.0005% per block
       await setBorrowRate(cToken, 0.001e-2); // 0.0010% per block
-      await expect(send(cToken, 'accrueInterest')).rejects.toRevert("revert borrow rate is absurdly high");
+      await expect(send(cToken, 'accrueInterest')).rejects.toRevert("revert T10");
     });
 
     it('fails if new borrow rate calculation fails', async () => {

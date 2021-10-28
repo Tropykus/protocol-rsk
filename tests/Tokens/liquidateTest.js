@@ -112,7 +112,7 @@ describe('CToken', function () {
       await send(cToken.comptroller, 'setFailCalculateSeizeTokens', [true]);
       await expect(
         liquidateFresh(cToken, liquidator, borrower, repayAmount, cTokenCollateral)
-      ).rejects.toRevert('revert LIQUIDATE_COMPTROLLER_CALCULATE_AMOUNT_SEIZE_FAILED');
+      ).rejects.toRevert('revert T19');
       const afterBalances = await getBalances([cToken, cTokenCollateral], [liquidator, borrower]);
       expect(afterBalances).toEqual(beforeBalances);
     });
@@ -128,7 +128,7 @@ describe('CToken', function () {
       await send(cToken.comptroller, 'setSeizeAllowed', [false]);
       await expect(
         liquidateFresh(cToken, liquidator, borrower, repayAmount, cTokenCollateral)
-      ).rejects.toRevert("revert token seizure failed");
+      ).rejects.toRevert("revert T21");
     });
 
     xit("reverts if liquidateBorrowVerify fails", async() => {

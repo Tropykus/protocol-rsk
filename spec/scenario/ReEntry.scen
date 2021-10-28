@@ -8,5 +8,5 @@ Test "ReEntry Mint @no-cov"
     Prep Geoff Some PHREAK cPHREAK
     AllowFailures
     Mint Geoff 50e18 cPHREAK
-    Assert Revert "revert re-entered"
+    Assert Revert "revert T26"
     Assert Equal (Erc20 cPHREAK TokenBalance Geoff) Zero

@@ -402,7 +402,7 @@ Test "When there's insufficient collateral"
     Prep Torrey 900e18 BAT cBAT
     AllowFailures
     Liquidate Torrey "->" Geoff 900e18 cBAT "Seizing" cBAT
-    Assert Revert "revert LIQUIDATE_SEIZE_TOO_MUCH"
+    Assert Revert "revert T20"
 
 Test "when seize is paused"
     InKindBorrow borrowAmount:1e18 borrowRate:0.000005
