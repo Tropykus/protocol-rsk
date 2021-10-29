@@ -38,3 +38,5 @@ fs.writeFileSync('./abis/CErc20Immutable.json', contracts.contracts['contracts/C
 console.log('CErc20Immutable.json created');
 fs.writeFileSync('./abis/CRDOC.json', JSON.stringify(contracts.contracts['contracts/CRDOC.sol:CRDOC'].abi));
 console.log('CRDOC.json created');
+fs.writeFileSync('./abis/CRBTCCompanion.json', JSON.stringify(contracts.contracts['contracts/CRBTCCompanion.sol:CRBTCCompanion'].abi));
+console.log('CRBTCCompanion.json created');
