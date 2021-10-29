@@ -97,7 +97,7 @@ async function main() {
   await comptrollerDeployed.deployTransaction.wait();
 
   // console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~ TOKENS ~~~~~~~~~~~~~~~~~~~~~~~~');
-  // const standardTokenContract = await ethers.getContractFactory('StandardToken');
+  const standardTokenContract = await ethers.getContractFactory('StandardToken');
 
   let rifToken = {
     address: '0xc370cd19517b5a8a9f6df0958679e8cd4874c048',
@@ -112,16 +112,14 @@ async function main() {
     address: '0xc486ac998afbf1b477533dda94d950bd2190ceb5',
   };
 
-  // if (chainId !== 31 && chainId !== 30) {
-  // rifToken = await standardTokenContract.deploy(parseEther('2000000'), 'Test RIF Tropykus', 18, 'tRIF');
-  // await rifToken.deployTransaction.wait();
-  // // }
-  // docToken = await standardTokenContract.deploy(parseEther('2000000'), 'Test DOC Tropykus', 18, 'tDOC');
-  // await docToken.deployTransaction.wait();
-  // rdocToken = await standardTokenContract.deploy(parseEther('2000000'), 'Test RDOC Tropykus', 18, 'tRDOC');
-  // await rdocToken.deployTransaction.wait();
-  // usdtToken = await standardTokenContract.deploy(parseEther('2000000'), 'Test rUSDT Tropykus', 18, 'trUSDT');
-  // await usdtToken.deployTransaction.wait();
+  rifToken = await standardTokenContract.deploy(parseEther('2000000'), 'Test RIF Tropykus', 18, 'tRIF');
+  await rifToken.deployTransaction.wait();
+  docToken = await standardTokenContract.deploy(parseEther('2000000'), 'Test DOC Tropykus', 18, 'tDOC');
+  await docToken.deployTransaction.wait();
+  rdocToken = await standardTokenContract.deploy(parseEther('2000000'), 'Test RDOC Tropykus', 18, 'tRDOC');
+  await rdocToken.deployTransaction.wait();
+  usdtToken = await standardTokenContract.deploy(parseEther('2000000'), 'Test rUSDT Tropykus', 18, 'trUSDT');
+  await usdtToken.deployTransaction.wait();
   console.log(`RIF = '${rifToken.address}';`);
   console.log(`DOC = '${docToken.address}';`);
   console.log(`RDOC = '${rdocToken.address}';`);
