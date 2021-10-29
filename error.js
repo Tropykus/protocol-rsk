@@ -196,13 +196,6 @@ load = async () => {
         console.log(`Detail: ${detail} | (Check the associated detail) | ${comptrollerError[detail]}`);
         console.log('===========================');
     });
-
-    csat.on('RedeemAux', (currentTotalSupply, redeemTokens) => {
-        console.log('=== CSAT RedeemAux ===');
-        console.log(`currentTotalSupply: ${Number(currentTotalSupply) / 1e18}`);
-        console.log(`redeemTokens: ${Number(redeemTokens) / 1e18}`);
-        console.log('===========================');
-    });
 };
 
 load();
