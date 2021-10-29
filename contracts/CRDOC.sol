@@ -37,7 +37,7 @@ contract CRDOC is CErc20 {
         BorrowLocalVars memory vars
     ) internal returns (BorrowLocalVars memory) {
         borrower;
-        require(vars.totalBorrowsNew <= 1000e18, "RD1");
+        require(vars.accountBorrowsNew <= 1000e18, "RD1");
         return vars;
     }
 }
