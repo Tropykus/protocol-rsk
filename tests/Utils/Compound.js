@@ -82,7 +82,7 @@ async function makeComptroller(opts = {}) {
     const priceOracle = opts.priceOracle || await makePriceOracle(opts.priceOracleOpts);
     const closeFactor = etherMantissa(dfn(opts.closeFactor, .051));
     const liquidationIncentive = etherMantissa(1);
-    const comp = opts.comp || await deploy('Comp', [opts.compOwner || root]);
+    // const comp = opts.comp || await deploy('Comp', [opts.compOwner || root]);
     const compRate = etherUnsigned(dfn(opts.compRate, 1e18));
 
     await send(unitroller, '_setPendingImplementation', [comptroller._address]);
@@ -92,9 +92,9 @@ async function makeComptroller(opts = {}) {
     await send(unitroller, '_setCloseFactor', [closeFactor]);
     await send(unitroller, '_setPriceOracle', [priceOracle._address]);
     await send(unitroller, '_setCompRate', [compRate]);
-    await send(unitroller, 'setCompAddress', [comp._address]); // harness only
+    // await send(unitroller, 'setCompAddress', [comp._address]); // harness only
 
-    return Object.assign(unitroller, { priceOracle, comp });
+    return Object.assign(unitroller, { priceOracle });
   }
 
   if (kind == 'unitroller') {
