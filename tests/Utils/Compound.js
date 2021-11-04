@@ -200,7 +200,7 @@ async function makeCToken(opts = {}) {
     await send(comptroller, '_addCompMarket', [cToken._address]);
   }
 
-  if(opts.needsCompanion) {
+  if (opts.interestRateModelOpts && opts.interestRateModelOpts.kind && opts.interestRateModelOpts.kind === 'hurricane') {
     companion = await deploy('CRBTCCompanion', [comptroller._address, cToken._address, comptroller.priceOracle._address]);
     await send(companion, 'setMarketCapThreshold', [opts.marketCapThreshold || etherMantissa(0.8)]);
     await send(cToken, 'setCompanion', [companion._address]);

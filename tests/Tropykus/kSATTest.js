@@ -1,9 +1,5 @@
-const { etherMantissa, etherUnsigned } = require("../Utils/Ethereum");
-const { makeCToken, makeComptroller } = require('../Utils/Compound');
-
-async function mintExplicit(cToken, minter, mintAmount) {
-    return send(cToken, 'mint', [], { from: minter, value: etherMantissa(mintAmount) });
-}
+const { etherMantissa } = require("../Utils/Ethereum");
+const { makeCToken, makeComptroller, fastForward } = require('../Utils/Compound');
 
 describe('rBTC (micro KSAT)', () => {
     beforeEach(async () => {
@@ -22,7 +18,6 @@ describe('rBTC (micro KSAT)', () => {
             supportMarket: true,
             underlyingPrice: 52050,
             collateralFactor: 0.5,
-            needsCompanion: true,
         });
         kRBTC = await makeCToken({
             name: 'kRBTC',
@@ -36,14 +31,41 @@ describe('rBTC (micro KSAT)', () => {
             underlyingPrice: 52050,
             collateralFactor: 0.5
         });
+        markets = [kRBTC, kSAT];
+
     });
     it('Avoid minting if mint value is above 0.025 rBTC', async () => {
-        const markets = [kRBTC, kSAT];
-        expect(await mintExplicit(kRBTC, alice, 3)).toSucceed();
+        await expect(send(kSAT, 'mint', [], { from: alice, value: etherMantissa(0.026) })).rejects.toRevert('revert R8');
+    });
+    it('Avoid minting if there is not enough market cap', async () => {
+        expect(await send(
+            comptroller,
+            'enterMarkets',
+            [markets.map(mkt => mkt._address)],
+            { from: alice }),
+        ).toSucceed();
+        await expect(send(kSAT, 'mint', [], { from: alice, value: etherMantissa(0.025) })).rejects.toRevert('revert R9');
+    });
+    it('Should allow minting if the amount is less or equal to 0.025 and there is enough market cap', async () => {
+        expect(await send(kRBTC, 'mint', [], { from: alice, value: etherMantissa(3) })).toSucceed();
         expect(Number(await call(kRBTC, 'balanceOf', [alice]))).toEqual(Number(etherMantissa(150)));
         expect(Number(await call(kRBTC, 'balanceOfUnderlying', [alice]))).toEqual(Number(etherMantissa(3)));
         expect(await send(comptroller, 'enterMarkets', [markets.map(mkt => mkt._address)], { from: alice })).toSucceed();
         expect(await send(kRBTC, 'borrow', [etherMantissa(0.5)], { from: alice })).toSucceed();
-        await expect(mintExplicit(kSAT, alice, 0.026)).rejects.toRevert('revert R8');
+        expect(await send(kSAT, 'mint', [], { from: alice, value: etherMantissa(0.025) })).toSucceed();
+    });
+    it('Interest plus withdraw', async () => {
+        /*
+        Alice deposits 0.02 rBTC in the market at 4% APY
+        After six months, Alice saved 0.0204 rBTC
+        She withdraws the MAX after these six months. She got 0.0204 rBTC in her wallet.
+        */
+        expect(await send(comptroller, 'enterMarkets', [markets.map(mkt => mkt._address)], { from: alice })).toSucceed();
+        expect(await send(kRBTC, 'mint', [], { from: alice, value: etherMantissa(3) })).toSucceed();
+        expect(await send(kRBTC, 'borrow', [etherMantissa(1)], { from: alice })).toSucceed();
+        expect(await send(kSAT, 'mint', [], { from: alice, value: etherMantissa(0.02) })).toSucceed();
+        expect((Number(await call(kSAT, 'balanceOfUnderlying', [alice], { from: alice })))).toEqual(Number(etherMantissa(0.02)));
+        fastForward(kSAT, 518400);
+        expect((Number(await call(kSAT, 'balanceOfUnderlying', [alice], { from: alice })) / 1e18)).toBeCloseTo(0.02039452054794520547, 10)
     });
 });
