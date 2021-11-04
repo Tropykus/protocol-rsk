@@ -220,7 +220,7 @@ async function makeCToken(opts = {}) {
     expect(await send(comptroller, '_setCollateralFactor', [cToken._address, factor])).toSucceed();
   }
 
-  return Object.assign(cToken, { name, symbol, underlying, comptroller, interestRateModel });
+  return Object.assign(cToken, { name, symbol, underlying, comptroller, interestRateModel, companion });
 }
 
 async function makeInterestRateModel(opts = {}) {
