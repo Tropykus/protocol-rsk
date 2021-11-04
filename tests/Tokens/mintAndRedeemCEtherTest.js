@@ -29,11 +29,11 @@ async function preMint(cToken, minter, mintAmount, mintTokens, exchangeRate) {
 }
 
 async function mintExplicit(cToken, minter, mintAmount) {
-  return send(cToken, 'mint', [], {from: minter, value: mintAmount});
+  return send(cToken, 'mint', [], { from: minter, value: mintAmount });
 }
 
 async function mintFallback(cToken, minter, mintAmount) {
-  return sendFallback(cToken, {from: minter, value: mintAmount});
+  return sendFallback(cToken, { from: minter, value: mintAmount });
 }
 
 async function preRedeem(cToken, redeemer, redeemTokens, redeemAmount, exchangeRate) {
@@ -47,11 +47,11 @@ async function preRedeem(cToken, redeemer, redeemTokens, redeemAmount, exchangeR
 }
 
 async function redeemCTokens(cToken, redeemer, redeemTokens, redeemAmount) {
-  return send(cToken, 'redeem', [redeemTokens], {from: redeemer});
+  return send(cToken, 'redeem', [redeemTokens], { from: redeemer });
 }
 
 async function redeemUnderlying(cToken, redeemer, redeemTokens, redeemAmount) {
-  return send(cToken, 'redeemUnderlying', [redeemAmount], {from: redeemer});
+  return send(cToken, 'redeemUnderlying', [redeemAmount], { from: redeemer });
 }
 
 describe('CRBTC', () => {
@@ -60,7 +60,7 @@ describe('CRBTC', () => {
 
   beforeEach(async () => {
     [root, minter, redeemer, ...accounts] = saddle.accounts;
-    cToken = await makeCToken({kind: 'crbtc', comptrollerOpts: {kind: 'bool'}});
+    cToken = await makeCToken({ kind: 'crbtc', comptrollerOpts: { kind: 'bool' } });
     await fastForward(cToken, 1);
   });
 

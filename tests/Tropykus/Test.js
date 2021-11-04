@@ -52,7 +52,7 @@ describe('DOC/RIF/USD markets', () => {
             comptrollerOpts: {
                 kind: 'unitroller-g6'
             },
-            interestRateModelOpts : {
+            interestRateModelOpts: {
                 kind: 'jump-rateV2',
                 baseRate: etherUnsigned(0.08),
                 multiplier: etherUnsigned(0.02),
@@ -68,13 +68,18 @@ describe('DOC/RIF/USD markets', () => {
 
     it('When an address deposits and then withdraws', async () => {
         await preMint(cToken, minter, mintAmount, mintTokens, exchangeRate);
-        
+
         expect(await mintFresh(cToken, minter, mintAmount)).toSucceed();
         expect(Number(await balanceOf(cToken, minter))).toEqual(Number(mintTokens));
 
-        await send(cToken.comptroller, 'fastForward', [ 5000 ]);
-        await send(cToken, 'harnessFastForward', [ 5000 ]);
+        console.log(Number(etherUnsigned(await call(cToken, 'balanceOfUnderlying', [minter]))));
+
+        await send(cToken.comptroller, 'fastForward', [5000]);
+        await send(cToken, 'harnessFastForward', [5000]);
 
         console.log(Number(await balanceOf(cToken, minter)));
+        console.log(Number(etherUnsigned(await call(cToken, 'balanceOfUnderlying', [minter]))));
+
+        console.log('Done');
     })
 })

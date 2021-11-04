@@ -133,7 +133,7 @@ async function makeCToken(opts = {}) {
   const name = opts.name || `CToken ${symbol}`;
   const admin = opts.admin || root;
 
-  let cToken, underlying;
+  let cToken, underlying, companion;
   let cDelegator, cDelegatee, cDaiMaker;
 
   switch (kind) {
@@ -200,9 +200,19 @@ async function makeCToken(opts = {}) {
     await send(comptroller, '_addCompMarket', [cToken._address]);
   }
 
+  if(opts.needsCompanion) {
+    companion = await deploy('CRBTCCompanion', [comptroller._address, cToken._address, comptroller.priceOracle._address]);
+    await send(companion, 'setMarketCapThreshold', [opts.marketCapThreshold || etherMantissa(0.8)]);
+    await send(cToken, 'setCompanion', [companion._address]);
+  }
+
   if (opts.underlyingPrice) {
     const price = etherMantissa(opts.underlyingPrice);
-    await send(comptroller.priceOracle, 'setUnderlyingPrice', [cToken._address, price]);
+    if (symbol === 'cRBTC') {
+      await send(comptroller.priceOracle, 'setDirectPrice', [cToken._address, price]);
+    } else {
+      await send(comptroller.priceOracle, 'setUnderlyingPrice', [cToken._address, price]);
+    }
   }
 
   if (opts.collateralFactor) {
@@ -248,8 +258,23 @@ async function makeInterestRateModel(opts = {}) {
     const multiplier = etherMantissa(dfn(opts.multiplier, 1e-18));
     const jump = etherMantissa(dfn(opts.jump, 2));
     const kink = etherMantissa(dfn(opts.kink, 0.9));
-    let contr=  await deploy('JumpRateModelV2', [baseRate, multiplier, jump, kink, root]);
+    let contr = await deploy('JumpRateModelV2', [baseRate, multiplier, jump, kink, root]);
     return contr;
+  }
+
+  if (kind == 'hurricane') {
+    const baseBorrowRate = etherMantissa(dfn(opts.baseBorrowRate, 0.08));
+    const promisedBaseReturnRate = etherMantissa(dfn(opts.promisedBaseReturnRate, 0.04));
+    const optimalUtilizationRate = etherMantissa(dfn(opts.optimalUtilizationRate, 0.5));
+    const borrowRateSlope = etherMantissa(dfn(opts.borrowRateSlope, 0.04));
+    const supplyRateSlope = etherMantissa(dfn(opts.supplyRateSlope, 0.02));
+    return await deploy('HurricaneInterestRateModel', [
+      baseBorrowRate,
+      promisedBaseReturnRate,
+      optimalUtilizationRate,
+      borrowRateSlope,
+      supplyRateSlope,
+    ]);
   }
 }
 

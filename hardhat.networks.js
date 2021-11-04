@@ -1,6 +1,7 @@
 const networks = {
   hardhat: {
     blockGasLimit: 200000000,
+    defaultBalanceEther: 20000000000,
     gas: 6800000,
     allowUnlimitedContractSize: true,
     chainId: 1337
