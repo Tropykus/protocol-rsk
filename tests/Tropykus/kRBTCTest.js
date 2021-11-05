@@ -20,7 +20,7 @@ describe('rBTC (standard)', () => {
             exchangeRate: 0.02,
             supportMarket: true,
             underlyingPrice: 61000,
-            collateralFactor: 0.5
+            collateralFactor: 0.75
         });
 
         DOC = await deploy('StandardToken', [
@@ -49,14 +49,11 @@ describe('rBTC (standard)', () => {
         });
         markets = [kRBTC, kDOC];
 
+        await send(kRBTC, '_setReserveFactor', [etherMantissa(0.2)], { from: root })
+        await send(kDOC, '_setReserveFactor', [etherMantissa(0.5)], { from: root })
     });
 
     it('Withdrawn earnings with 1% APY after 180 days', async () => {
-        /*
-        Alice deposits 0.5 rBTC in the market at 1% APY
-        After six months, Alice saved 0.0025 rBTC
-        She withdraws the MAX after these six months. She got 0.5025 rBTC in her wallet.
-        */
         expect(await send(kRBTC, 'mint', [], { from: alice, value: etherMantissa(0.5) })).toSucceed();
 
         expect(await send(comptroller, 'enterMarkets', [markets.map(mkt => mkt._address)], { from: bob })).toSucceed();
@@ -65,59 +62,61 @@ describe('rBTC (standard)', () => {
 
         fastForward(kRBTC, 518400);
 
-        expect((Number(await call(kRBTC, 'balanceOfUnderlying', [alice], { from: alice })) / 1e18)).toBeCloseTo(0.502465753424657534, 10);
+        expect((Number(await call(kRBTC, 'balanceOfUnderlying', [alice], { from: alice })) / 1e18)).toEqual(0.501972602745783);
     });
 
     it('Withdraw + borrow', async () => {
-        /*
-        Alice deposits 0.5 rBTC in the market at 1% APY
-        After two months, Alice saved 0.00083 rBTC
-        She withdraws 0.3 rBTC after these two months. 
-        She left 0.20083 rBTC in Tropykus
-        Two months later, she has 0.20083 + interest accrued 0.0020083 = 0.2028383 rBTC
-        She borrows 30% of the amount permitted by its collateral in DOC at 8% APY
-        50% collateral factor in rBTC: 0.10141 rBTC = 6186 DOC (assuming rBTC at 61.000) 
-        Alice receives 30% of the possible permitted borrow: 1855,8 DOC 
-        6 months later she pays 60% of the loan 
-        One month later pays the remaining amount. 
-        The loan is completely repaid.
-        */
         expect(await send(kRBTC, 'mint', [], { from: alice, value: etherMantissa(0.5) })).toSucceed();
 
         expect(await send(comptroller, 'enterMarkets', [markets.map(mkt => mkt._address)], { from: bob })).toSucceed();
         expect(await send(kRBTC, 'mint', [], { from: bob, value: etherMantissa(1.5) })).toSucceed();
-        expect(await send(kRBTC, 'borrow', [etherMantissa(0.463324959)], { from: bob })).toSucceed();
+        expect(await send(kRBTC, 'borrow', [etherMantissa(0.5348469228795509)], { from: bob })).toSucceed();
+
+        expect((await call(kRBTC, 'supplyRatePerBlock', [])/1e18) * (blocksPerDay * 365) * 100).toBeCloseTo(1, 7);
 
         fastForward(kRBTC, 172800);
-
-        expect((Number(await call(kRBTC, 'balanceOfUnderlying', [alice], { from: alice })) / 1e18)).toBeCloseTo(0.5008219178082191781, 10);
+        
+        expect((Number(await call(kRBTC, 'balanceOfUnderlying', [alice], { from: alice })) / 1e18)).toBeCloseTo(0.500821917808219, 7);
         expect(await send(kRBTC, 'redeemUnderlying', [etherMantissa(0.3)], { from: alice })).toSucceed();
-        expect((Number(await call(kRBTC, 'balanceOfUnderlying', [alice], { from: alice })) / 1e18)).toBeCloseTo(0.2008219178082191781, 10);
+        expect((Number(await call(kRBTC, 'balanceOfUnderlying', [alice], { from: alice })) / 1e18)).toBeCloseTo(0.200821917808219, 7);
 
         fastForward(kRBTC, 172800);
-        expect((Number(await call(kRBTC, 'balanceOfUnderlying', [alice], { from: alice })) / 1e18)).toBeCloseTo(0.2012505343074387, 10);
+        await send(kRBTC, 'exchangeRateCurrent', []);
+
+        expect((Number(await call(kRBTC, 'balanceOfUnderlying', [alice], { from: alice })) / 1e18)).toBeCloseTo(0.201253466055087, 7);
 
         expect(await send(kDOC.underlying, 'transfer', [bob, etherMantissa(10000)])).toSucceed();
         expect(await send(kDOC.underlying, 'approve', [kDOC._address, etherMantissa(5000)], { from: bob })).toSucceed();
         expect(await send(kDOC, 'mint', [etherMantissa(5000)], { from: bob })).toSucceed();
 
         expect(await send(comptroller, 'enterMarkets', [markets.map(mkt => mkt._address)], { from: alice })).toSucceed();
-        hypotheticalAccountLiquidity = await call(comptroller, 'getHypotheticalAccountLiquidity', [alice, kDOC._address, etherMantissa(0), etherMantissa(0)]);
+        hypotheticalAccountLiquidity = await call(comptroller, 'getHypotheticalAccountLiquidity', [alice, kRBTC._address, 0, 0]);
         allowedToBorrow = Number(hypotheticalAccountLiquidity[1])/1e18;
+        expect(allowedToBorrow).toBeCloseTo(9207.346072020220, 7);
+
+        expect((await call(kDOC, 'borrowRatePerBlock', [])/1e18) * (blocksPerDay * 365) * 100).toBeCloseTo(8, 7);
+        expect(allowedToBorrow * 0.3).toBeCloseTo(2762.2038216060700, 7);
         expect(await send(kDOC, 'borrow', [etherMantissa(allowedToBorrow * 0.3)], { from: alice })).toSucceed();
 
         fastForward(kDOC, 518400);
 
         aliceDOCDebt =  Number(await call(kDOC, 'borrowBalanceCurrent', [alice], { from: alice })) / 1e18;
+        expect(aliceDOCDebt).toBeCloseTo(2887.901221585370000, 7);
         expect(await send(kDOC.underlying, 'approve', [kDOC._address, etherMantissa(aliceDOCDebt * 0.6)], { from: alice })).toSucceed();
         expect(await send(kDOC, 'repayBorrow', [etherMantissa(aliceDOCDebt * 0.6)], { from: alice })).toSucceed();
+        expect(aliceDOCDebt * 0.6).toBeCloseTo(1732.7407329512200, 7);
 
         fastForward(kDOC, 86400);
+        await send(kRBTC, 'exchangeRateCurrent', []);
 
         aliceDOCBalance = Number(await call(DOC, 'balanceOf', [alice], { from: alice })) / 1e18;
         aliceDOCDebt =  Number(await call(kDOC, 'borrowBalanceCurrent', [alice], { from: alice })) / 1e18;
+        expect(aliceDOCDebt).toBeCloseTo(1163.237463887960000, 7);
         expect(await send(kDOC.underlying, 'transfer', [alice, etherMantissa(aliceDOCDebt - aliceDOCBalance + 1)])).toSucceed();
         expect(await send(kDOC.underlying, 'approve', [kDOC._address, etherMantissa(aliceDOCDebt + 1)], { from: alice })).toSucceed();
         expect(await send(kDOC, 'repayBorrow', [etherMantissa(-1)], { from: alice })).toSucceed();
+
+        aliceDOCDebt =  Number(await call(kDOC, 'borrowBalanceCurrent', [alice], { from: alice })) / 1e18;
+        expect(aliceDOCDebt).toEqual(0);
     });
 });
