@@ -329,6 +329,10 @@ async function totalSupply(token) {
   return etherUnsigned(await call(token, 'totalSupply'));
 }
 
+async function totalCash(token) {
+  return etherUnsigned(await call(token, 'getCash'));
+}
+
 async function borrowSnapshot(cToken, account) {
   const { principal, interestIndex } = await call(cToken, 'harnessAccountBorrows', [account]);
   return { principal: etherUnsigned(principal), interestIndex: etherUnsigned(interestIndex) };
@@ -483,6 +487,7 @@ module.exports = {
 
   balanceOf,
   totalSupply,
+  totalCash,
   borrowSnapshot,
   totalBorrows,
   totalReserves,
