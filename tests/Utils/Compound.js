@@ -134,7 +134,7 @@ async function makeCToken(opts = {}) {
   const admin = opts.admin || root;
 
   let cToken, underlying, companion;
-  let cDelegator, cDelegatee, cDaiMaker;
+  let cDelegator, cDelegatee, cDaiMaker, CRDOC;
 
   switch (kind) {
     case 'crbtc':
@@ -168,6 +168,23 @@ async function makeCToken(opts = {}) {
         ]
       );
       cToken = await saddle.getContractAt('CCompLikeDelegate', cDelegator._address);
+      break;
+
+    case 'crdoc':
+      underlying = opts.underlying || await makeToken(opts.underlyingOpts);
+      CRDOC = await deploy('CRDOCHarness',
+        [
+          underlying._address,
+          comptroller._address,
+          interestRateModel._address,
+          exchangeRate,
+          name,
+          symbol,
+          decimals,
+          admin
+        ]
+      );
+      cToken = await saddle.getContractAt('CRDOCHarness', CRDOC._address);
       break;
 
     case 'cerc20':
