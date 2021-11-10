@@ -31,17 +31,11 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         uint8 decimals_
     ) public {
         require(msg.sender == admin, "T1");
-        require(
-            accrualBlockNumber == 0 && borrowIndex == 0,
-            "T2"
-        );
+        require(accrualBlockNumber == 0 && borrowIndex == 0, "T2");
 
         // Set initial exchange rate
         initialExchangeRateMantissa = initialExchangeRateMantissa_;
-        require(
-            initialExchangeRateMantissa > 0,
-            "T3"
-        );
+        require(initialExchangeRateMantissa > 0, "T3");
 
         // Set the comptroller
         uint256 err = _setComptroller(comptroller_);
@@ -53,10 +47,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         // Set the interest rate model (depends on block number / borrow index)
         err = _setInterestRateModelFresh(interestRateModel_);
-        require(
-            err == uint256(Error.NO_ERROR),
-            "T5"
-        );
+        require(err == uint256(Error.NO_ERROR), "T5");
 
         name = name_;
         symbol = symbol_;
@@ -319,10 +310,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
      * @return The total borrows with interest
      */
     function totalBorrowsCurrent() external nonReentrant returns (uint256) {
-        require(
-            accrueInterest() == uint256(Error.NO_ERROR),
-            "T7"
-        );
+        require(accrueInterest() == uint256(Error.NO_ERROR), "T7");
         return totalBorrows;
     }
 
@@ -336,10 +324,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         nonReentrant
         returns (uint256)
     {
-        require(
-            accrueInterest() == uint256(Error.NO_ERROR),
-            "T7"
-        );
+        require(accrueInterest() == uint256(Error.NO_ERROR), "T7");
         return borrowBalanceStored(account);
     }
 
@@ -354,10 +339,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         returns (uint256)
     {
         (MathError err, uint256 result) = borrowBalanceStoredInternal(account);
-        require(
-            err == MathError.NO_ERROR,
-            "T8"
-        );
+        require(err == MathError.NO_ERROR, "T8");
         return result;
     }
 
@@ -437,10 +419,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
      * @return Calculated exchange rate scaled by 1e18
      */
     function exchangeRateCurrent() public nonReentrant returns (uint256) {
-        require(
-            accrueInterest() == uint256(Error.NO_ERROR),
-            "T7"
-        );
+        require(accrueInterest() == uint256(Error.NO_ERROR), "T7");
         return exchangeRateStored();
     }
 
@@ -451,10 +430,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
      */
     function exchangeRateStored() public view returns (uint256) {
         (MathError err, uint256 result) = exchangeRateStoredInternal();
-        require(
-            err == MathError.NO_ERROR,
-            "T9"
-        );
+        require(err == MathError.NO_ERROR, "T9");
         return result;
     }
 
@@ -507,6 +483,9 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             SupplySnapshot storage supplySnapshot = accountTokens[redeemer];
             if (supplySnapshot.suppliedAt == 0) {
                 return (MathError.DIVISION_BY_ZERO, 0);
+            }
+            if (supplySnapshot.tokens == 0) {
+                return (MathError.NO_ERROR, initialExchangeRateMantissa);
             }
             (, uint256 interestFactorMantissa, , , ) = tropykusInterestAccrued(
                 redeemer
@@ -609,20 +588,14 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             borrowsPrior,
             reservesPrior
         );
-        require(
-            borrowRateMantissa <= borrowRateMaxMantissa,
-            "T10"
-        );
+        require(borrowRateMantissa <= borrowRateMaxMantissa, "T10");
 
         /* Calculate the number of blocks elapsed since the last accrual */
         (MathError mathErr, uint256 blockDelta) = subUInt(
             currentBlockNumber,
             accrualBlockNumberPrior
         );
-        require(
-            mathErr == MathError.NO_ERROR,
-            "T11"
-        );
+        require(mathErr == MathError.NO_ERROR, "T11");
 
         /*
          * Calculate the interest accumulated into borrows and reserves and the new index:
@@ -915,10 +888,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             vars.actualMintAmount,
             Exp({mantissa: vars.exchangeRateMantissa})
         );
-        require(
-            vars.mathErr == MathError.NO_ERROR,
-            "T13"
-        );
+        require(vars.mathErr == MathError.NO_ERROR, "T13");
 
         /*
          * We calculate the new total supply of cTokens and minter token balance, checking for overflow:
@@ -929,19 +899,13 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             totalSupply,
             vars.mintTokens
         );
-        require(
-            vars.mathErr == MathError.NO_ERROR,
-            "T14"
-        );
+        require(vars.mathErr == MathError.NO_ERROR, "T14");
 
         (vars.mathErr, vars.accountTokensNew) = addUInt(
             accountTokens[minter].tokens,
             vars.mintTokens
         );
-        require(
-            vars.mathErr == MathError.NO_ERROR,
-            "T15"
-        );
+        require(vars.mathErr == MathError.NO_ERROR, "T15");
 
         uint256 currentSupplyRate = interestRateModel.getSupplyRate(
             getCashPrior(),
@@ -1073,10 +1037,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         uint256 redeemTokensIn,
         uint256 redeemAmountIn
     ) internal returns (uint256) {
-        require(
-            redeemTokensIn == 0 || redeemAmountIn == 0,
-            "T16"
-        );
+        require(redeemTokensIn == 0 || redeemAmountIn == 0, "T16");
 
         RedeemLocalVars memory vars;
 
@@ -1654,19 +1615,13 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             vars.accountBorrows,
             vars.actualRepayAmount
         );
-        require(
-            vars.mathErr == MathError.NO_ERROR,
-            "T17"
-        );
+        require(vars.mathErr == MathError.NO_ERROR, "T17");
 
         (vars.mathErr, vars.totalBorrowsNew) = subUInt(
             totalBorrows,
             vars.actualRepayAmount
         );
-        require(
-            vars.mathErr == MathError.NO_ERROR,
-            "T18"
-        );
+        require(vars.mathErr == MathError.NO_ERROR, "T18");
 
         /* We write the previously calculated values into storage */
         accountBorrows[borrower].principal = vars.accountBorrowsNew;
@@ -1851,16 +1806,10 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                 address(cTokenCollateral),
                 actualRepayAmount
             );
-        require(
-            amountSeizeError == uint256(Error.NO_ERROR),
-            "T19"
-        );
+        require(amountSeizeError == uint256(Error.NO_ERROR), "T19");
 
         /* Revert if borrower collateral token balance < seizeTokens */
-        require(
-            cTokenCollateral.balanceOf(borrower) >= seizeTokens,
-            "T20"
-        );
+        require(cTokenCollateral.balanceOf(borrower) >= seizeTokens, "T20");
 
         // If this is also the collateral, run seizeInternal to avoid re-entrancy, otherwise make an external call
         uint256 seizeError;
@@ -2242,10 +2191,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         totalReservesNew = totalReserves + actualAddAmount;
 
         /* Revert on overflow */
-        require(
-            totalReservesNew >= totalReserves,
-            "T23"
-        );
+        require(totalReservesNew >= totalReserves, "T23");
 
         // Store reserves[n+1] = reserves[n] + actualAddAmount
         totalReserves = totalReservesNew;
@@ -2314,10 +2260,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         subsidyFundNew = subsidyFund + actualAddAmount;
 
         /* Revert on overflow */
-        require(
-            subsidyFundNew >= subsidyFund,
-            "T24"
-        );
+        require(subsidyFundNew >= subsidyFund, "T24");
 
         // Store reserves[n+1] = reserves[n] + actualAddAmount
         subsidyFund = subsidyFundNew;
@@ -2404,10 +2347,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         totalReservesNew = totalReserves - reduceAmount;
         // We checked reduceAmount <= totalReserves above, so this should never revert.
-        require(
-            totalReservesNew <= totalReserves,
-            "T25"
-        );
+        require(totalReservesNew <= totalReserves, "T25");
 
         // Store reserves[n+1] = reserves[n] - reduceAmount
         totalReserves = totalReservesNew;
@@ -2478,10 +2418,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         oldInterestRateModel = interestRateModel;
 
         // Ensure invoke newInterestRateModel.isInterestRateModel() returns true
-        require(
-            newInterestRateModel.isInterestRateModel(),
-            "T22"
-        );
+        require(newInterestRateModel.isInterestRateModel(), "T22");
 
         // Set the interest rate model to newInterestRateModel
         interestRateModel = newInterestRateModel;
