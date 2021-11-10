@@ -1132,15 +1132,19 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         if (redeemTokensIn > 0) {
             vars.redeemTokens = redeemTokensIn;
             if (isTropykusInterestRateModel) {
-                (, Exp memory num) = mulExp(
-                    vars.redeemTokens,
-                    currentUnderlying
-                );
-                (, Exp memory realUnderlyingWithdrawAmount) = getExp(
-                    num.mantissa,
-                    supplySnapshot.tokens
-                );
-                vars.redeemAmount = realUnderlyingWithdrawAmount.mantissa;
+                if (redeemTokensIn == supplySnapshot.tokens) {
+                    vars.redeemAmount = supplySnapshot.underlyingAmount;
+                } else {
+                    (, Exp memory num) = mulExp(
+                        vars.redeemTokens,
+                        currentUnderlying
+                    );
+                    (, Exp memory realUnderlyingWithdrawAmount) = getExp(
+                        num.mantissa,
+                        supplySnapshot.tokens
+                    );
+                    vars.redeemAmount = realUnderlyingWithdrawAmount.mantissa;
+                }
             } else {
                 /*
                  * We calculate the exchange rate and the amount of underlying to be redeemed:
