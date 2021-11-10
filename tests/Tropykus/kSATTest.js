@@ -54,6 +54,24 @@ describe('rBTC (micro KSAT)', () => {
         expect(await send(kRBTC, 'borrow', [etherMantissa(0.5)], { from: alice })).toSucceed();
         expect(await send(kSAT, 'mint', [], { from: alice, value: etherMantissa(0.025) })).toSucceed();
     });
+    it('Allow to deposit after redeeming all the initial deposit, exchangeRate is not 0', async () => {
+        expect(await send(kRBTC, 'mint', [], { from: root, value: etherMantissa(5) })).toSucceed();
+        expect(await send(comptroller, 'enterMarkets', [markets.map(mkt => mkt._address)], { from: root })).toSucceed();
+        expect(await send(comptroller, 'enterMarkets', [markets.map(mkt => mkt._address)], { from: alice })).toSucceed();
+        expect(await send(kRBTC, 'borrow', [etherMantissa(2.5)], { from: root })).toSucceed();
+        expect(await send(kSAT, 'mint', [], { from: root, value: etherMantissa(0.025) })).toSucceed();
+        expect(await send(kSAT, 'mint', [], { from: alice, value: etherMantissa(0.025) })).toSucceed();
+        expect(Number(await call(kSAT, 'balanceOf', [alice], { from: alice })) / 1e18).toEqual(1.25);
+        expect(Number(await call(kSAT, 'exchangeRateCurrent', [], { from: alice }))).toEqual(Number(etherMantissa(0.02)));
+        fastForward(kSAT, 2880);
+        expect(Number(await call(kSAT, 'balanceOf', [alice], { from: alice })) / 1e18).toEqual(1.25);
+        expect(await send(kSAT, 'redeem', [etherMantissa(1.25)], { from: alice })).toSucceed();
+        expect(Number(await call(kSAT, 'exchangeRateCurrent', [], { from: alice }))).toEqual(Number(etherMantissa(0.02)));
+        const supplySnapshot = await call(kSAT, 'getSupplierSnapshotStored', [alice], { from: alice });
+        expect(Number(supplySnapshot.tokens)).toEqual(0);
+        expect(Number(supplySnapshot.underlyingAmount)).toEqual(0);
+        expect(await send(kSAT, 'mint', [], { from: alice, value: etherMantissa(0.025) })).toSucceed();
+    });
     it('Interest plus withdraw', async () => {
         /*
         Alice deposits 0.02 rBTC in the market at 4% APY
