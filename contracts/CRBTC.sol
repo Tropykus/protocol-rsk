@@ -113,6 +113,11 @@ contract CRBTC is CToken {
         requireNoError(err, "repayBorrow failed");
     }
 
+    function repayBorrowAll() external payable {
+        (uint256 err, ) = repayBorrowInternal(uint256(-1));
+        requireNoError(err, "repayBorrow failed");
+    }
+
     /**
      * @notice Sender repays a borrow belonging to borrower
      * @dev Reverts upon any failure
@@ -181,6 +186,17 @@ contract CRBTC is CToken {
         // Sanity checks
         require(msg.sender == from, "sender mismatch");
         require(msg.value == amount, "value mismatch");
+        return amount;
+    }
+
+    function doTransferIn(
+        address from,
+        uint256 amount,
+        bool isMax
+    ) internal returns (uint256) {
+        isMax;
+        // Sanity checks
+        require(msg.sender == from, "sender mismatch");
         return amount;
     }
 

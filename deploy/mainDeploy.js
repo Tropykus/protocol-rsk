@@ -58,8 +58,8 @@ async function main() {
       },
       rbtc: {
         reserveFactor: parseEther('0.20'),
-        collateralFactor: parseEther('0.75'),
-        baseBorrowRate: parseEther('0.02'),
+        collateralFactor: parseEther('0.6'),
+        baseBorrowRate: parseEther('0.04'),
         multiplier: parseEther('0.1'),
       },
       sat: {

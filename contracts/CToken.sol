@@ -1593,8 +1593,14 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         /* If repayAmount == -1, repayAmount = accountBorrows */
         if (repayAmount == uint256(-1)) {
             vars.repayAmount = vars.accountBorrows;
+            vars.actualRepayAmount = doTransferIn(
+                payer,
+                vars.repayAmount,
+                true
+            );
         } else {
             vars.repayAmount = repayAmount;
+            vars.actualRepayAmount = doTransferIn(payer, vars.repayAmount);
         }
 
         /////////////////////////
@@ -1608,7 +1614,6 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
          *  doTransferIn reverts if anything goes wrong, since we can't be sure if side effects occurred.
          *   it returns the amount actually transferred, in case of a fee.
          */
-        vars.actualRepayAmount = doTransferIn(payer, vars.repayAmount);
 
         /*
          * We calculate the new borrower and total borrow balances, failing on underflow:
@@ -2452,6 +2457,12 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     function doTransferIn(address from, uint256 amount)
         internal
         returns (uint256);
+
+    function doTransferIn(
+        address from,
+        uint256 amount,
+        bool isMax
+    ) internal returns (uint256);
 
     /**
      * @dev Performs a transfer out, ideally returning an explanatory error code upon failure tather than reverting.
