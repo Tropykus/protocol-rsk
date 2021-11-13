@@ -81,7 +81,7 @@ async function makeComptroller(opts = {}) {
     const comptroller = await deploy('ComptrollerScenarioG6');
     const priceOracle = opts.priceOracle || await makePriceOracle(opts.priceOracleOpts);
     const closeFactor = etherMantissa(dfn(opts.closeFactor, .051));
-    const liquidationIncentive = etherMantissa(1);
+    const liquidationIncentive = etherMantissa(dfn(opts.liquidationIncentive, 1));
     // const comp = opts.comp || await deploy('Comp', [opts.compOwner || root]);
     const compRate = etherUnsigned(dfn(opts.compRate, 1e18));
 
@@ -102,7 +102,7 @@ async function makeComptroller(opts = {}) {
     const comptroller = await deploy('ComptrollerHarness');
     const priceOracle = opts.priceOracle || await makePriceOracle(opts.priceOracleOpts);
     const closeFactor = etherMantissa(dfn(opts.closeFactor, .051));
-    const liquidationIncentive = etherMantissa(1);
+    const liquidationIncentive = etherMantissa(dfn(opts.liquidationIncentive, 1));
     const comp = opts.comp || await deploy('TROP', [opts.compOwner || root]);
     const compRate = etherUnsigned(dfn(opts.compRate, 1e18));
 

@@ -7,6 +7,7 @@ describe('rBTC (micro KSAT)', () => {
     comptroller = await makeComptroller({
       kind: 'unitroller-g6',
       closeFactor: 0.5,
+      liquidationIncentive: 0.07,
     });
     kSAT = await makeCToken({
       name: 'kSAT',
@@ -233,8 +234,16 @@ describe('rBTC (micro KSAT)', () => {
       it('Should allow a liquidator to liquidate an undercollateralized borrow and seized the collateral', async () => {
         expect(await send(kSAT, 'mint', [], { from: alice, value: etherMantissa(0.025) })).toSucceed();
         expect(await send(kRBTC, 'borrow', [etherMantissa(0.0125)], { from: alice })).toSucceed();
-        expect(await send(comptroller.priceOracle, 'setDirectPrice', [kRBTC._address, etherMantissa(110000)])).toSucceed();
+        console.log('Exchange Rate Alice before price climb: ', Number(await call(kSAT, 'exchangeRateStored', { from: alice })) / 1e18);
+        expect(await send(comptroller.priceOracle, 'setDirectPrice', [kRBTC._address, etherMantissa(75000)])).toSucceed();
+        fastForward(kSAT, 2880);
+        fastForward(kRBTC, 2880);
+        await send(comptroller, 'fastForward', [2880]);
+        await send(kSAT, 'balanceOfUnderlying', [alice]);
+        console.log('Exchange Rate Alice after price climb: ', Number(await call(kSAT, 'exchangeRateStored', { from: alice })) / 1e18);
         liquidityData = await call(comptroller, 'getHypotheticalAccountLiquidity', [alice, kSAT._address, 0, 0]);
+        console.log('Liquidity: ', Number(liquidityData[1]) / 1e18);
+        console.log('Shortfall: ', Number(liquidityData[2]) / 1e18);
         expect(Number(liquidityData[2]) / 1e18).toBeGreaterThan(0);
         bobCurrentBalance = Number(await etherBalance(bob)) / 1e18;
         console.log('kSAT balance for Bob: ', Number(await call(kSAT, 'balanceOf', [bob])) / 1e18);
@@ -245,9 +254,12 @@ describe('rBTC (micro KSAT)', () => {
         console.log('Liquidity: ', Number(liquidityData[1]) / 1e18);
         console.log('Shortfall: ', Number(liquidityData[2]) / 1e18);
         expect(Number(await etherBalance(bob)) / 1e18).toBeCloseTo(bobCurrentBalance - liquidationGas - 0.006, 13);
-        console.log('kSAT balance for Bob: ', Number(await call(kSAT, 'balanceOf', [bob])) / 1e18);
+        bobKSATBalance = Number(await call(kSAT, 'balanceOf', [bob])) / 1e18;
+        console.log('kSAT balance for Bob: ', bobKSATBalance);
+        expect(bobKSATBalance).toBeCloseTo(0.030256050262700722, 13); // Alice
+        expect(bobKSATBalance).toBeCloseTo(0.030259365994236318, 13); // Bob
       });
-    });º
+    });
   });
   describe('Interaction in presence of other markets and more users', () => { });
   describe('Market cap always as 80% of the total debt in other markets', () => {
