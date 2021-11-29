@@ -186,6 +186,7 @@ contract CRBTC is CToken {
         // Sanity checks
         require(msg.sender == from, "sender mismatch");
         require(msg.value == amount, "value mismatch");
+
         return amount;
     }
 
@@ -197,6 +198,9 @@ contract CRBTC is CToken {
         isMax;
         // Sanity checks
         require(msg.sender == from, "sender mismatch");
+        require(msg.value >= amount, "value mismatch");
+        (MathError err, uint256 returnAmount) = subUInt(msg.value, amount);
+        doTransferOut(msg.sender, returnAmount);
         return amount;
     }
 

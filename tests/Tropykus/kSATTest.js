@@ -209,20 +209,48 @@ describe('rBTC (micro KSAT)', () => {
         await send(comptroller, 'fastForward', [2880]);
         expect(await send(kRBTC, 'repayBorrow', { from: alice, value: etherMantissa(0.01) })).toSucceed();
       });
+      it('Should fail if paying the whole debt without amount', async () => {
+        expect(await send(kRBTC, 'borrow', [etherMantissa(0.0125)], { from: alice })).toSucceed();
+        fastForward(kSAT, 2880);
+        fastForward(kRBTC, 2880);
+        await send(comptroller, 'fastForward', [2880]);
+        await expect(send(kRBTC, 'repayBorrowAll', { from: alice })).rejects.toRevert('revert value mismatch');
+      });
       it('Should allow paying the whole debt', async () => {
         expect(await send(kRBTC, 'borrow', [etherMantissa(0.0125)], { from: alice })).toSucceed();
         fastForward(kSAT, 2880);
         fastForward(kRBTC, 2880);
         await send(comptroller, 'fastForward', [2880]);
-        expect(await send(kRBTC, 'repayBorrowAll', { from: alice })).toSucceed();
+        currentBalance = Number(await etherBalance(alice)) / 1e18;
+        tx = await send(kRBTC, 'repayBorrowAll', { from: alice, value: etherMantissa(1) });
+        gas = Number(await etherGasCost(tx)) / 1e18;
+        expect(tx).toSucceed();
+        expect(Number(await etherBalance(alice)) / 1e18).toBeCloseTo(currentBalance - gas - 0.0125, 13);
+        expect(Number(await call(kRBTC, 'borrowBalanceCurrent', [alice], { from: alice })) / 1e18).toEqual(0);
+      });
+      it('Should allow paying the whole debt delta considered', async () => {
+        expect(await send(kRBTC, 'borrow', [etherMantissa(0.0125)], { from: alice })).toSucceed();
+        fastForward(kSAT, 2880);
+        fastForward(kRBTC, 2880);
+        await send(comptroller, 'fastForward', [2880]);
+        currentBalance = Number(await etherBalance(alice)) / 1e18;
+        currentDebt = Number(await call(kRBTC, 'borrowBalanceCurrent', [alice], { from: alice })) / 1e18;
+        tx = await send(kRBTC, 'repayBorrowAll', { from: alice, value: etherMantissa(currentDebt + 0.000002) });
+        gas = Number(await etherGasCost(tx)) / 1e18;
+        expect(tx).toSucceed();
+        expect(Number(await etherBalance(alice)) / 1e18).toBeCloseTo(currentBalance - gas - currentDebt, 13);
+        expect(Number(await call(kRBTC, 'borrowBalanceCurrent', [alice], { from: alice })) / 1e18).toEqual(0);
       });
       it('Should allow a borrower to borrow again after repaying a former debt', async () => {
         expect(await send(kRBTC, 'borrow', [etherMantissa(0.0125)], { from: alice })).toSucceed();
         fastForward(kSAT, 2880);
         fastForward(kRBTC, 2880);
         await send(comptroller, 'fastForward', [2880]);
-        expect(await send(kRBTC, 'repayBorrowAll', { from: alice })).toSucceed();
+        currentDebt = Number(await call(kRBTC, 'borrowBalanceCurrent', [alice], { from: alice })) / 1e18;
+        expect(await send(kRBTC, 'repayBorrowAll', { from: alice, value: etherMantissa(currentDebt + 0.000002) })).toSucceed();
+        expect(Number(await call(kRBTC, 'borrowBalanceCurrent', [alice], { from: alice })) / 1e18).toEqual(0);
         expect(await send(kRBTC, 'borrow', [etherMantissa(0.0125)], { from: alice })).toSucceed();
+        expect(Number(await call(kRBTC, 'borrowBalanceCurrent', [alice], { from: alice })) / 1e18).toEqual(0.0125);
       });
     });
     describe('Liquidation', () => {
