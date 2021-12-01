@@ -1,5 +1,14 @@
-const { etherMantissa, etherBalance, etherGasCost } = require("../Utils/Ethereum");
+const { etherMantissa, etherBalance, etherGasCost, etherUnsigned } = require("../Utils/Ethereum");
 const { makeCToken, makeComptroller, fastForward } = require('../Utils/Compound');
+
+const blockNumber = 2e7;
+const borrowIndex = 1e18;
+
+async function pretendBlock(cToken, accrualBlock = blockNumber, deltaBlocks = 1) {
+  await send(cToken, 'harnessSetAccrualBlockNumber', [etherUnsigned(blockNumber)]);
+  await send(cToken, 'harnessSetBlockNumber', [etherUnsigned(blockNumber + deltaBlocks)]);
+  await send(cToken, 'harnessSetBorrowIndex', [etherUnsigned(borrowIndex)]);
+}
 
 describe('rBTC (micro KSAT)', () => {
   beforeEach(async () => {
@@ -36,6 +45,19 @@ describe('rBTC (micro KSAT)', () => {
     markets = [kRBTC, kSAT];
   });
   describe('Basic operation', () => {
+    describe('Subsidy fund', () => {
+      it('Should be able to add RBTC to the subsidy fund', async () => {
+        expect(Number(await etherBalance(kSAT._address)) / 1e18).toEqual(0);
+        expect(await send(kSAT, 'addSubsidy', [], { from: root, value: etherMantissa(1) })).toSucceed();
+        expect(Number(await etherBalance(kSAT._address)) / 1e18).toEqual(1);
+        expect(Number(await call(kSAT, 'subsidyFund', { from: bob })) / 1e18).toEqual(1);
+      });
+      it('Should revert tx if fails to accrueInterest or math calculations', async () => {
+        expect(Number(await etherBalance(kSAT._address)) / 1e18).toEqual(0);
+        await pretendBlock(kSAT, blockNumber, 5e70);
+        await expect(send(kSAT, 'addSubsidy', [], { from: root, value: etherMantissa(1) })).rejects.toRevert('revert R1');
+      });
+    });
     describe('Exchange rate', () => {
       beforeEach(async () => {
         await send(kRBTC, 'mint', { from: root, value: etherMantissa(5) });

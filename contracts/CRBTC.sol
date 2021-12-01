@@ -234,7 +234,10 @@ contract CRBTC is CToken {
     }
 
     function addSubsidy() external payable {
-        _addSubsidyInternal(msg.value);
+        uint256 error = _addSubsidyInternal(msg.value);
+        if (error != uint256(Error.NO_ERROR)) {
+            revert("R1");
+        }
     }
 
     function setCompanion(address crbtcCompanion_) external {
