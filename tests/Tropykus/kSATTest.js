@@ -55,7 +55,10 @@ describe('rBTC (micro KSAT)', () => {
       it('Should revert tx if fails to accrueInterest or math calculations', async () => {
         expect(Number(await etherBalance(kSAT._address)) / 1e18).toEqual(0);
         await pretendBlock(kSAT, blockNumber, 5e70);
+        userBalance = Number(await etherBalance(root)) / 1e18;
         await expect(send(kSAT, 'addSubsidy', [], { from: root, value: etherMantissa(1) })).rejects.toRevert('revert R1');
+        expect(Number(await etherBalance(root)) / 1e18).toBeCloseTo(userBalance, 2);
+        expect(Number(await call(kSAT, 'subsidyFund', { from: root })) / 1e18).toEqual(0);
       });
     });
     describe('Exchange rate', () => {
