@@ -22,6 +22,9 @@ contract HurricaneInterestRateModel is InterestRateModel {
         uint256 _borrowRateSlope,
         uint256 _supplyRateSlope
     ) public {
+        blocksPerYear = 1051200;
+        initBlockTimestamp = block.timestamp;
+        initBlockNumber = block.number;
         baseBorrowRatePerBlock = _baseBorrowRate.div(blocksPerYear);
         promisedBaseReturnRatePerBlock = _promisedBaseReturnRate.div(
             blocksPerYear
@@ -30,9 +33,6 @@ contract HurricaneInterestRateModel is InterestRateModel {
         borrowRateSlopePerBlock = _borrowRateSlope.div(blocksPerYear);
         supplyRateSlopePerBlock = _supplyRateSlope.div(blocksPerYear);
         owner = msg.sender;
-        blocksPerYear = 1051200;
-        initBlockNumber = block.number;
-        initBlockTimestamp = block.timestamp;
     }
 
     modifier onlyOwner() {

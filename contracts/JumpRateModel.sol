@@ -40,13 +40,13 @@ contract JumpRateModel is InterestRateModel {
      * @param kink_ The utilization point at which the jump multiplier is applied
      */
     constructor(uint baseRatePerYear, uint multiplierPerYear, uint jumpMultiplierPerYear, uint kink_) public {
+        blocksPerYear = 1051200;
+        initBlockNumber = block.number;
+        initBlockTimestamp = block.timestamp;
         baseRatePerBlock = baseRatePerYear.div(blocksPerYear);
         multiplierPerBlock = multiplierPerYear.div(blocksPerYear);
         jumpMultiplierPerBlock = jumpMultiplierPerYear.div(blocksPerYear);
         kink = kink_;
-        blocksPerYear = 1051200;
-        initBlockNumber = block.number;
-        initBlockTimestamp = block.timestamp;
 
         emit NewInterestParams(baseRatePerBlock, multiplierPerBlock, jumpMultiplierPerBlock, kink);
     }

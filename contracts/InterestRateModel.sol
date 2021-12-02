@@ -19,9 +19,9 @@ contract InterestRateModel is Exponential {
      * @notice The approximate number of blocks per year that is assumed by the interest rate model
      */
     uint256 public blocksPerYear;
-    uint private initBlockNumber;
-    uint private initBlockTimestamp;
-    uint public constant secondsPerYear = seconds(1 years);
+    uint256 internal initBlockNumber;
+    uint256 internal initBlockTimestamp;
+    uint256 public constant secondsPerYear = 31536000;
 
     /**
      * @notice Calculates the utilization rate of the market: `borrows / (cash + borrows - reserves)`

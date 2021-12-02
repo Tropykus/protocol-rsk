@@ -29,11 +29,11 @@ contract WhitePaperInterestRateModel is InterestRateModel {
      * @param multiplierPerYear The rate of increase in interest rate wrt utilization (scaled by 1e18)
      */
     constructor(uint256 baseRatePerYear, uint256 multiplierPerYear) public {
+        blocksPerYear = 1051200;
+        initBlockTimestamp = block.timestamp;
+        initBlockNumber = block.number;
         baseRatePerBlock = baseRatePerYear.div(blocksPerYear);
         multiplierPerBlock = multiplierPerYear.div(blocksPerYear);
-        blocksPerYear = 1051200;
-        initBlockNumber = block.number;
-        initBlockTimestamp = block.timestamp;
 
         emit NewInterestParams(baseRatePerBlock, multiplierPerBlock);
     }
