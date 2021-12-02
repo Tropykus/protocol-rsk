@@ -44,6 +44,9 @@ contract JumpRateModel is InterestRateModel {
         multiplierPerBlock = multiplierPerYear.div(blocksPerYear);
         jumpMultiplierPerBlock = jumpMultiplierPerYear.div(blocksPerYear);
         kink = kink_;
+        blocksPerYear = 1051200;
+        initBlockNumber = block.number;
+        initBlockTimestamp = block.timestamp;
 
         emit NewInterestParams(baseRatePerBlock, multiplierPerBlock, jumpMultiplierPerBlock, kink);
     }

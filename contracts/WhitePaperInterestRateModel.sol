@@ -8,7 +8,6 @@ import "./InterestRateModel.sol";
  * @notice The parameterized model described in section 2.4 of the original tropykus Protocol whitepaper
  */
 contract WhitePaperInterestRateModel is InterestRateModel {
-
     event NewInterestParams(
         uint256 baseRatePerBlock,
         uint256 multiplierPerBlock
@@ -32,6 +31,9 @@ contract WhitePaperInterestRateModel is InterestRateModel {
     constructor(uint256 baseRatePerYear, uint256 multiplierPerYear) public {
         baseRatePerBlock = baseRatePerYear.div(blocksPerYear);
         multiplierPerBlock = multiplierPerYear.div(blocksPerYear);
+        blocksPerYear = 1051200;
+        initBlockNumber = block.number;
+        initBlockTimestamp = block.timestamp;
 
         emit NewInterestParams(baseRatePerBlock, multiplierPerBlock);
     }
@@ -66,8 +68,9 @@ contract WhitePaperInterestRateModel is InterestRateModel {
         uint256 reserves,
         uint256 reserveFactorMantissa
     ) public view returns (uint256) {
-        uint256 oneMinusReserveFactor =
-            uint256(1e18).sub(reserveFactorMantissa);
+        uint256 oneMinusReserveFactor = uint256(1e18).sub(
+            reserveFactorMantissa
+        );
         uint256 borrowRate = getBorrowRate(cash, borrows, reserves);
         uint256 rateToPool = borrowRate.mul(oneMinusReserveFactor).div(1e18);
         return
