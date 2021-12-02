@@ -54,7 +54,7 @@ contract CRBTC is CToken {
      */
     function mint() external payable {
         (uint256 err, ) = mintInternal(msg.value);
-        requireNoError(err, "mint failed");
+        requireNoError(err, "R2");
     }
 
     function mintInternalVerifications(
@@ -110,12 +110,12 @@ contract CRBTC is CToken {
      */
     function repayBorrow() external payable {
         (uint256 err, ) = repayBorrowInternal(msg.value);
-        requireNoError(err, "repayBorrow failed");
+        requireNoError(err, "R3");
     }
 
     function repayBorrowAll() external payable {
         (uint256 err, ) = repayBorrowInternal(uint256(-1));
-        requireNoError(err, "repayBorrow failed");
+        requireNoError(err, "R4");
     }
 
     /**
@@ -125,7 +125,7 @@ contract CRBTC is CToken {
      */
     function repayBorrowBehalf(address borrower) external payable {
         (uint256 err, ) = repayBorrowBehalfInternal(borrower, msg.value);
-        requireNoError(err, "repayBorrowBehalf failed");
+        requireNoError(err, "R5");
     }
 
     /**
@@ -144,7 +144,7 @@ contract CRBTC is CToken {
             msg.value,
             cTokenCollateral
         );
-        requireNoError(err, "liquidateBorrow failed");
+        requireNoError(err, "R6");
     }
 
     /**
@@ -152,7 +152,7 @@ contract CRBTC is CToken {
      */
     function() external payable {
         (uint256 err, ) = mintInternal(msg.value);
-        requireNoError(err, "mint failed");
+        requireNoError(err, "R2");
     }
 
     /*** Safe Token ***/
@@ -184,8 +184,8 @@ contract CRBTC is CToken {
         returns (uint256)
     {
         // Sanity checks
-        require(msg.sender == from, "sender mismatch");
-        require(msg.value == amount, "value mismatch");
+        require(msg.sender == from, "R7");
+        require(msg.value == amount, "R10");
 
         return amount;
     }
@@ -197,8 +197,8 @@ contract CRBTC is CToken {
     ) internal returns (uint256) {
         isMax;
         // Sanity checks
-        require(msg.sender == from, "sender mismatch");
-        require(msg.value >= amount, "value mismatch");
+        require(msg.sender == from, "R7");
+        require(msg.value >= amount, "R10");
         (MathError err, uint256 returnAmount) = subUInt(msg.value, amount);
         doTransferOut(msg.sender, returnAmount);
         return amount;
@@ -241,7 +241,7 @@ contract CRBTC is CToken {
     }
 
     function setCompanion(address crbtcCompanion_) external {
-        require(msg.sender == admin, "only admin may set the companion");
+        require(msg.sender == admin, "R11");
         crbtcCompanion = crbtcCompanion_;
     }
 }
