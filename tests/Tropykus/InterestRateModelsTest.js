@@ -139,10 +139,10 @@ describe('Interest Rate Models Government', () => {
       expect(Number(await call(interestRateModel, 'supplyRateSlopePerBlock'))).toEqual(9512937595129);
       expect(await send(interestRateModel, 'setBlocksPerYear', [2000000])).toSucceed();
       expect(Number(await call(interestRateModel, 'blocksPerYear'))).toEqual(2000000);
-      expect(Number(await call(interestRateModel, 'baseBorrowRatePerBlock'))).toEqual(9512937595129);
-      expect(Number(await call(interestRateModel, 'promisedBaseReturnRatePerBlock'))).toEqual(9512937595129);
-      expect(Number(await call(interestRateModel, 'borrowRateSlopePerBlock'))).toEqual(9512937595129);
-      expect(Number(await call(interestRateModel, 'supplyRateSlopePerBlock'))).toEqual(9512937595129);
+      expect(Number(await call(interestRateModel, 'baseBorrowRatePerBlock')) / 1e18).toBeCloseTo(0.000005, 5);
+      expect(Number(await call(interestRateModel, 'promisedBaseReturnRatePerBlock')) / 1e18).toBeCloseTo(0.000005, 5);
+      expect(Number(await call(interestRateModel, 'borrowRateSlopePerBlock')) / 1e18).toBeCloseTo(0.000005, 5);
+      expect(Number(await call(interestRateModel, 'supplyRateSlopePerBlock')) / 1e18).toBeCloseTo(0.000005, 5);
     });
   });
 });

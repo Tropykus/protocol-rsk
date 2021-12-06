@@ -76,4 +76,16 @@ contract HurricaneInterestRateModel is InterestRateModel {
         uint256 utilizationRate = utilizationRate(cash, borrows, reserves);
         return utilizationRate > optimalUtilizationRate;
     }
+
+    function setBlocksPerYear(uint256 blocksPerYear_) public onlyAdmin {
+        baseBorrowRatePerBlock = baseBorrowRatePerBlock.mul(blocksPerYear);
+        promisedBaseReturnRatePerBlock = promisedBaseReturnRatePerBlock.mul(blocksPerYear);
+        borrowRateSlopePerBlock = borrowRateSlopePerBlock.mul(blocksPerYear);
+        supplyRateSlopePerBlock = supplyRateSlopePerBlock.mul(blocksPerYear);
+        super.setBlocksPerYear(blocksPerYear_);
+        baseBorrowRatePerBlock = baseBorrowRatePerBlock.div(blocksPerYear);
+        promisedBaseReturnRatePerBlock = promisedBaseReturnRatePerBlock.div(blocksPerYear);
+        borrowRateSlopePerBlock = borrowRateSlopePerBlock.div(blocksPerYear);
+        supplyRateSlopePerBlock = supplyRateSlopePerBlock.div(blocksPerYear);
+    }
 }
