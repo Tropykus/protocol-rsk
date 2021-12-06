@@ -239,7 +239,7 @@ describe('rBTC (micro KSAT)', () => {
         fastForward(kSAT, 2880);
         fastForward(kRBTC, 2880);
         await send(comptroller, 'fastForward', [2880]);
-        await expect(send(kRBTC, 'repayBorrowAll', { from: alice })).rejects.toRevert('revert value mismatch');
+        await expect(send(kRBTC, 'repayBorrowAll', { from: alice })).rejects.toRevert('revert R10');
       });
       it('Should allow paying the whole debt', async () => {
         expect(await send(kRBTC, 'borrow', [etherMantissa(0.0125)], { from: alice })).toSucceed();

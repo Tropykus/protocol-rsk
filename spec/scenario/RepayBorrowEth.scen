@@ -200,7 +200,7 @@ Test "Prohibit repay by comptroller hook"
     Comptroller UnList cRBTC -- Mock unlist cRBTC
     AllowFailures
     RepayBorrowEth Geoff 0.001e18 cRBTC
-    Assert RevertFailure COMPTROLLER_REJECTION "revert repayBorrow failed"
+    Assert RevertFailure COMPTROLLER_REJECTION "revert R3"
     ---- Let's check the overall numbers
     Assert Equal (CToken cRBTC BorrowBalance Geoff) 0.0025e18
     Assert Equal (CToken cRBTC TotalBorrowsCurrent) 0.0025e18

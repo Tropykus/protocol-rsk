@@ -26,11 +26,11 @@ describe('CRBTC', function () {
     });
 
     it("reverts if from != msg.sender", async () => {
-      await expect(call(cToken, 'harnessDoTransferIn', [nonRoot, 100], {value: 100})).rejects.toRevert("revert sender mismatch");
+      await expect(call(cToken, 'harnessDoTransferIn', [nonRoot, 100], {value: 100})).rejects.toRevert("revert R7");
     });
 
     it("reverts if amount != msg.value", async () => {
-      await expect(call(cToken, 'harnessDoTransferIn', [root, 77], {value: 100})).rejects.toRevert("revert value mismatch");
+      await expect(call(cToken, 'harnessDoTransferIn', [root, 77], {value: 100})).rejects.toRevert("revert R10");
     });
 
     describe("doTransferOut", () => {

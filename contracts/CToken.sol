@@ -472,6 +472,17 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
     }
 
+    struct TropykusLocalVars {
+        MathError mathErr;
+        uint256 promisedSupplyRate;
+        uint256 delta;
+        Exp interestFactor;
+        uint256 currentUnderlying;
+        Exp redeemerUnderlying;
+        Exp realAmount;
+        Exp exchangeRate;
+    }
+
     function tropykusExchangeRateStoredInternal(address redeemer)
         internal
         view
@@ -480,6 +491,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         if (totalSupply == 0) {
             return (MathError.NO_ERROR, initialExchangeRateMantissa);
         } else {
+            TropykusLocalVars memory vars;
             SupplySnapshot storage supplySnapshot = accountTokens[redeemer];
             if (supplySnapshot.suppliedAt == 0) {
                 return (MathError.DIVISION_BY_ZERO, 0);
@@ -487,21 +499,11 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             if (supplySnapshot.tokens == 0) {
                 return (MathError.NO_ERROR, initialExchangeRateMantissa);
             }
-            (, uint256 interestFactorMantissa, , , ) = tropykusInterestAccrued(
+            (MathError err, , , uint256 exchangeRateMantissa, ) = tropykusInterestAccrued(
                 redeemer
             );
-            Exp memory interestFactor = Exp({mantissa: interestFactorMantissa});
-            uint256 currentUnderlying = supplySnapshot.underlyingAmount;
-            Exp memory redeemerUnderlying = Exp({mantissa: currentUnderlying});
-            (, Exp memory realAmount) = mulExp(
-                interestFactor,
-                redeemerUnderlying
-            );
-            (, Exp memory exchangeRate) = getExp(
-                realAmount.mantissa,
-                supplySnapshot.tokens
-            );
-            return (MathError.NO_ERROR, exchangeRate.mantissa);
+            if (err != MathError.NO_ERROR) return (err, 0);
+            return (MathError.NO_ERROR, exchangeRateMantissa);
         }
     }
 
@@ -516,40 +518,48 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             uint256
         )
     {
+        TropykusLocalVars memory vars;
         SupplySnapshot storage supplySnapshot = accountTokens[account];
-        uint256 promisedSupplyRate = supplySnapshot.promisedSupplyRate;
+        vars.promisedSupplyRate = supplySnapshot.promisedSupplyRate;
         Exp memory expectedSupplyRatePerBlock = Exp({
-            mantissa: promisedSupplyRate
+            mantissa: vars.promisedSupplyRate
         });
-        (, uint256 delta) = subUInt(
+        (vars.mathErr, vars.delta) = subUInt(
             accrualBlockNumber,
             supplySnapshot.suppliedAt
         );
-        (, Exp memory expectedSupplyRatePerBlockWithDelta) = mulScalar(
+        if (vars.mathErr != MathError.NO_ERROR) return (vars.mathErr, 0, 0, initialExchangeRateMantissa, 0);
+        Exp memory expectedSupplyRatePerBlockWithDelta;
+        (vars.mathErr, expectedSupplyRatePerBlockWithDelta) = mulScalar(
             expectedSupplyRatePerBlock,
-            delta
+            vars.delta
         );
-        (, Exp memory interestFactor) = addExp(
+        if (vars.mathErr != MathError.NO_ERROR) return (vars.mathErr, 0, 0, initialExchangeRateMantissa, 0);
+        (vars.mathErr, vars.interestFactor) = addExp(
             Exp({mantissa: 1e18}),
             expectedSupplyRatePerBlockWithDelta
         );
-        uint256 currentUnderlying = supplySnapshot.underlyingAmount;
-        Exp memory redeemerUnderlying = Exp({mantissa: currentUnderlying});
-        (, Exp memory realAmount) = mulExp(interestFactor, redeemerUnderlying);
-        (, uint256 interestEarned) = subUInt(
-            realAmount.mantissa,
-            currentUnderlying
+        vars.currentUnderlying = supplySnapshot.underlyingAmount;
+        vars.redeemerUnderlying = Exp({mantissa: vars.currentUnderlying});
+        (vars.mathErr, vars.realAmount) = mulExp(vars.interestFactor, vars.redeemerUnderlying);
+        if (vars.mathErr != MathError.NO_ERROR) return (vars.mathErr, 0, 0, initialExchangeRateMantissa, 0);
+        uint256 interestEarned;
+        (vars.mathErr, interestEarned) = subUInt(
+            vars.realAmount.mantissa,
+            vars.currentUnderlying
         );
-        (, Exp memory exchangeRate) = getExp(
-            realAmount.mantissa,
+        if (vars.mathErr != MathError.NO_ERROR) return (vars.mathErr, 0, 0, initialExchangeRateMantissa, 0);
+        (vars.mathErr, vars.exchangeRate) = getExp(
+            vars.realAmount.mantissa,
             supplySnapshot.tokens
         );
+        if (vars.mathErr != MathError.NO_ERROR) return (vars.mathErr, 0, 0, initialExchangeRateMantissa, 0);
         return (
             MathError.NO_ERROR,
-            interestFactor.mantissa,
+            vars.interestFactor.mantissa,
             interestEarned,
-            exchangeRate.mantissa,
-            realAmount.mantissa
+            vars.exchangeRate.mantissa,
+            vars.realAmount.mantissa
         );
     }
 

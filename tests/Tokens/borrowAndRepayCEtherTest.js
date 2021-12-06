@@ -216,10 +216,10 @@ describe('CRBTC', function () {
         it("reverts if checkTransferIn fails", async () => {
           await expect(
             send(cToken, 'harnessRepayBorrowFresh', [payer, borrower, repayAmount], {from: root, value: repayAmount})
-          ).rejects.toRevert("revert sender mismatch");
+          ).rejects.toRevert("revert R7");
           await expect(
             send(cToken, 'harnessRepayBorrowFresh', [payer, borrower, repayAmount], {from: payer, value: 1})
-          ).rejects.toRevert("revert value mismatch");
+          ).rejects.toRevert("revert R10");
         });
 
         xit("reverts if repayBorrowVerify fails", async() => {
@@ -280,7 +280,7 @@ describe('CRBTC', function () {
 
     it("reverts when repay borrow fresh fails", async () => {
       await send(cToken.comptroller, 'setRepayBorrowAllowed', [false]);
-      await expect(repayBorrow(cToken, borrower, repayAmount)).rejects.toRevertWithError('COMPTROLLER_REJECTION', "revert repayBorrow failed");
+      await expect(repayBorrow(cToken, borrower, repayAmount)).rejects.toRevertWithError('COMPTROLLER_REJECTION', "revert R3");
     });
 
     it("returns success from repayBorrowFresh and repays the right amount", async () => {
@@ -314,7 +314,7 @@ describe('CRBTC', function () {
 
     it("reverts from within repay borrow fresh", async () => {
       await send(cToken.comptroller, 'setRepayBorrowAllowed', [false]);
-      await expect(repayBorrowBehalf(cToken, payer, borrower, repayAmount)).rejects.toRevertWithError('COMPTROLLER_REJECTION', "revert repayBorrowBehalf failed");
+      await expect(repayBorrowBehalf(cToken, payer, borrower, repayAmount)).rejects.toRevertWithError('COMPTROLLER_REJECTION', "revert R5");
     });
 
     it("returns success from repayBorrowFresh and repays the right amount", async () => {
