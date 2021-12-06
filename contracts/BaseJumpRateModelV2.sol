@@ -52,9 +52,8 @@ contract BaseJumpRateModelV2 is InterestRateModel {
      */
     constructor(uint baseRatePerYear, uint multiplierPerYear, uint jumpMultiplierPerYear, uint kink_, address owner_) internal {
         owner = owner_;
+        admin = msg.sender;
         blocksPerYear = 1051200;
-        initBlockNumber = block.number;
-        initBlockTimestamp = block.timestamp;
         emit NewAdmin(owner);
         updateJumpRateModelInternal(baseRatePerYear,  multiplierPerYear, jumpMultiplierPerYear, kink_);
     }

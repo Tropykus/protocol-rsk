@@ -30,8 +30,7 @@ contract WhitePaperInterestRateModel is InterestRateModel {
      */
     constructor(uint256 baseRatePerYear, uint256 multiplierPerYear) public {
         blocksPerYear = 1051200;
-        initBlockTimestamp = block.timestamp;
-        initBlockNumber = block.number;
+        admin = msg.sender;
         baseRatePerBlock = baseRatePerYear.div(blocksPerYear);
         multiplierPerBlock = multiplierPerYear.div(blocksPerYear);
 
@@ -75,5 +74,13 @@ contract WhitePaperInterestRateModel is InterestRateModel {
         uint256 rateToPool = borrowRate.mul(oneMinusReserveFactor).div(1e18);
         return
             utilizationRate(cash, borrows, reserves).mul(rateToPool).div(1e18);
+    }
+
+    function setBlocksPerYear(uint256 blocksPerYear_) public onlyAdmin {
+        baseRatePerBlock = baseRatePerBlock.mul(blocksPerYear);
+        multiplierPerBlock = multiplierPerBlock.mul(blocksPerYear);
+        super.setBlocksPerYear(blocksPerYear_);
+        baseRatePerBlock = baseRatePerBlock.div(blocksPerYear);
+        multiplierPerBlock = multiplierPerBlock.div(blocksPerYear);
     }
 }
