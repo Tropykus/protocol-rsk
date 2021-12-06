@@ -13,6 +13,7 @@ contract InterestRateModelHarness is InterestRateModel {
 
     constructor(uint borrowRate_) public {
         borrowRate = borrowRate_;
+        blocksPerYear = 1051200;
     }
 
     function setFailBorrowRate(bool failBorrowRate_) public {

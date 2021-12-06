@@ -243,7 +243,7 @@ async function makeCToken(opts = {}) {
 async function makeInterestRateModel(opts = {}) {
   const {
     root = saddle.account,
-    kind = 'harnessed'
+    kind = 'harnessed',
   } = opts || {};
 
   if (kind == 'harnessed') {

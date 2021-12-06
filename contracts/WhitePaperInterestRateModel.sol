@@ -8,7 +8,6 @@ import "./InterestRateModel.sol";
  * @notice The parameterized model described in section 2.4 of the original tropykus Protocol whitepaper
  */
 contract WhitePaperInterestRateModel is InterestRateModel {
-
     event NewInterestParams(
         uint256 baseRatePerBlock,
         uint256 multiplierPerBlock
@@ -30,6 +29,8 @@ contract WhitePaperInterestRateModel is InterestRateModel {
      * @param multiplierPerYear The rate of increase in interest rate wrt utilization (scaled by 1e18)
      */
     constructor(uint256 baseRatePerYear, uint256 multiplierPerYear) public {
+        blocksPerYear = 1051200;
+        admin = msg.sender;
         baseRatePerBlock = baseRatePerYear.div(blocksPerYear);
         multiplierPerBlock = multiplierPerYear.div(blocksPerYear);
 
@@ -66,11 +67,20 @@ contract WhitePaperInterestRateModel is InterestRateModel {
         uint256 reserves,
         uint256 reserveFactorMantissa
     ) public view returns (uint256) {
-        uint256 oneMinusReserveFactor =
-            uint256(1e18).sub(reserveFactorMantissa);
+        uint256 oneMinusReserveFactor = uint256(1e18).sub(
+            reserveFactorMantissa
+        );
         uint256 borrowRate = getBorrowRate(cash, borrows, reserves);
         uint256 rateToPool = borrowRate.mul(oneMinusReserveFactor).div(1e18);
         return
             utilizationRate(cash, borrows, reserves).mul(rateToPool).div(1e18);
+    }
+
+    function setBlocksPerYear(uint256 blocksPerYear_) public onlyAdmin {
+        baseRatePerBlock = baseRatePerBlock.mul(blocksPerYear);
+        multiplierPerBlock = multiplierPerBlock.mul(blocksPerYear);
+        super.setBlocksPerYear(blocksPerYear_);
+        baseRatePerBlock = baseRatePerBlock.div(blocksPerYear);
+        multiplierPerBlock = multiplierPerBlock.div(blocksPerYear);
     }
 }

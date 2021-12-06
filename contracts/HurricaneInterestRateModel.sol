@@ -22,13 +22,15 @@ contract HurricaneInterestRateModel is InterestRateModel {
         uint256 _borrowRateSlope,
         uint256 _supplyRateSlope
     ) public {
+        blocksPerYear = 1051200;
+        admin = msg.sender;
         baseBorrowRatePerBlock = _baseBorrowRate.div(blocksPerYear);
         promisedBaseReturnRatePerBlock = _promisedBaseReturnRate.div(
             blocksPerYear
         );
-        optimalUtilizationRate = _optimalUtilizationRate;
         borrowRateSlopePerBlock = _borrowRateSlope.div(blocksPerYear);
         supplyRateSlopePerBlock = _supplyRateSlope.div(blocksPerYear);
+        optimalUtilizationRate = _optimalUtilizationRate;
         owner = msg.sender;
     }
 

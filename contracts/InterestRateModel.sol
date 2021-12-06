@@ -18,7 +18,14 @@ contract InterestRateModel is Exponential {
     /**
      * @notice The approximate number of blocks per year that is assumed by the interest rate model
      */
-    uint256 public constant blocksPerYear = 1051200;
+    uint256 public blocksPerYear;
+    address admin;
+    address pendingAdmin;
+
+    modifier onlyAdmin() {
+        require(msg.sender == admin, "NONADMIN");
+        _;
+    }
 
     /**
      * @notice Calculates the utilization rate of the market: `borrows / (cash + borrows - reserves)`
@@ -108,5 +115,18 @@ contract InterestRateModel is Exponential {
         borrows;
         reserves;
         return false;
+    }
+
+    function _setPendingAdmin(address pendingAdmin_) public onlyAdmin {
+        pendingAdmin = pendingAdmin_;
+    }
+
+    function _acceptPendingAdmin() public {
+        require(msg.sender == pendingAdmin, "NONNEWADMIN");
+        admin = pendingAdmin;
+    }
+
+    function setBlocksPerYear(uint256 blocksPerYear_) public onlyAdmin {
+        blocksPerYear = blocksPerYear_;
     }
 }
