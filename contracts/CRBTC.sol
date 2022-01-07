@@ -167,8 +167,10 @@ contract CRBTC is CToken {
             address(this).balance,
             msg.value
         );
-        if (interestRateModel.isTropykusInterestRateModel())
+        if (interestRateModel.isTropykusInterestRateModel()) {
+            if(subsidyFund >= startingBalance) return 0;
             (err, startingBalance) = subUInt(startingBalance, subsidyFund);
+        }
         require(err == MathError.NO_ERROR, "Math error");
         return startingBalance;
     }
