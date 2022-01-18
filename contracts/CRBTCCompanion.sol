@@ -1,4 +1,4 @@
-pragma solidity ^0.5.16;
+pragma solidity 0.5.16;
 
 import "./CRBTCCompanionInterface.sol";
 import "./Exponential.sol";
@@ -23,6 +23,9 @@ contract CRBTCCompanion is
         address _crbtcAddress,
         address _oracle
     ) public {
+        require(address(_comptroller) != address(0), "A1");
+        require(_crbtcAddress != address(0), "A1");
+        require(_oracle != address(0), "A1");
         owner = msg.sender;
         comptroller = _comptroller;
         crbtcAddress = _crbtcAddress;

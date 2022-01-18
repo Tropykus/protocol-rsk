@@ -1,4 +1,4 @@
-pragma solidity ^0.5.16;
+pragma solidity 0.5.16;
 
 import "./PriceOracle.sol";
 import "./PriceOracleAdapter.sol";
@@ -36,6 +36,7 @@ contract PriceOracleProxy is PriceOracle {
 
     /// @param guardian_ The address of the guardian, which may set the
     constructor(address guardian_) public {
+        require(guardian_ != address(0), "A1");
         guardian = guardian_;
     }
 

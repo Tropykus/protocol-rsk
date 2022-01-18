@@ -1,4 +1,4 @@
-pragma solidity ^0.5.16;
+pragma solidity 0.5.16;
 
 import "./Exponential.sol";
 import "./SafeMath.sol";
@@ -118,6 +118,7 @@ contract InterestRateModel is Exponential {
     }
 
     function _setPendingAdmin(address pendingAdmin_) public onlyAdmin {
+        require(pendingAdmin_ != address(0), "A1");
         pendingAdmin = pendingAdmin_;
     }
 

@@ -63,6 +63,8 @@ describe('rBTC (standard)', () => {
         fastForward(kRBTC, 518400);
 
         expect((Number(await call(kRBTC, 'balanceOfUnderlying', [alice], { from: alice })) / 1e18)).toEqual(0.501972602745783);
+        expect((Number(await call(kRBTC, 'balanceOf', [alice], { from: alice }))) / 1e18).toEqual(25);
+        expect(await send(kRBTC, 'redeem', [etherMantissa(25)], { from: alice })).toSucceed();
     });
 
     it('Withdraw + borrow', async () => {
@@ -72,10 +74,10 @@ describe('rBTC (standard)', () => {
         expect(await send(kRBTC, 'mint', [], { from: bob, value: etherMantissa(1.5) })).toSucceed();
         expect(await send(kRBTC, 'borrow', [etherMantissa(0.5348469228795509)], { from: bob })).toSucceed();
 
-        expect((await call(kRBTC, 'supplyRatePerBlock', [])/1e18) * (blocksPerDay * 365) * 100).toBeCloseTo(1, 7);
+        expect((await call(kRBTC, 'supplyRatePerBlock', []) / 1e18) * (blocksPerDay * 365) * 100).toBeCloseTo(1, 7);
 
         fastForward(kRBTC, 172800);
-        
+
         expect((Number(await call(kRBTC, 'balanceOfUnderlying', [alice], { from: alice })) / 1e18)).toBeCloseTo(0.500821917808219, 7);
         expect(await send(kRBTC, 'redeemUnderlying', [etherMantissa(0.3)], { from: alice })).toSucceed();
         expect((Number(await call(kRBTC, 'balanceOfUnderlying', [alice], { from: alice })) / 1e18)).toBeCloseTo(0.200821917808219, 7);
@@ -91,16 +93,16 @@ describe('rBTC (standard)', () => {
 
         expect(await send(comptroller, 'enterMarkets', [markets.map(mkt => mkt._address)], { from: alice })).toSucceed();
         hypotheticalAccountLiquidity = await call(comptroller, 'getHypotheticalAccountLiquidity', [alice, kRBTC._address, 0, 0]);
-        allowedToBorrow = Number(hypotheticalAccountLiquidity[1])/1e18;
+        allowedToBorrow = Number(hypotheticalAccountLiquidity[1]) / 1e18;
         expect(allowedToBorrow).toBeCloseTo(9207.346072020220, 7);
 
-        expect((await call(kDOC, 'borrowRatePerBlock', [])/1e18) * (blocksPerDay * 365) * 100).toBeCloseTo(8, 7);
+        expect((await call(kDOC, 'borrowRatePerBlock', []) / 1e18) * (blocksPerDay * 365) * 100).toBeCloseTo(8, 7);
         expect(allowedToBorrow * 0.3).toBeCloseTo(2762.2038216060700, 7);
         expect(await send(kDOC, 'borrow', [etherMantissa(allowedToBorrow * 0.3)], { from: alice })).toSucceed();
 
         fastForward(kDOC, 518400);
 
-        aliceDOCDebt =  Number(await call(kDOC, 'borrowBalanceCurrent', [alice], { from: alice })) / 1e18;
+        aliceDOCDebt = Number(await call(kDOC, 'borrowBalanceCurrent', [alice], { from: alice })) / 1e18;
         expect(aliceDOCDebt).toBeCloseTo(2887.901221585370000, 7);
         expect(await send(kDOC.underlying, 'approve', [kDOC._address, etherMantissa(aliceDOCDebt * 0.6)], { from: alice })).toSucceed();
         expect(await send(kDOC, 'repayBorrow', [etherMantissa(aliceDOCDebt * 0.6)], { from: alice })).toSucceed();
@@ -110,13 +112,13 @@ describe('rBTC (standard)', () => {
         await send(kRBTC, 'exchangeRateCurrent', []);
 
         aliceDOCBalance = Number(await call(DOC, 'balanceOf', [alice], { from: alice })) / 1e18;
-        aliceDOCDebt =  Number(await call(kDOC, 'borrowBalanceCurrent', [alice], { from: alice })) / 1e18;
+        aliceDOCDebt = Number(await call(kDOC, 'borrowBalanceCurrent', [alice], { from: alice })) / 1e18;
         expect(aliceDOCDebt).toBeCloseTo(1163.237463887960000, 7);
         expect(await send(kDOC.underlying, 'transfer', [alice, etherMantissa(aliceDOCDebt - aliceDOCBalance + 1)])).toSucceed();
         expect(await send(kDOC.underlying, 'approve', [kDOC._address, etherMantissa(aliceDOCDebt + 1)], { from: alice })).toSucceed();
         expect(await send(kDOC, 'repayBorrow', [etherMantissa(-1)], { from: alice })).toSucceed();
 
-        aliceDOCDebt =  Number(await call(kDOC, 'borrowBalanceCurrent', [alice], { from: alice })) / 1e18;
+        aliceDOCDebt = Number(await call(kDOC, 'borrowBalanceCurrent', [alice], { from: alice })) / 1e18;
         expect(aliceDOCDebt).toEqual(0);
     });
 });

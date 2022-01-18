@@ -1,4 +1,4 @@
-pragma solidity ^0.5.16;
+pragma solidity 0.5.16;
 
 import "./PriceOracleAdapter.sol";
 
@@ -77,7 +77,7 @@ contract PriceOracleAdapterMoc is PriceOracleAdapter {
             "PriceOracleAdapterMoc: only guardian"
         );
         require(
-            guardian != address(0),
+            newGuardian != address(0),
             "PriceOracleAdapterMoc: guardin address can not be 0"
         );
         //set old address

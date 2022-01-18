@@ -1,4 +1,4 @@
-pragma solidity ^0.5.16;
+pragma solidity 0.5.16;
 
 import "./CToken.sol";
 import "./CRBTCCompanionInterface.sol";
@@ -31,6 +31,7 @@ contract CRBTC is CToken {
         address payable admin_
     ) public {
         // Creator of the contract is admin during initialization
+        require(admin_ != address(0), "A1");
         admin = msg.sender;
 
         initialize(
@@ -168,7 +169,7 @@ contract CRBTC is CToken {
             msg.value
         );
         if (interestRateModel.isTropykusInterestRateModel()) {
-            if(subsidyFund >= startingBalance) return 0;
+            if (subsidyFund >= startingBalance) return 0;
             (err, startingBalance) = subUInt(startingBalance, subsidyFund);
         }
         require(err == MathError.NO_ERROR, "Math error");
@@ -242,6 +243,7 @@ contract CRBTC is CToken {
 
     function setCompanion(address crbtcCompanion_) external {
         require(msg.sender == admin, "R11");
+        require(crbtcCompanion_ != address(0), "A1");
         crbtcCompanion = crbtcCompanion_;
     }
 }

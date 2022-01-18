@@ -1,4 +1,4 @@
-pragma solidity ^0.5.16;
+pragma solidity 0.5.16;
 
 import "./ComptrollerInterface.sol";
 import "./CTokenInterfaces.sol";
@@ -1998,6 +1998,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                     FailureInfo.SET_PENDING_ADMIN_OWNER_CHECK
                 );
         }
+        require(newPendingAdmin != address(0), "A1");
 
         // Save current value, if any, for inclusion in log
         address oldPendingAdmin = pendingAdmin;
