@@ -496,7 +496,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             if (supplySnapshot.suppliedAt == 0) {
                 return (MathError.DIVISION_BY_ZERO, 0);
             }
-            if (supplySnapshot.tokens == 0) {
+            if (supplySnapshot.tokens == 0 || supplySnapshot.underlyingAmount == 0) {
                 return (MathError.NO_ERROR, initialExchangeRateMantissa);
             }
             (MathError err, , , uint256 exchangeRateMantissa, ) = tropykusInterestAccrued(
