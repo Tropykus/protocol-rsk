@@ -25,10 +25,6 @@ describe('Zero-check for addresses', () => {
       ])
     ).rejects.toRevert('revert');
   });
-  it('Should avoid cToken pending admin with zero address', async () => {
-    token = await makeCToken();
-    await expect(send(token, '_setPendingAdmin', ['0x0000000000000000000000000000000000000000'], { from: root })).rejects.toRevert('revert A1');
-  });
   it('Should avoid interest rate pending admin with zero address', async () => {
     interestModel = await makeInterestRateModel({
       kind: 'white-paper',
@@ -42,40 +38,6 @@ describe('Zero-check for addresses', () => {
   it('Should avoid unitroller pending admin with zero address', async () => {
     unitroller = await deploy('Unitroller', { from: root });
     await expect(send(unitroller, '_setPendingAdmin', ['0x0000000000000000000000000000000000000000'], { from: root })).rejects.toRevert('revert A1');
-  });
-  it('Should avoid unitroller pending admin with zero address', async () => {
-    comptroller = await makeComptroller({
-      kind: 'unitroller-g6',
-    });
-    interestModel = await makeInterestRateModel({
-      kind: 'white-paper',
-    });
-    await expect(
-      deploy('CRBTC', [
-        comptroller._address,
-        interestModel._address,
-        etherMantissa(0.02),
-        'Test',
-        'TST',
-        etherUnsigned(18),
-        '0x0000000000000000000000000000000000000000',
-      ])
-    ).rejects.toRevert('revert A1');
-  });
-  it('Should avoid setting an empty crbtc companion', async () => {
-    kSAT = await makeCToken({
-      name: 'kSAT',
-      kind: 'crbtc',
-      comptroller,
-      interestRateModelOpts: {
-        kind: 'white-paper',
-      },
-      exchangeRate: 0.02,
-      supportMarket: true,
-      underlyingPrice: 52050,
-      collateralFactor: 0.5,
-    });
-    await expect(send(kSAT, 'setCompanion', ['0x0000000000000000000000000000000000000000'], { from: root })).rejects.toRevert('revert A1');
   });
   it('Should avoid BaseJumpV2 to pending admin zero address', async () => {
     interestModel = await makeInterestRateModel({ kind: 'jump-rateV2' });

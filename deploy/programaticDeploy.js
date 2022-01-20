@@ -52,6 +52,17 @@ async function main() {
   console.log(`DOC = '${docToken.address}';`);
   console.log(`RDOC = '${rdocToken.address}';`);
   console.log(`USDT = '${usdtToken.address}';`);
+
+  const mockPriceProviderMoC = await ethers.getContractFactory('MockPriceProviderMoC');
+  const priceOracleAdapterMoc = await ethers.getContractFactory('PriceOracleAdapterMoc');
+
+  for(let {k, v} of Object.entries(config.markets)) {
+    // Oracles
+    const mktOracle = await mockPriceProviderMoC.connect(deployer).deploy(deployer.address, parseEther(v.oracle.price));
+    console.log(`${k}Oracle = ${mktOracle.address}`);
+    
+  }
+
   // console.log('~~~~~~~~~~~~~~~~~~~~~~~~ /TOKENS ~~~~~~~~~~~~~~~~~~~~~~~~\n');
 
   // console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~ ORACLES ~~~~~~~~~~~~~~~~~~~~~~~~');

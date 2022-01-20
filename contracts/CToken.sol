@@ -1998,7 +1998,6 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
                     FailureInfo.SET_PENDING_ADMIN_OWNER_CHECK
                 );
         }
-        require(newPendingAdmin != address(0), "A1");
 
         // Save current value, if any, for inclusion in log
         address oldPendingAdmin = pendingAdmin;

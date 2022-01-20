@@ -5,6 +5,7 @@ const david = '0x53Ec0aF115619c536480C95Dec4a065e27E6419F';
 const diego = '0x3024074Eaa70F3D4c071c0Da9D0c8eEc50232c47';
 const mauro = '';
 const mesi = '0x158be1Cadb19163025C485E0f7f841F212429aE1';
+const isProduction = true;
 
 const admins = [anni, david, diego, mauro, mesi].map(a => a.toLowerCase());
 
@@ -22,7 +23,10 @@ const config = {
         baseBorrowRate: parseEther('0.015'),
         multiplier: parseEther('0.01'),
       },
-      oracleAddress: '',
+      oracle: {
+        address: '',
+        price: '0.252',
+      },
       underlying: '',
     },
     doc: {

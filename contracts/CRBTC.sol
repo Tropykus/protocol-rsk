@@ -31,7 +31,6 @@ contract CRBTC is CToken {
         address payable admin_
     ) public {
         // Creator of the contract is admin during initialization
-        require(admin_ != address(0), "A1");
         admin = msg.sender;
 
         initialize(
@@ -243,7 +242,6 @@ contract CRBTC is CToken {
 
     function setCompanion(address crbtcCompanion_) external {
         require(msg.sender == admin, "R11");
-        require(crbtcCompanion_ != address(0), "A1");
         crbtcCompanion = crbtcCompanion_;
     }
 }
