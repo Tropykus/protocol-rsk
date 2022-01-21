@@ -3,17 +3,17 @@ load = async () => {
     comptroller = await ethers.getContractAt('ComptrollerG6', Comptroller, dep);
     rif = await ethers.getContractAt('StandardToken', RIF, dep);
     doc = await ethers.getContractAt('StandardToken', DOC, dep);
-    rdoc = await ethers.getContractAt('StandardToken', RDOC, dep);
+    xusd = await ethers.getContractAt('StandardToken', XUSD, dep);
     usdt = await ethers.getContractAt('StandardToken', USDT, dep);
-    crif = await ethers.getContractAt('CErc20Immutable', cRIF, dep);
-    cdoc = await ethers.getContractAt('CErc20Immutable', cDOC, dep);
-    crdoc = await ethers.getContractAt('CRDOC', cRDOC, dep);
-    cusdt = await ethers.getContractAt('CErc20Immutable', cUSDT, dep);
-    crbtc = await ethers.getContractAt('CRBTC', cRBTC, dep);
-    csat = await ethers.getContractAt('CRBTC', cSAT, dep);
-    csatCompanion = await ethers.getContractAt('CRBTCCompanion', cRBTCCompanion, dep);
+    crif = await ethers.getContractAt('CErc20Immutable', kRIF, dep);
+    cdoc = await ethers.getContractAt('CErc20Immutable', kDOC, dep);
+    cxusd = await ethers.getContractAt('CRDOC', kXUSD, dep);
+    cusdt = await ethers.getContractAt('CErc20Immutable', kUSDT, dep);
+    crbtc = await ethers.getContractAt('CRBTC', kRBTC, dep);
+    csat = await ethers.getContractAt('CRBTC', kSAT, dep);
+    csatCompanion = await ethers.getContractAt('CRBTCCompanion', SATcompanion, dep);
     priceOracleProxy = await ethers.getContractAt('PriceOracleProxy', PriceOracleProxy, dep);
-    rbtcOracle = await ethers.getContractAt('MockPriceProviderMoC', RBTCOracle, dep);
+    rbtcOracle = await ethers.getContractAt('MockPriceProviderMoC', RBTCoracle, dep);
     mkts = await comptroller.getAllMarkets();
     users = [dep, alice, bob, eve];
 }

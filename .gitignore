@@ -1,5 +1,7 @@
+deploy/config.js
 allFiredEvents
 results
+result
 loader.js
 .build-temp
 build
