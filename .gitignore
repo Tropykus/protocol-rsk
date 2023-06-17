@@ -52,6 +52,7 @@ junit.xml
 .saddle_history
 deploy/oracles.js
 oraclesInfo.json
+result
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/soliditytruffle,solidity,node,jetbrains+all
