@@ -12,6 +12,8 @@ const getChainId = (chainName) => {
       return 1337;
     case 'hardhat':
       return 1337;
+    case 'localhost':
+      return 31337;
     default:
       return 'Unknown';
   }

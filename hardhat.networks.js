@@ -4,7 +4,7 @@ const networks = {
     defaultBalanceEther: 20000000000,
     gas: 6800000,
     allowUnlimitedContractSize: true,
-    chainId: 1337
+    chainId: 311337
   },
   ganache: {
     url: 'http://127.0.0.1:8545',
