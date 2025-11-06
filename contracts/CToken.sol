@@ -398,6 +398,10 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         borrowed = accountBorrows[account].principal;
     }
 
+    /**
+     * @dev DEPRECATED: This function was intended to be used for the kSAT market only.
+     * If used in other markets can lead to read errors
+     */
     function getSupplierSnapshotStored(address account)
         public
         view
