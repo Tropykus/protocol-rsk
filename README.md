@@ -212,12 +212,19 @@ The following markets have been deprecated or are no longer actively supported:
 
 #### kSAT Market
 - **Status:** DEPRECATED
+- **Address:** 0xd2ec53e8dd00d204d3d9313af5474eb9f5188ef6
 - **Description:** The kSAT (micro rBTC) market was a specialized market with unique snapshot functionality. This market is no longer actively maintained or supported as well as the Hurricane Interest Rate Model.
 - **Note:** The `getSupplierSnapshotStored` function was specifically designed for this market and should not be used with other markets.
-- 
+
 #### kUSDT Market
 - **Status:** DEPRECATED
+- **Address:** 0xedaefc6b596ed38d712100976969975a37c84464
 - **Description:** The legacy kUSDT market was deprecated due to potential vulnerabilities that could be exploited with its integration.
+
+#### kRIF Market
+- **Status:** DEPRECATED
+- **Address:** 0x3134b7fbfca5db217eca523eab1941452cf35163
+- **Description:** The kRIF market was deprecated due to potential vulnerabilities that could be exploited with its integration.
 
 
 > **Important:** When integrating with the tropykus Protocol, avoid using deprecated functions and markets. Always refer to the latest contract interfaces and documentation.
