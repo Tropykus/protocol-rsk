@@ -4,7 +4,7 @@ tropykus Protocol
 
 tropykus is an algorithmic distributed protocol deployed on the RSK network. As such, it's main motivation is to allow users to lend crypto currencies as collateral and to borrow crypto assets based on interest rates set by real-time supply and demand smart contracts. The tropykus Protocol is developed using RSK smart contracts for supplying or borrowing assets. Through the cToken contracts, accounts on the blockchain *supply* capital (rBTC or ERC-20 tokens) to receive cTokens or *borrow* assets from the protocol (holding other assets as collateral). The tropykus cToken contracts track these balances and algorithmically set interest rates for borrowers.
 
-You can read the protocol documentation at [tropykus.app](https://tropykus.app/docs/introduction)
+You can read the protocol documentation at [Gitbook](https://tropykus.gitbook.io/tropykus-protocol/)
 
 Contracts
 =========
@@ -18,7 +18,7 @@ We detail a few of the core contracts in the tropykus protocol.
 
 <dl>
   <dt>Price Oracle Proxy</dt>
-  <dd>This contract controlls the adapters that link the protocol with price oracles.</dd>
+  <dd>This contract controls the adapters that link the protocol with price oracles.</dd>
 </dl>
 
 <dl>
@@ -28,12 +28,12 @@ We detail a few of the core contracts in the tropykus protocol.
 
 <dl>
   <dt>TROP</dt>
-  <dd>The tropykus Governance Token (TROP). Holders of this token have the ability to govern the protocol via the governor contract.</dd>
+  <dd>The tropykus Governance Token (TROP). Holders of this token have the ability to govern the protocol via the governor contract. Once the token is **launched**</dd>
 </dl>
 
 <dl>
   <dt>Governor Alpha</dt>
-  <dd>The administrator of the tropykus timelock contract. Holders of TROP token may create and vote on proposals which will be queued into the tropykus timelock and then have effects on tropykus cToken and Copmtroller contracts. This contract may be replaced in the future with a beta version.</dd>
+  <dd>The administrator of the tropykus timelock contract. Holders of TROP token may create and vote on proposals which will be queued into the tropykus timelock and then have effects on tropykus cToken and Comptroller contracts. This contract may be replaced in the future with a beta version.</dd>
 </dl>
 
 <dl>
@@ -65,10 +65,12 @@ We detail a few of the core contracts in the tropykus protocol.
 
 | Contract           | Mainnet       | Testnet  |
 | :------------------|:------------- |:-------- |
-| Unitroller (Comptroller Proxy)  | [0x57f3edae1d2a109f0d5e4e6269aca2f532cdbaaa](https://explorer.rsk.co/address/0x57f3edae1d2a109f0d5e4e6269aca2f532cdbaaa?__ctab=Code) | [0x3a983c7597b3ac4fbc3e0cf484d7631d70d04c05](https://explorer.testnet.rsk.co/address/0x3a983c7597b3ac4fbc3e0cf484d7631d70d04c05?__ctab=Code) |
-| cRIF           | [0xb7ff2c56c897562c0aa6747d2679d35f5e937492](https://explorer.rsk.co/address/0xb7ff2c56c897562c0aa6747d2679d35f5e937492?__ctab=Code) | [0x4664d4cbd5104a0e974354724cbc8e0d9bd1aca3](https://explorer.testnet.rsk.co/address/0x4664d4cbd5104a0e974354724cbc8e0d9bd1aca3?__ctab=Code) |
-| cRBTC          | [0x872664a885a1995d754e3666a23fad5c801401c4](https://explorer.rsk.co/address/0x872664a885a1995d754e3666a23fad5c801401c4?__ctab=Code) | [0xc19f0882bf318c9f8767c7d520018888e878417b](https://explorer.testnetrsk.co/address/0xc19f0882bf318c9f8767c7d520018888e878417b?__ctab=Code) |
-| crUSDT         | [0xd256c121a507cadd2687599e27fa45e31b7c3199](https://explorer.rsk.co/address/0xd256c121a507cadd2687599e27fa45e31b7c3199?__ctab=Code) | [0xfd09f3349fdab173d162cd0e4669b591ed5a78fb](https://explorer.testnet.rsk.co/address/0xfd09f3349fdab173d162cd0e4669b591ed5a78fb?__ctab=Code) |
+| Unitroller (Comptroller Proxy)  | [0x962308Fef8EdfAdD705384840e7701f8F39ed0c0](https://rootstock.blockscout.com/address/0x962308Fef8EdfAdD705384840e7701f8F39ed0c0) | [0xb1BEc5376929b4E0235F1353819DBa92c4B0C6bb](https://rootstock-testnet.blockscout.com/address/0xb1BEc5376929b4E0235F1353819DBa92c4B0C6bb) |
+| Comptroller   | [0x8Cb69F6cB3c07c219789F3B655bF8f068C5c1848](https://rootstock.blockscout.com/address/0x8Cb69F6cB3c07c219789F3B655bF8f068C5c1848) | [0x2DcC80D32f2603C6763FdcA16f8E69e16f59DA36](https://rootstock-testnet.blockscout.com/address/0x2DcC80D32f2603C6763FdcA16f8E69e16f59DA36) |
+| kUSDRIF           | [0xDdf3CE45fcf080DF61ee61dac5Ddefef7ED4F46C](https://rootstock.blockscout.com/address/0xDdf3CE45fcf080DF61ee61dac5Ddefef7ED4F46C) | [0xfbee4444493194468df1de7450a37d840eb8b555](https://rootstock-testnet.blockscout.com/address/0xfbee4444493194468df1de7450a37d840eb8b555) |
+| kRBTC          | [0x0aeadb9d4c6a80462a47e87e76e487fa8b9a37d7](https://rootstock.blockscout.com/address/0x0aeadb9d4c6a80462a47e87e76e487fa8b9a37d7) | [0x5b35072cd6110606c8421e013304110fa04a32a3](https://rootstock-testnet.blockscout.com/address/0x5b35072cd6110606c8421e013304110fa04a32a3) |
+| kDOC         | [0x544eb90e766b405134b3b3f62b6b4c23fcd5fda2](https://rootstock.blockscout.com/address/0x544eb90e766b405134b3b3f62b6b4c23fcd5fda2) | [0x71e6b108d823c2786f8ef63a3e0589576b4f3914](https://rootstock-testnet.blockscout.com/address/0x71e6b108d823c2786f8ef63a3e0589576b4f3914) |
+| kBPRO         | [0x405062731d8656af5950ef952be9fa110878036b](https://rootstock.blockscout.com/address/0x405062731d8656af5950ef952be9fa110878036b) | [0x844a99Ba756539Aee698ce2915d678bA0FeE4d9d](https://rootstock-testnet.blockscout.com/address/0x844a99Ba756539Aee698ce2915d678bA0FeE4d9d) |
 
 Installation
 ------------
@@ -143,8 +145,8 @@ tropykus initially developed and tested on:
     #ubuntu/debian
     sudo apt-get install make
 
-### Recomend 🤓
-Recomend for GNU SO.
+### Recommend 🤓
+Recommend for GNU SO.
 Install build-essential package and node-gyp.
 
     #ubuntu/debian
@@ -160,7 +162,7 @@ Deployment
 -------
 To deploy the contracts we use buidler.
 
-Copy the .envrc.example and rename it to .envrc, change the mnemonic, then use`direnv allow` on this dirally rectory.
+Copy the .envrc.example and rename it to .envrc, change the mnemonic, then use `direnv allow` on this directory.
 Finally run `yarn deploy [networkName]` to deploy to the selected network
 
 
@@ -173,7 +175,7 @@ Debug in local ganache-cli with VS Code
 
 Configure launch.json (VS Code).
 
-In .buil/launch.json (create if is necesary) add the follow:
+In .buil/launch.json (create if is necesary) add the follow:****
 
     {
     "version": "0.2.0",
@@ -190,6 +192,42 @@ In .buil/launch.json (create if is necesary) add the follow:
         },
     ]
     }
+
+Deprecated Functions and Markets
+----------
+
+### Deprecated Functions
+
+The following functions are deprecated and should not be used in new integrations:
+
+#### `getSupplierSnapshotStored(address account)`
+- **Status:** DEPRECATED
+- **Location:** `CToken.sol`
+- **Description:** This function was intended to be used for the kSAT market only. If used in other markets, it can lead to read errors.
+- **Recommendation:** Do not use this function in new code. Use standard CToken functions instead.
+
+### Deprecated Markets
+
+The following markets have been deprecated or are no longer actively supported:
+
+#### kSAT Market
+- **Status:** DEPRECATED
+- **Address:** 0xd2ec53e8dd00d204d3d9313af5474eb9f5188ef6
+- **Description:** The kSAT (micro rBTC) market was a specialized market with unique snapshot functionality. This market is no longer actively maintained or supported as well as the Hurricane Interest Rate Model.
+- **Note:** The `getSupplierSnapshotStored` function was specifically designed for this market and should not be used with other markets.
+
+#### kUSDT Market
+- **Status:** DEPRECATED
+- **Address:** 0xedaefc6b596ed38d712100976969975a37c84464
+- **Description:** The legacy kUSDT market was deprecated due to potential vulnerabilities that could be exploited with its integration.
+
+#### kRIF Market
+- **Status:** DEPRECATED
+- **Address:** 0x3134b7fbfca5db217eca523eab1941452cf35163
+- **Description:** The kRIF market was deprecated due to potential vulnerabilities that could be exploited with its integration.
+
+
+> **Important:** When integrating with the tropykus Protocol, avoid using deprecated functions and markets. Always refer to the latest contract interfaces and documentation.
 
 Security and Liability
 ----------
