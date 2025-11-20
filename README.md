@@ -206,6 +206,20 @@ The following functions are deprecated and should not be used in new integration
 - **Description:** This function was intended to be used for the kSAT market only. If used in other markets, it can lead to read errors.
 - **Recommendation:** Do not use this function in new code. Use standard CToken functions instead.
 
+#### `addSubsidy()`
+- **Status:** DEPRECATED
+- **Location:** `CRBTC.sol`
+- **Description:** This function allows anyone to add rBTC to the subsidy fund without access control. Funds added via this function become part of a shared pool and cannot be directly withdrawn. The subsidy fund is distributed proportionally to suppliers based on their interest earned, meaning users who add subsidies without minting cTokens will lose access to their funds. This can introduce risks to unaware users who may accidentally contribute funds they cannot recover.
+- **Risk:** Users who call this function without understanding its behavior may permanently lose access to their rBTC contributions, as there is no mechanism to directly withdraw from the subsidy fund.
+- **Recommendation:** Do not use this function in new integrations. Use alternative mechanisms for managing protocol subsidies that include proper access control and withdrawal capabilities.
+
+#### `tropykusInterestAccrued(address account)`
+- **Status:** DEPRECATED
+- **Location:** `CToken.sol`
+- **Description:** This function calculates interest accrued for an account using the Tropykus interest rate model. This interest rate model was used for the kSAT market, which has been deprecated. The internal accounting mechanisms introduced by this model introduce vulnerabilities and should not be used in new integrations or markets.
+- **Risk:** The internal accounting mechanisms used by this function introduce vulnerabilities that could be exploited. This function is part of a deprecated interest rate model that was only intended for the kSAT market.
+- **Recommendation:** Do not use this function in new code. This function must not be used as it is associated with deprecated and vulnerable accounting mechanisms from the kSAT market.
+
 ### Deprecated Markets
 
 The following markets have been deprecated or are no longer actively supported:
@@ -228,6 +242,17 @@ The following markets have been deprecated or are no longer actively supported:
 
 
 > **Important:** When integrating with the tropykus Protocol, avoid using deprecated functions and markets. Always refer to the latest contract interfaces and documentation.
+
+Known Issues
+----------
+
+### Missing `maxAssets` Setter in ComptrollerG6
+
+- **Status:** KNOWN ISSUE
+- **Location:** `ComptrollerG6.sol`
+- **Description:** The `maxAssets` variable in `ComptrollerStorage.sol` controls the maximum number of assets a single account can participate in (borrow or use as collateral). However, `ComptrollerG6` does not implement a `_setMaxAssets()` function to update this value, unlike previous Comptroller versions (G1-G5) which had this functionality.
+- **Impact:** Once `maxAssets` is set (either during initialization or inherited from a previous Comptroller version), it cannot be changed in `ComptrollerG6`. The real impact is that a large number of listed markets would consume a lot of gas for user operations, as accounts could potentially enter many markets without the `maxAssets` limit being adjustable to manage gas costs. This could potentially make the protocol unusable for some users because some operations could exceed the maximum amount of gas allowed in a block, causing transactions to fail.
+- **Workaround:** If `maxAssets` needs to be updated, the protocol would need to upgrade to a new Comptroller implementation that includes the setter function, or ensure `maxAssets` is properly initialized during deployment/upgrade.
 
 Security and Liability
 ----------

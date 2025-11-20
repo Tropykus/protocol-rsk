@@ -235,6 +235,17 @@ contract CRBTC is CToken {
         require(errCode == uint256(Error.NO_ERROR), string(fullMessage));
     }
 
+    /**
+     * @notice Add rBTC to the subsidy fund
+     * @dev DEPRECATED: This function is deprecated and should not be used. It can introduce risks to unaware users.
+     *      Funds added via this function become part of a shared pool and cannot be directly withdrawn.
+     *      The subsidy fund is distributed proportionally to suppliers based on their interest earned,
+     *      meaning users who add subsidies without minting cTokens will lose access to their funds.
+     *      This function has no access control and is publicly callable, which can lead to accidental
+     *      or malicious fund contributions.
+     * @deprecated This function is deprecated and should not be used in new integrations.
+     *             Use alternative mechanisms for managing protocol subsidies.
+     */
     function addSubsidy() external payable {
         uint256 error = _addSubsidyInternal(msg.value);
         require(error == uint256(Error.NO_ERROR), "R1");
