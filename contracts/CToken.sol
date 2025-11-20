@@ -511,6 +511,22 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
     }
 
+    /**
+     * @notice Calculate interest accrued for an account using Tropykus interest rate model
+     * @dev DEPRECATED: This function is deprecated and must not be used. This interest rate model
+     *      was used for the kSAT market, which has been deprecated. The internal accounting
+     *      mechanisms introduced by this model introduce vulnerabilities and should not be
+     *      used in new integrations or markets.
+     * @param account The account for which to calculate interest
+     * @return mathErr Math error code (0 = success)
+     * @return interestFactor The interest factor mantissa
+     * @return interestEarned The amount of interest earned
+     * @return exchangeRate The exchange rate mantissa
+     * @return realAmount The real underlying amount
+     * @deprecated This function is deprecated and must not be used. The Tropykus interest rate
+     *             model and kSAT market have been deprecated due to vulnerabilities in their
+     *             internal accounting mechanisms.
+     */
     function tropykusInterestAccrued(address account)
         public
         view
