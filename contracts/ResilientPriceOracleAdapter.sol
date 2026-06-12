@@ -3,30 +3,44 @@ pragma solidity 0.8.20;
 
 /// @title ResilientPriceOracleAdapter
 /// @author Tropykus Finance
-/// @notice Multi-source price oracle adapter with cross-validation, circuit breaker,
-///         and lastGoodPrice fallback. Designed for Compound V2 fork on Rootstock.
+/// @notice Stateless multi-source price oracle adapter with 2-of-3 cross-validation
+///         and fail-closed behavior. Designed for Compound V2 fork on Rootstock.
 /// @dev Implements the same external interface as PriceOracleAdapter (assetPrices(address))
 ///      so it can be used behind PriceOracleProxy without changes.
 ///
-///      Architecture (inspired by Venus ResilientOracle + Liquity PriceFeed):
+///      Architecture (stateless 2-of-3 majority validation):
 ///        - Per-asset config: main feed, pivot feed, fallback feed
-///        - BoundValidator: cross-validates main vs pivot with configurable bands
-///        - Staleness check per feed (AggregatorV3 via updatedAt; MoC via cross-validation)
-///        - Circuit breaker: per-asset pause controlled by Pause Guardian
-///        - lastGoodPrice: cached last valid price with mandatory maximum age expiry
-///        - Fixed price escape hatch: admin can set a fixed price for emergencies
-///        - Fail-closed: reverts on deviation/bounds failure instead of serving stale data
-///        - Degraded mode: when pivot is unavailable, uses lastGoodPrice (not unvalidated feeds)
+///        - A price is served ONLY when two live, independent sources agree within
+///          the configured bounds. Validation pairs are tried in priority order:
+///            1. main  vs pivot     -> serve main
+///            2. fallback vs pivot  -> serve fallback
+///            3. main  vs fallback  -> serve main (covers pivot outage AND pivot-as-outlier)
+///        - No price cache, no lastGoodPrice, no keeper, no external maintenance.
+///          The oracle holds zero price state; every read is validated fresh.
+///        - Staleness per feed (AggregatorV3 via updatedAt; MoC via cross-validation,
+///          see MoC design note below)
+///        - Circuit breaker: per-asset and global pause. While paused, price queries
+///          REVERT (no cached price exists to serve). Pause = full market freeze.
+///        - Fixed price escape hatch: admin can set a FIXED_PRICE main feed which is
+///          served directly WITHOUT cross-validation (explicit, timelocked override
+///          for emergencies and wind-down exits). FIXED_PRICE is only allowed on the
+///          main role; pivot and fallback must always be live market sources.
+///        - Fail-closed: if no validation pair agrees, assetPrices reverts.
 ///
-///      MoC design note: Money on Chain's peek() does not expose timestamps. Staleness
-///      for MoC feeds is enforced indirectly through cross-validation against the pivot
-///      (which does have timestamps) and deviation checks against lastGoodPrice. This is
-///      intentional — any on-chain staleness tracker for MoC would be artificial and
-///      bypassable, providing false security.
+///      MoC design note: Money on Chain's peek() does not expose timestamps. A frozen
+///      MoC feed (still answering has==true with its last value) is detected because
+///      MoC prices are NEVER served alone: they must agree with at least one
+///      timestamped aggregator feed (pivot or fallback). If the market moves while
+///      MoC is frozen, the live aggregator diverges, no pair agrees, and the oracle
+///      fails closed. Consequently, if ALL aggregator feeds are down, MoC alone is
+///      not served — this is an intentional conservative trade-off.
 ///
 ///      Roles:
-///        - admin: Timelock controller (24h). Configures assets, feeds, bounds.
-///        - pauseGuardian: Timelock Pause. Can only pause/unpause per asset.
+///        - admin: Timelock controller (24h). Configures assets, feeds, bounds,
+///          fixed-price overrides, and is the ONLY role that can unpause.
+///          Admin transfer is two-step (pending/accept) to prevent bricking.
+///        - pauseGuardian: fast-response pause multisig. Can ONLY pause
+///          (per asset or global). Cannot unpause, cannot touch prices or config.
 
 // =============================================================================
 // Interfaces
@@ -66,35 +80,20 @@ contract ResilientPriceOracleAdapter {
     /// @notice Precision for price ratios and bounds (1e18 = 100%)
     uint256 public constant RATIO_PRECISION = 1e18;
 
-    /// @notice Maximum allowed bound ratio (200% = 2x)
-    uint256 public constant MAX_UPPER_BOUND = 2e18;
+    /// @notice Maximum allowed upper bound ratio (125% = 1.25x).
+    /// @dev Guardrail on configuration, not an operating band: no asset can be
+    ///      configured to treat feeds differing by more than 25% as "agreeing".
+    ///      Immutable by design (protects against admin fat-finger/compromise);
+    ///      changing it requires deploying a new adapter behind the proxy.
+    uint256 public constant MAX_UPPER_BOUND = 1.25e18;
 
-    /// @notice Minimum allowed bound ratio (50% = 0.5x)
-    uint256 public constant MIN_LOWER_BOUND = 5e17;
-
-    /// @notice Maximum deviation threshold in basis points (5000 = 50%)
-    uint256 public constant MAX_DEVIATION_BPS = 5000;
-
-    /// @notice Minimum deviation threshold in basis points (100 = 1%)
-    uint256 public constant MIN_DEVIATION_BPS = 100;
-
-    /// @notice Basis points precision
-    uint256 public constant BPS_PRECISION = 10000;
-
-    /// @notice Minimum allowed lastGoodPrice max age (1 hour)
-    uint256 public constant MIN_LAST_GOOD_PRICE_AGE = 1 hours;
-
-    /// @notice Maximum allowed lastGoodPrice max age (7 days)
-    uint256 public constant MAX_LAST_GOOD_PRICE_AGE = 7 days;
+    /// @notice Minimum allowed lower bound ratio (80% = 0.8x). Same guardrail semantics.
+    uint256 public constant MIN_LOWER_BOUND = 8e17;
 
     /// @notice Maximum sane price after scaling (1e30 = 1 trillion at 18 decimals)
     /// @dev Any price above this after scaling to 18 decimals is rejected as invalid.
     ///      This prevents overflow in multiplication operations downstream.
     uint256 public constant MAX_SANE_PRICE = 1e30;
-
-    /// @notice Minimum delay between lastGoodPrice updates (1 Rootstock block ~30s)
-    /// @dev Prevents multiple cache updates in the same block to mitigate ratcheting attacks.
-    uint256 public constant MIN_UPDATE_DELAY = 30;
 
     // =========================================================================
     // Enums
@@ -104,7 +103,16 @@ contract ResilientPriceOracleAdapter {
     enum FeedType {
         AGGREGATOR_V3,  // RedStone, APRO, Chainlink-compatible
         MOC,            // Money on Chain
-        FIXED_PRICE     // Emergency fixed price
+        FIXED_PRICE     // Emergency fixed price (main role only)
+    }
+
+    /// @notice Which validation path produced the price (diagnostics)
+    enum PricePath {
+        NONE,           // No valid price (assetPrices would revert)
+        FIXED_OVERRIDE, // main is FIXED_PRICE, served directly
+        MAIN_PIVOT,     // main cross-validated against pivot
+        FALLBACK_PIVOT, // fallback cross-validated against pivot
+        MAIN_FALLBACK   // main cross-validated against fallback (pivot down/outlier)
     }
 
     // =========================================================================
@@ -112,30 +120,27 @@ contract ResilientPriceOracleAdapter {
     // =========================================================================
 
     /// @notice Configuration for a single oracle feed source
-    /// @dev For AGGREGATOR_V3: feedDecimals stored at config time, not queried live.
+    /// @dev For AGGREGATOR_V3: feedDecimals is verified on-chain against the feed's
+    ///      decimals() at configuration time, then stored (not queried live on reads).
     ///      For MOC: feedDecimals ignored (MoC returns 18 decimals natively).
     ///      For MOC: maxStaleness ignored (MoC has no timestamp; validated via cross-check).
-    ///      For FIXED_PRICE: feedDecimals and maxStaleness ignored.
+    ///      For FIXED_PRICE: feedAddress, feedDecimals and maxStaleness ignored.
     struct FeedConfig {
         address feedAddress;     // Address of the oracle contract (or unused for FIXED)
         FeedType feedType;       // Type of the feed
         uint256 maxStaleness;    // Max seconds before price is considered stale (AggregatorV3 only)
         uint256 fixedPrice;      // Only used when feedType == FIXED_PRICE
-        uint8 feedDecimals;      // Decimals of the feed (AggregatorV3 only, stored at config time)
+        uint8 feedDecimals;      // Decimals of the feed (AggregatorV3 only, verified at config time)
         bool enabled;            // Whether this feed is active
     }
 
     /// @notice Per-asset oracle configuration
     struct AssetConfig {
         FeedConfig main;              // Primary price source
-        FeedConfig pivot;             // Validation/cross-check source
-        FeedConfig fallback_;         // Backup source
-        uint256 upperBoundRatio;      // Max allowed ratio main/pivot (e.g., 1.10e18 = 110%)
-        uint256 lowerBoundRatio;      // Min allowed ratio main/pivot (e.g., 0.90e18 = 90%)
-        uint256 maxDeviationBps;      // Max price change vs lastGoodPrice (mandatory, never 0)
-        uint256 lastGoodPrice;        // Last validated price (safety net)
-        uint256 lastUpdateTimestamp;   // Timestamp of last successful price validation
-        uint256 lastGoodPriceMaxAge;  // Max seconds lastGoodPrice can be used without refresh
+        FeedConfig pivot;             // Validation/cross-check source (live feed only)
+        FeedConfig fallback_;         // Backup source (live feed only)
+        uint256 upperBoundRatio;      // Max allowed ratio between paired feeds (e.g., 1.10e18)
+        uint256 lowerBoundRatio;      // Min allowed ratio between paired feeds (e.g., 0.90e18)
         bool paused;                  // Per-asset circuit breaker
         bool configured;              // Whether this asset has been configured
     }
@@ -146,6 +151,9 @@ contract ResilientPriceOracleAdapter {
 
     /// @notice Admin address (Timelock controller)
     address public admin;
+
+    /// @notice Pending admin for two-step transfer
+    address public pendingAdmin;
 
     /// @notice Pause Guardian address (multisig)
     address public pauseGuardian;
@@ -176,8 +184,6 @@ contract ResilientPriceOracleAdapter {
         uint256 lowerBoundRatio
     );
 
-    event MaxDeviationUpdated(address indexed cToken, uint256 maxDeviationBps);
-
     event FeedUpdated(
         address indexed cToken,
         string feedRole,
@@ -190,11 +196,11 @@ contract ResilientPriceOracleAdapter {
     event GlobalPaused();
     event GlobalUnpaused();
 
-    event LastGoodPriceUpdated(address indexed cToken, uint256 price);
-    event LastGoodPriceMaxAgeUpdated(address indexed cToken, uint256 maxAge);
+    /// @notice Emitted when admin sets a fixed-price override on the main feed.
+    ///         Distinct event for monitoring: this bypasses all cross-validation.
+    event FixedPriceOverrideSet(address indexed cToken, uint256 price);
 
-    event FixedPriceSet(address indexed cToken, string feedRole, uint256 price);
-
+    event NewPendingAdmin(address indexed oldPendingAdmin, address indexed newPendingAdmin);
     event AdminTransferred(address indexed oldAdmin, address indexed newAdmin);
     event PauseGuardianUpdated(address indexed oldGuardian, address indexed newGuardian);
 
@@ -203,19 +209,20 @@ contract ResilientPriceOracleAdapter {
     // =========================================================================
 
     error OnlyAdmin();
-    error OnlyPauseGuardian();
+    error OnlyPendingAdmin();
     error OnlyAdminOrGuardian();
     error AssetNotConfigured(address cToken);
+    error AssetAlreadyConfigured(address cToken);
     error InvalidAddress();
     error InvalidBounds();
-    error InvalidDeviation();
     error InvalidStaleness();
     error InvalidFixedPrice();
     error InvalidDecimals();
-    error InvalidMaxAge();
+    error InvalidFeedRole();
+    error FeedTypeNotAllowedForRole();
+    error DuplicateFeedAddress();
     error PriceUnavailable(address cToken);
-    error LastGoodPriceExpired(address cToken);
-    error AssetAlreadyConfigured(address cToken);
+    error OraclePaused(address cToken);
 
     // =========================================================================
     // Modifiers
@@ -223,11 +230,6 @@ contract ResilientPriceOracleAdapter {
 
     modifier onlyAdmin() {
         if (msg.sender != admin) revert OnlyAdmin();
-        _;
-    }
-
-    modifier onlyPauseGuardian() {
-        if (msg.sender != pauseGuardian) revert OnlyPauseGuardian();
         _;
     }
 
@@ -255,15 +257,15 @@ contract ResilientPriceOracleAdapter {
     /// @notice Get the price of an asset. Compatible with PriceOracleAdapter interface.
     /// @param cToken The cToken address to get the price for
     /// @return price The underlying asset price mantissa (scaled by 1e18).
-    /// @dev Reverts if no valid price is available or asset is not configured.
+    /// @dev Reverts if the asset is not configured, is paused, or no validation
+    ///      pair agrees (fail-closed). This function is stateless: it never reads
+    ///      or writes any cached price.
     function assetPrices(address cToken) external view returns (uint256) {
         AssetConfig storage config = assetConfigs[cToken];
 
         if (!config.configured) revert AssetNotConfigured(cToken);
 
-        if (globalPaused || config.paused) {
-            return _getLastGoodPriceOrRevert(cToken, config);
-        }
+        if (globalPaused || config.paused) revert OraclePaused(cToken);
 
         (uint256 price, ) = _getValidatedPrice(config);
         if (price == 0) revert PriceUnavailable(cToken);
@@ -271,138 +273,76 @@ contract ResilientPriceOracleAdapter {
     }
 
     // =========================================================================
-    // External — State-Changing Price Query (keeper/monitor)
+    // Internal — Price Resolution Logic (stateless 2-of-3)
     // =========================================================================
 
-    /// @notice Get price AND update lastGoodPrice. Call from a keeper/monitor.
-    /// @dev Updates lastGoodPrice/lastUpdateTimestamp ONLY when price is cross-validated
-    ///      (pivot available). Degraded-mode prices are served but don't refresh the cache,
-    ///      preventing attackers from ratcheting lastGoodPrice during pivot outages.
-    ///      Enforces MIN_UPDATE_DELAY between cache updates to prevent same-block ratcheting.
-    /// @param cToken The cToken address
-    /// @return price The validated price
-    function getAndUpdatePrice(address cToken) external returns (uint256) {
-        AssetConfig storage config = assetConfigs[cToken];
-
-        if (!config.configured) revert AssetNotConfigured(cToken);
-
-        if (globalPaused || config.paused) {
-            return _getLastGoodPriceOrRevert(cToken, config);
-        }
-
-        (uint256 price, bool crossValidated) = _getValidatedPrice(config);
-        if (price == 0) revert PriceUnavailable(cToken);
-
-        // Only update cache when price was cross-validated against pivot.
-        // Degraded-mode prices are served to callers but don't shift the baseline,
-        // preventing ratcheting attacks during pivot outages.
-        if (crossValidated) {
-            // Enforce minimum delay between cache updates to prevent same-block ratcheting
-            if (block.timestamp - config.lastUpdateTimestamp >= MIN_UPDATE_DELAY) {
-                config.lastUpdateTimestamp = block.timestamp;
-
-                if (price != config.lastGoodPrice) {
-                    config.lastGoodPrice = price;
-                    emit LastGoodPriceUpdated(cToken, price);
-                }
-            }
-        }
-
-        return price;
-    }
-
-    // =========================================================================
-    // Internal — Price Resolution Logic
-    // =========================================================================
-
-    /// @dev Core price resolution logic.
+    /// @dev Core price resolution. A price is accepted only if two live sources
+    ///      agree within bounds, except for the explicit FIXED_PRICE admin override.
     ///
-    ///      Normal mode (pivot available):
-    ///        main -> validate vs pivot + deviation -> accept (crossValidated = true)
-    ///        if main fails bounds -> fallback -> validate vs pivot + deviation -> accept
-    ///
-    ///      Degraded mode (pivot unavailable):
-    ///        main -> deviation check only (no bounds) -> accept (crossValidated = false)
-    ///        fallback -> deviation check only -> accept (crossValidated = false)
-    ///        This keeps the protocol operational with real market data from MoC/APRO
-    ///        during pivot (RedStone) outages. The mandatory deviation check (min 1%)
-    ///        limits how far the price can move from the last validated value.
-    ///
-    ///      Fail-closed: returns 0 on deviation failure (caller reverts).
-    ///      lastGoodPrice returned only when all feeds fail AND cache not expired.
+    ///      Resolution order:
+    ///        0. main is FIXED_PRICE  -> serve fixedPrice (admin override, no validation)
+    ///        1. main  agrees with pivot     -> serve main
+    ///        2. fallback agrees with pivot  -> serve fallback
+    ///        3. main  agrees with fallback  -> serve main
+    ///           (covers pivot outage; also covers pivot reporting an outlier price,
+    ///            since main+fallback then form the 2-of-3 majority)
+    ///        4. no pair agrees -> (0, NONE) -> caller reverts (fail-closed)
     ///
     /// @return price The validated price (0 if unavailable)
-    /// @return crossValidated True if the price was validated against the pivot feed
+    /// @return path Which validation pair produced the price (diagnostics)
     function _getValidatedPrice(
         AssetConfig storage config
-    ) internal view returns (uint256, bool) {
+    ) internal view returns (uint256, PricePath) {
 
-        // Step 1: Read main and pivot
+        // Step 0: explicit admin override — FIXED_PRICE on main bypasses validation.
+        // This is the timelocked escape hatch for emergencies and wind-down exits.
+        if (config.main.enabled && config.main.feedType == FeedType.FIXED_PRICE) {
+            uint256 fixed_ = config.main.fixedPrice;
+            if (fixed_ > 0 && fixed_ <= MAX_SANE_PRICE) {
+                return (fixed_, PricePath.FIXED_OVERRIDE);
+            }
+            return (0, PricePath.NONE);
+        }
+
         (uint256 mainPrice, bool mainValid) = _readFeed(config.main);
         (uint256 pivotPrice, bool pivotValid) = _readFeed(config.pivot);
-
-        // Step 2: If main is valid, try to use it
-        if (mainValid && mainPrice > 0) {
-
-            if (pivotValid && pivotPrice > 0) {
-                // Normal mode: cross-validate main against pivot
-                if (_safeValidateBounds(mainPrice, pivotPrice, config.upperBoundRatio, config.lowerBoundRatio)) {
-                    if (_safeCheckDeviation(mainPrice, config.lastGoodPrice, config.maxDeviationBps)) {
-                        return (mainPrice, true);
-                    }
-                    // Deviation exceeded -> fail closed
-                    return (0, false);
-                }
-                // Main failed bounds -> try fallback below
-            } else {
-                // Degraded mode: pivot unavailable, accept main with deviation check only
-                if (_safeCheckDeviation(mainPrice, config.lastGoodPrice, config.maxDeviationBps)) {
-                    return (mainPrice, false);
-                }
-                // Deviation exceeded -> fail closed
-                return (0, false);
-            }
-        }
-
-        // Step 3: Try fallback
         (uint256 fallbackPrice, bool fallbackValid) = _readFeed(config.fallback_);
 
-        if (fallbackValid && fallbackPrice > 0) {
-            if (pivotValid && pivotPrice > 0) {
-                // Normal mode: cross-validate fallback against pivot
-                if (_safeValidateBounds(fallbackPrice, pivotPrice, config.upperBoundRatio, config.lowerBoundRatio)) {
-                    if (_safeCheckDeviation(fallbackPrice, config.lastGoodPrice, config.maxDeviationBps)) {
-                        return (fallbackPrice, true);
-                    }
-                    return (0, false);
-                }
-            } else {
-                // Degraded mode: pivot unavailable, accept fallback with deviation check only
-                if (_safeCheckDeviation(fallbackPrice, config.lastGoodPrice, config.maxDeviationBps)) {
-                    return (fallbackPrice, false);
-                }
-                return (0, false);
-            }
+        // Pair 1: main vs pivot
+        if (mainValid && pivotValid &&
+            _safeValidateBounds(mainPrice, pivotPrice, config.upperBoundRatio, config.lowerBoundRatio)
+        ) {
+            return (mainPrice, PricePath.MAIN_PIVOT);
         }
 
-        // Step 4: All feeds failed or all prices rejected. Use lastGoodPrice if not expired.
-        if (config.lastGoodPrice > 0 && _isLastGoodPriceValid(config)) {
-            return (config.lastGoodPrice, false);
+        // Pair 2: fallback vs pivot
+        if (fallbackValid && pivotValid &&
+            _safeValidateBounds(fallbackPrice, pivotPrice, config.upperBoundRatio, config.lowerBoundRatio)
+        ) {
+            return (fallbackPrice, PricePath.FALLBACK_PIVOT);
         }
 
-        return (0, false);
+        // Pair 3: main vs fallback (pivot down, or pivot is the 2-of-3 outlier)
+        if (mainValid && fallbackValid &&
+            _safeValidateBounds(mainPrice, fallbackPrice, config.upperBoundRatio, config.lowerBoundRatio)
+        ) {
+            return (mainPrice, PricePath.MAIN_FALLBACK);
+        }
+
+        // No agreeing pair: fail closed.
+        return (0, PricePath.NONE);
     }
 
-    /// @dev Read a price from a feed based on its type
+    // =========================================================================
+    // Internal — Feed Readers
+    // =========================================================================
+
+    /// @dev Read a price from a feed based on its type.
+    ///      Note: FIXED_PRICE is handled in Step 0 of _getValidatedPrice for the main
+    ///      role and is rejected at configuration time for pivot/fallback roles, so
+    ///      it is never read through this path.
     function _readFeed(FeedConfig storage feed) internal view returns (uint256 price, bool valid) {
         if (!feed.enabled) {
-            return (0, false);
-        }
-
-        if (feed.feedType == FeedType.FIXED_PRICE) {
-            if (feed.fixedPrice > 0 && feed.fixedPrice <= MAX_SANE_PRICE) {
-                return (feed.fixedPrice, true);
-            }
             return (0, false);
         }
 
@@ -471,10 +411,10 @@ contract ResilientPriceOracleAdapter {
     }
 
     /// @dev Read price from Money on Chain PriceProvider.
-    ///      MoC does not expose timestamps. Staleness is enforced indirectly:
-    ///      - Cross-validation against pivot (which has timestamps) catches divergence
-    ///      - Deviation check against lastGoodPrice catches large stale drifts
-    ///      - lastGoodPrice expiry ensures cached prices don't live forever
+    ///      MoC does not expose timestamps. Staleness is enforced structurally:
+    ///      MoC prices are never served alone — they must agree with a timestamped
+    ///      aggregator feed (pivot or fallback) to be accepted. A frozen MoC feed
+    ///      diverges from live aggregators as the market moves and is rejected.
     function _readMoC(FeedConfig storage feed) internal view returns (uint256, bool) {
         try PriceProviderMoC(feed.feedAddress).peek() returns (bytes32 price, bool has) {
             if (!has) return (0, false);
@@ -506,53 +446,18 @@ contract ResilientPriceOracleAdapter {
 
     /// @dev Overflow-safe bound validation. Returns false on overflow instead of reverting.
     function _safeValidateBounds(
-        uint256 mainPrice,
-        uint256 pivotPrice,
+        uint256 priceA,
+        uint256 priceB,
         uint256 upperBound,
         uint256 lowerBound
     ) internal pure returns (bool) {
-        if (pivotPrice == 0) return false;
+        if (priceB == 0) return false;
 
-        // Check for overflow: mainPrice * RATIO_PRECISION
-        // Max safe mainPrice for multiplication: type(uint256).max / RATIO_PRECISION
-        if (mainPrice > type(uint256).max / RATIO_PRECISION) return false;
+        // Check for overflow: priceA * RATIO_PRECISION
+        if (priceA > type(uint256).max / RATIO_PRECISION) return false;
 
-        uint256 ratio = (mainPrice * RATIO_PRECISION) / pivotPrice;
+        uint256 ratio = (priceA * RATIO_PRECISION) / priceB;
         return ratio >= lowerBound && ratio <= upperBound;
-    }
-
-    /// @dev Overflow-safe deviation check. Returns false on overflow instead of reverting.
-    function _safeCheckDeviation(
-        uint256 newPrice,
-        uint256 lastPrice,
-        uint256 maxDevBps
-    ) internal pure returns (bool) {
-        // maxDeviationBps is mandatory (never 0), but handle gracefully
-        if (lastPrice == 0) return true;
-
-        uint256 diff = newPrice > lastPrice ? newPrice - lastPrice : lastPrice - newPrice;
-
-        // Check for overflow: diff * BPS_PRECISION
-        if (diff > type(uint256).max / BPS_PRECISION) return false;
-
-        uint256 deviationBps = (diff * BPS_PRECISION) / lastPrice;
-
-        return deviationBps <= maxDevBps;
-    }
-
-    /// @dev Check if lastGoodPrice is still within its maximum age
-    function _isLastGoodPriceValid(AssetConfig storage config) internal view returns (bool) {
-        return (block.timestamp - config.lastUpdateTimestamp) <= config.lastGoodPriceMaxAge;
-    }
-
-    /// @dev Get lastGoodPrice or revert if expired/zero
-    function _getLastGoodPriceOrRevert(
-        address cToken,
-        AssetConfig storage config
-    ) internal view returns (uint256) {
-        if (config.lastGoodPrice == 0) revert PriceUnavailable(cToken);
-        if (!_isLastGoodPriceValid(config)) revert LastGoodPriceExpired(cToken);
-        return config.lastGoodPrice;
     }
 
     // =========================================================================
@@ -560,24 +465,31 @@ contract ResilientPriceOracleAdapter {
     // =========================================================================
 
     /// @notice Configure a new asset with all three feed sources
+    /// @dev Role-type rules (enforce invariant "MoC never served alone"):
+    ///        - main: MOC or AGGREGATOR_V3. FIXED_PRICE cannot be configured here;
+    ///          the only way to set a fixed-price override is setFixedPrice (single,
+    ///          monitored path).
+    ///        - pivot, fallback: AGGREGATOR_V3 only (must carry timestamps). This
+    ///          guarantees every servable pair contains at least one feed with
+    ///          staleness validation, so a frozen MoC feed can never validate
+    ///          against another frozen source.
+    ///      Enabled feeds must also have distinct addresses across roles, so the
+    ///      2-of-3 majority is never two reads of the same source.
     function configureAsset(
         address cToken,
         FeedConfig calldata main,
         FeedConfig calldata pivot,
         FeedConfig calldata fallback_,
         uint256 upperBoundRatio,
-        uint256 lowerBoundRatio,
-        uint256 maxDeviationBps,
-        uint256 initialPrice,
-        uint256 lastGoodPriceMaxAge
+        uint256 lowerBoundRatio
     ) external onlyAdmin {
         if (cToken == address(0)) revert InvalidAddress();
         if (assetConfigs[cToken].configured) revert AssetAlreadyConfigured(cToken);
 
         _validateBoundParams(upperBoundRatio, lowerBoundRatio);
-        _validateDeviationBps(maxDeviationBps);
-        if (initialPrice == 0 || initialPrice > MAX_SANE_PRICE) revert InvalidFixedPrice();
-        _validateMaxAge(lastGoodPriceMaxAge);
+        if (main.feedType == FeedType.FIXED_PRICE) revert FeedTypeNotAllowedForRole();
+        if (pivot.feedType != FeedType.AGGREGATOR_V3) revert FeedTypeNotAllowedForRole();
+        if (fallback_.feedType != FeedType.AGGREGATOR_V3) revert FeedTypeNotAllowedForRole();
         _validateFeedConfig(main);
         _validateFeedConfig(pivot);
         _validateFeedConfig(fallback_);
@@ -588,22 +500,20 @@ contract ResilientPriceOracleAdapter {
         config.fallback_ = fallback_;
         config.upperBoundRatio = upperBoundRatio;
         config.lowerBoundRatio = lowerBoundRatio;
-        config.maxDeviationBps = maxDeviationBps;
-        config.lastGoodPrice = initialPrice;
-        config.lastUpdateTimestamp = block.timestamp;
-        config.lastGoodPriceMaxAge = lastGoodPriceMaxAge;
         config.configured = true;
+        _validateDistinctFeeds(config);
 
         configuredAssets.push(cToken);
 
         emit AssetConfigured(cToken, main.feedAddress, pivot.feedAddress, fallback_.feedAddress);
         emit BoundsUpdated(cToken, upperBoundRatio, lowerBoundRatio);
-        emit MaxDeviationUpdated(cToken, maxDeviationBps);
-        emit LastGoodPriceUpdated(cToken, initialPrice);
-        emit LastGoodPriceMaxAgeUpdated(cToken, lastGoodPriceMaxAge);
     }
 
     /// @notice Update a specific feed for an asset
+    /// @dev Same role-type rules as configureAsset. FIXED_PRICE is rejected for ALL
+    ///      roles here: the only path to a fixed-price override is setFixedPrice,
+    ///      so monitoring a single event (FixedPriceOverrideSet) has no blind spots.
+    ///      Restoring live pricing after an override is done with this function.
     function updateFeed(
         address cToken,
         string calldata feedRole,
@@ -611,18 +521,22 @@ contract ResilientPriceOracleAdapter {
     ) external onlyAdmin {
         AssetConfig storage config = assetConfigs[cToken];
         if (!config.configured) revert AssetNotConfigured(cToken);
+        if (newFeed.feedType == FeedType.FIXED_PRICE) revert FeedTypeNotAllowedForRole();
         _validateFeedConfig(newFeed);
 
         bytes32 role = keccak256(bytes(feedRole));
         if (role == keccak256("main")) {
             config.main = newFeed;
         } else if (role == keccak256("pivot")) {
+            if (newFeed.feedType != FeedType.AGGREGATOR_V3) revert FeedTypeNotAllowedForRole();
             config.pivot = newFeed;
         } else if (role == keccak256("fallback")) {
+            if (newFeed.feedType != FeedType.AGGREGATOR_V3) revert FeedTypeNotAllowedForRole();
             config.fallback_ = newFeed;
         } else {
-            revert("Invalid feed role");
+            revert InvalidFeedRole();
         }
+        _validateDistinctFeeds(config);
 
         emit FeedUpdated(cToken, feedRole, newFeed.feedAddress, newFeed.feedType);
     }
@@ -643,39 +557,19 @@ contract ResilientPriceOracleAdapter {
         emit BoundsUpdated(cToken, upperBoundRatio, lowerBoundRatio);
     }
 
-    /// @notice Update max deviation threshold for an asset
-    function updateMaxDeviation(address cToken, uint256 maxDeviationBps) external onlyAdmin {
-        AssetConfig storage config = assetConfigs[cToken];
-        if (!config.configured) revert AssetNotConfigured(cToken);
-        _validateDeviationBps(maxDeviationBps);
-
-        config.maxDeviationBps = maxDeviationBps;
-
-        emit MaxDeviationUpdated(cToken, maxDeviationBps);
-    }
-
-    /// @notice Update lastGoodPrice maximum age for an asset
-    function updateLastGoodPriceMaxAge(address cToken, uint256 maxAge) external onlyAdmin {
-        AssetConfig storage config = assetConfigs[cToken];
-        if (!config.configured) revert AssetNotConfigured(cToken);
-        _validateMaxAge(maxAge);
-
-        config.lastGoodPriceMaxAge = maxAge;
-
-        emit LastGoodPriceMaxAgeUpdated(cToken, maxAge);
-    }
-
-    /// @notice Emergency: set a fixed price for an asset's feed
-    function setFixedPrice(
-        address cToken,
-        string calldata feedRole,
-        uint256 price
-    ) external onlyAdmin {
+    /// @notice Emergency: set a fixed-price override on the asset's MAIN feed.
+    /// @dev This is the ONLY path that can install a FIXED_PRICE feed (configureAsset
+    ///      and updateFeed reject the type), so monitoring FixedPriceOverrideSet
+    ///      covers every override with no blind spots. The override is served
+    ///      directly, bypassing all cross-validation, and does NOT expire on-chain:
+    ///      off-chain monitoring should alert on long-lived FIXED_OVERRIDE paths.
+    ///      To restore live pricing, call updateFeed("main", <live feed config>).
+    function setFixedPrice(address cToken, uint256 price) external onlyAdmin {
         AssetConfig storage config = assetConfigs[cToken];
         if (!config.configured) revert AssetNotConfigured(cToken);
         if (price == 0 || price > MAX_SANE_PRICE) revert InvalidFixedPrice();
 
-        FeedConfig memory fixedFeed = FeedConfig({
+        config.main = FeedConfig({
             feedAddress: address(0),
             feedType: FeedType.FIXED_PRICE,
             maxStaleness: 0,
@@ -684,71 +578,71 @@ contract ResilientPriceOracleAdapter {
             enabled: true
         });
 
-        bytes32 role = keccak256(bytes(feedRole));
-        if (role == keccak256("main")) {
-            config.main = fixedFeed;
-        } else if (role == keccak256("pivot")) {
-            config.pivot = fixedFeed;
-        } else if (role == keccak256("fallback")) {
-            config.fallback_ = fixedFeed;
-        } else {
-            revert("Invalid feed role");
-        }
-
-        emit FixedPriceSet(cToken, feedRole, price);
-    }
-
-    /// @notice Force-update the lastGoodPrice for an asset (emergency use)
-    function setLastGoodPrice(address cToken, uint256 price) external onlyAdmin {
-        AssetConfig storage config = assetConfigs[cToken];
-        if (!config.configured) revert AssetNotConfigured(cToken);
-        if (price == 0 || price > MAX_SANE_PRICE) revert InvalidFixedPrice();
-
-        config.lastGoodPrice = price;
-        config.lastUpdateTimestamp = block.timestamp;
-
-        emit LastGoodPriceUpdated(cToken, price);
+        emit FixedPriceOverrideSet(cToken, price);
     }
 
     // =========================================================================
-    // Pause Guardian — Circuit Breaker
+    // Pause — Circuit Breaker
     // =========================================================================
+    // Guardian (or admin) can pause; ONLY admin (timelock) can unpause.
+    // While paused, assetPrices reverts: the market is frozen until the admin
+    // reviews the incident and either unpauses or reconfigures feeds.
+    //
+    // DELIBERATE DESIGN DECISION: because unpausing goes through the 24h timelock,
+    // ANY pause freezes price-dependent operations (borrow, redeem, liquidate,
+    // transfer) for a minimum of ~24h. This is accepted: the oracle already fails
+    // closed automatically on feed divergence, so a manual pause is reserved for
+    // rare, severe scenarios (e.g. feeds agreeing on a known-bad price) where a
+    // deliberate, timelocked review period is appropriate. Operators must treat
+    // pausing as a costly action and prefer per-asset over global pause.
 
-    function pauseAsset(address cToken) external onlyPauseGuardian {
+    function pauseAsset(address cToken) external onlyAdminOrGuardian {
         AssetConfig storage config = assetConfigs[cToken];
         if (!config.configured) revert AssetNotConfigured(cToken);
         config.paused = true;
         emit AssetPaused(cToken);
     }
 
-    function unpauseAsset(address cToken) external onlyAdminOrGuardian {
+    function unpauseAsset(address cToken) external onlyAdmin {
         AssetConfig storage config = assetConfigs[cToken];
         if (!config.configured) revert AssetNotConfigured(cToken);
         config.paused = false;
         emit AssetUnpaused(cToken);
     }
 
-    function pauseGlobal() external onlyPauseGuardian {
+    function pauseGlobal() external onlyAdminOrGuardian {
         globalPaused = true;
         emit GlobalPaused();
     }
 
-    function unpauseGlobal() external onlyAdminOrGuardian {
+    function unpauseGlobal() external onlyAdmin {
         globalPaused = false;
         emit GlobalUnpaused();
     }
 
     // =========================================================================
-    // Admin — Role Management
+    // Admin — Role Management (two-step admin transfer)
     // =========================================================================
 
-    function transferAdmin(address newAdmin) external onlyAdmin {
-        if (newAdmin == address(0)) revert InvalidAddress();
-        address oldAdmin = admin;
-        admin = newAdmin;
-        emit AdminTransferred(oldAdmin, newAdmin);
+    /// @notice Begin admin transfer. New admin must call acceptAdmin().
+    function setPendingAdmin(address newPendingAdmin) external onlyAdmin {
+        if (newPendingAdmin == address(0)) revert InvalidAddress();
+        address oldPendingAdmin = pendingAdmin;
+        pendingAdmin = newPendingAdmin;
+        emit NewPendingAdmin(oldPendingAdmin, newPendingAdmin);
     }
 
+    /// @notice Complete admin transfer. Callable only by the pending admin.
+    function acceptAdmin() external {
+        if (msg.sender != pendingAdmin) revert OnlyPendingAdmin();
+        address oldAdmin = admin;
+        admin = pendingAdmin;
+        pendingAdmin = address(0);
+        emit AdminTransferred(oldAdmin, admin);
+    }
+
+    /// @notice Update the pause guardian. Single-step: a misconfigured guardian is
+    ///         recoverable by the admin, unlike a misconfigured admin.
     function setPauseGuardian(address newGuardian) external onlyAdmin {
         if (newGuardian == address(0)) revert InvalidAddress();
         address oldGuardian = pauseGuardian;
@@ -768,22 +662,14 @@ contract ResilientPriceOracleAdapter {
         bool configured,
         bool paused,
         uint256 upperBoundRatio,
-        uint256 lowerBoundRatio,
-        uint256 maxDeviationBps,
-        uint256 lastGoodPrice,
-        uint256 lastUpdateTimestamp,
-        uint256 lastGoodPriceMaxAge
+        uint256 lowerBoundRatio
     ) {
         AssetConfig storage config = assetConfigs[cToken];
         return (
             config.configured,
             config.paused,
             config.upperBoundRatio,
-            config.lowerBoundRatio,
-            config.maxDeviationBps,
-            config.lastGoodPrice,
-            config.lastUpdateTimestamp,
-            config.lastGoodPriceMaxAge
+            config.lowerBoundRatio
         );
     }
 
@@ -797,18 +683,20 @@ contract ResilientPriceOracleAdapter {
         if (role == keccak256("main")) return _readFeed(config.main);
         else if (role == keccak256("pivot")) return _readFeed(config.pivot);
         else if (role == keccak256("fallback")) return _readFeed(config.fallback_);
-        else revert("Invalid feed role");
+        else revert InvalidFeedRole();
     }
 
+    /// @notice Full diagnostic read: all three feeds plus the resolved price and path.
+    /// @dev Does not check pause state — useful for monitoring while paused.
     function diagnosePrice(address cToken) external view returns (
         uint256 price,
+        PricePath path,
         uint256 mainPrice,
         bool mainValid,
         uint256 pivotPrice,
         bool pivotValid,
         uint256 fallbackPrice,
-        bool fallbackValid,
-        bool lastGoodPriceStillValid
+        bool fallbackValid
     ) {
         AssetConfig storage config = assetConfigs[cToken];
         if (!config.configured) revert AssetNotConfigured(cToken);
@@ -816,8 +704,7 @@ contract ResilientPriceOracleAdapter {
         (mainPrice, mainValid) = _readFeed(config.main);
         (pivotPrice, pivotValid) = _readFeed(config.pivot);
         (fallbackPrice, fallbackValid) = _readFeed(config.fallback_);
-        lastGoodPriceStillValid = _isLastGoodPriceValid(config);
-        (price, ) = _getValidatedPrice(config);
+        (price, path) = _getValidatedPrice(config);
     }
 
     // =========================================================================
@@ -830,26 +717,36 @@ contract ResilientPriceOracleAdapter {
         if (lower >= upper) revert InvalidBounds();
     }
 
-    function _validateDeviationBps(uint256 devBps) internal pure {
-        if (devBps < MIN_DEVIATION_BPS || devBps > MAX_DEVIATION_BPS) revert InvalidDeviation();
+    /// @dev Enabled feeds must point to distinct contracts across roles, so an
+    ///      "agreeing pair" is always two reads of two different sources. FIXED_PRICE
+    ///      main (feedAddress == 0) is exempt: it never participates in pairs.
+    function _validateDistinctFeeds(AssetConfig storage config) internal view {
+        address a = config.main.enabled ? config.main.feedAddress : address(0);
+        address b = config.pivot.enabled ? config.pivot.feedAddress : address(0);
+        address c = config.fallback_.enabled ? config.fallback_.feedAddress : address(0);
+
+        if (a != address(0) && (a == b || a == c)) revert DuplicateFeedAddress();
+        if (b != address(0) && b == c) revert DuplicateFeedAddress();
     }
 
-    function _validateMaxAge(uint256 maxAge) internal pure {
-        if (maxAge < MIN_LAST_GOOD_PRICE_AGE || maxAge > MAX_LAST_GOOD_PRICE_AGE) {
-            revert InvalidMaxAge();
-        }
-    }
-
-    function _validateFeedConfig(FeedConfig calldata feed) internal pure {
-        if (feed.feedType == FeedType.FIXED_PRICE) {
-            if (feed.enabled && (feed.fixedPrice == 0 || feed.fixedPrice > MAX_SANE_PRICE)) {
-                revert InvalidFixedPrice();
-            }
-        } else if (feed.feedType == FeedType.AGGREGATOR_V3) {
+    /// @dev Validates a feed config. For AGGREGATOR_V3 feeds, verifies the provided
+    ///      feedDecimals against the feed's on-chain decimals() to catch typos that
+    ///      would mis-scale prices by orders of magnitude.
+    ///      FIXED_PRICE never reaches this function: configureAsset and updateFeed
+    ///      reject the type before validation, and setFixedPrice builds its feed
+    ///      inline after validating the price range.
+    function _validateFeedConfig(FeedConfig calldata feed) internal view {
+        if (feed.feedType == FeedType.AGGREGATOR_V3) {
             if (feed.enabled) {
                 if (feed.feedAddress == address(0)) revert InvalidAddress();
                 if (feed.maxStaleness == 0) revert InvalidStaleness();
                 if (feed.feedDecimals == 0 || feed.feedDecimals > 24) revert InvalidDecimals();
+
+                // On-chain verification: stored decimals must match the feed's actual
+                // decimals(). Reverts (bubbles up) if the feed doesn't implement it —
+                // a feed without decimals() should not be configured as AGGREGATOR_V3.
+                uint8 actualDecimals = AggregatorV3Interface(feed.feedAddress).decimals();
+                if (actualDecimals != feed.feedDecimals) revert InvalidDecimals();
             }
         } else if (feed.feedType == FeedType.MOC) {
             if (feed.enabled) {
