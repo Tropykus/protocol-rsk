@@ -306,14 +306,16 @@ contract ResilientPriceOracleAdapter {
 
         (uint256 mainPrice, bool mainValid) = _readFeed(config.main);
         (uint256 pivotPrice, bool pivotValid) = _readFeed(config.pivot);
-        (uint256 fallbackPrice, bool fallbackValid) = _readFeed(config.fallback_);
 
-        // Pair 1: main vs pivot
+        // Pair 1: main vs pivot (normal path — fallback not read)
         if (mainValid && pivotValid &&
             _safeValidateBounds(mainPrice, pivotPrice, config.upperBoundRatio, config.lowerBoundRatio)
         ) {
             return (mainPrice, PricePath.MAIN_PIVOT);
         }
+
+        // Primary pair did not validate: now (and only now) consult the fallback.
+        (uint256 fallbackPrice, bool fallbackValid) = _readFeed(config.fallback_);
 
         // Pair 2: fallback vs pivot
         if (fallbackValid && pivotValid &&
