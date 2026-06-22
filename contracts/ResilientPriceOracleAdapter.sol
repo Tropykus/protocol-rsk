@@ -394,6 +394,9 @@ contract ResilientPriceOracleAdapter {
             /* uint80 answeredInRound */
         ) = AggregatorV3Interface(feedAddress).latestRoundData();
 
+        // Validation: decimals must still match what was verified at configuration time.
+        if (AggregatorV3Interface(feedAddress).decimals() != feedDecimals) return (0, false);
+
         // Validation: price must be positive
         if (answer <= 0) return (0, false);
 
