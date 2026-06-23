@@ -505,8 +505,6 @@ contract ResilientPriceOracleAdapter {
         if (main.feedType == FeedType.FIXED_PRICE) revert FeedTypeNotAllowedForRole();
         if (pivot.feedType != FeedType.AGGREGATOR_V3) revert FeedTypeNotAllowedForRole();
         if (fallback_.feedType != FeedType.AGGREGATOR_V3) revert FeedTypeNotAllowedForRole();
-        // All three feeds must be enabled at configuration so the asset is born with a complete 2-of-3 set.
-        if (!main.enabled || !pivot.enabled || !fallback_.enabled) revert FeedNotEnabled();
         _validateFeedConfig(main);
         _validateFeedConfig(pivot);
         _validateFeedConfig(fallback_);
@@ -519,6 +517,11 @@ contract ResilientPriceOracleAdapter {
         config.lowerBoundRatio = lowerBoundRatio;
         config.configured = true;
         _validateDistinctFeeds(config);
+        // At least two feeds must be enabled so a validation pair can form. We do NOT
+        // require all three: some Rootstock assets only have two viable sources, so an
+        // asset must remain configurable (and a compromised feed removable) down to a
+        // 2-of-2 set. See _requireTwoEnabled.
+        _requireTwoEnabled(config);
 
         configuredAssets.push(cToken);
 
@@ -554,6 +557,10 @@ contract ResilientPriceOracleAdapter {
             revert InvalidFeedRole();
         }
         _validateDistinctFeeds(config);
+        // Must keep >= 2 enabled feeds (see _requireTwoEnabled): allows rotating or
+        // disabling a compromised feed (2-of-3 -> 2-of-2) but never bricking the asset
+        // by dropping below a quotable pair.
+        _requireTwoEnabled(config);
 
         emit FeedUpdated(cToken, feedRole, newFeed.feedAddress, newFeed.feedType);
     }
@@ -744,6 +751,27 @@ contract ResilientPriceOracleAdapter {
 
         if (a != address(0) && (a == b || a == c)) revert DuplicateFeedAddress();
         if (b != address(0) && b == c) revert DuplicateFeedAddress();
+    }
+
+    /// @dev A configured asset must always keep at least two enabled feeds so that one
+    ///      of the three validation pairs ({main,pivot}, {fallback,pivot}, {main,fallback})
+    ///      can form. This is the minimum for a quotable 2-of-N set.
+    ///
+    ///      We intentionally do NOT require all three enabled: on Rootstock some assets
+    ///      only have two viable sources, and an operator must be able to disable a
+    ///      compromised feed (degrading 2-of-3 -> 2-of-2) without bricking the asset.
+    ///      At 2-of-2 byzantine fault tolerance is lost (a single feed dispute -> no
+    ///      agreeing pair -> fail-closed), which is an accepted, documented trade-off.
+    ///
+    ///      "MoC never served alone" still holds at 2-of-2: pivot and fallback are
+    ///      always AGGREGATOR_V3, so any surviving pair that includes MoC-main
+    ///      cross-checks it against a timestamped aggregator.
+    function _requireTwoEnabled(AssetConfig storage config) internal view {
+        uint256 enabledFeeds =
+            (config.main.enabled ? 1 : 0) +
+            (config.pivot.enabled ? 1 : 0) +
+            (config.fallback_.enabled ? 1 : 0);
+        if (enabledFeeds < 2) revert FeedNotEnabled();
     }
 
     /// @dev Validates a feed config. For AGGREGATOR_V3 feeds, verifies the provided
