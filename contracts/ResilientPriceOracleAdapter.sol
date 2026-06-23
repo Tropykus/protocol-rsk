@@ -95,6 +95,15 @@ contract ResilientPriceOracleAdapter {
     ///      This prevents overflow in multiplication operations downstream.
     uint256 public constant MAX_SANE_PRICE = 1e30;
 
+    /// @notice Upper guardrail for per-feed maxStaleness (7 days).
+    /// @dev The whole freshness model (including "MoC never served alone") rests on
+    ///      maxStaleness. Without a ceiling, an admin could configure an effectively
+    ///      infinite staleness, letting a frozen aggregator validate against a frozen
+    ///      MoC feed. This caps the parameter the security model depends on. Immutable,
+    ///      same rationale as the bound guardrails. Operating values are far lower
+    ///      (minutes); 7 days is a generous outer limit, not a recommended setting.
+    uint256 public constant MAX_STALENESS = 7 days;
+
     // =========================================================================
     // Enums
     // =========================================================================
@@ -216,6 +225,7 @@ contract ResilientPriceOracleAdapter {
     error InvalidAddress();
     error InvalidBounds();
     error InvalidStaleness();
+    error FeedNotEnabled();
     error InvalidFixedPrice();
     error InvalidDecimals();
     error InvalidFeedRole();
@@ -495,6 +505,8 @@ contract ResilientPriceOracleAdapter {
         if (main.feedType == FeedType.FIXED_PRICE) revert FeedTypeNotAllowedForRole();
         if (pivot.feedType != FeedType.AGGREGATOR_V3) revert FeedTypeNotAllowedForRole();
         if (fallback_.feedType != FeedType.AGGREGATOR_V3) revert FeedTypeNotAllowedForRole();
+        // All three feeds must be enabled at configuration so the asset is born with a complete 2-of-3 set.
+        if (!main.enabled || !pivot.enabled || !fallback_.enabled) revert FeedNotEnabled();
         _validateFeedConfig(main);
         _validateFeedConfig(pivot);
         _validateFeedConfig(fallback_);
@@ -744,7 +756,7 @@ contract ResilientPriceOracleAdapter {
         if (feed.feedType == FeedType.AGGREGATOR_V3) {
             if (feed.enabled) {
                 if (feed.feedAddress == address(0)) revert InvalidAddress();
-                if (feed.maxStaleness == 0) revert InvalidStaleness();
+                if (feed.maxStaleness == 0 || feed.maxStaleness > MAX_STALENESS) revert InvalidStaleness();
                 if (feed.feedDecimals == 0 || feed.feedDecimals > 24) revert InvalidDecimals();
 
                 // On-chain verification: stored decimals must match the feed's actual
