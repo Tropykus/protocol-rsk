@@ -39,10 +39,16 @@ pragma solidity 0.8.20;
 ///      (block.timestamp - blocksSincePublication * assumedBlockTime, with
 ///      assumedBlockTime fixed at wrapper deployment). If Rootstock's real block time
 ///      exceeds the wrapper's assumption, a feed's age is UNDERestimated (it looks
-///      fresher than it is), so calibrate that feed's maxStaleness tighter by the
-///      factor assumedBlockTime / realBlockTime to compensate. Drift in the safe
-///      direction (real block time below the assumption) only makes the check trip
-///      earlier — fail-closed.
+///      fresher than it is). HARD CONFIGURATION REQUIREMENT: maxStaleness for such a
+///      feed MUST be set assuming the worst-case real block time — tighten it by the
+///      factor assumedBlockTime / worstCaseRealBlockTime (e.g. desired 300s real
+///      freshness with a 24s-assumption wrapper on ~30s blocks -> configure 240s).
+///      This cannot be validated on-chain (the wrapper's assumption is not exposed);
+///      it is enforced at feed-selection/review time, together with verifying the
+///      wrapper's round semantics. Drift in the safe direction (real block time below
+///      the assumption) only makes the check trip earlier — fail-closed. The residual
+///      risk is bounded: the estimate error scales the EFFECTIVE staleness window, it
+///      does not disable it — a halted MoC feeder still goes stale and gets rejected.
 ///
 ///      Roles:
 ///        - admin: Timelock controller (24h). Configures assets, feeds, bounds,
@@ -243,6 +249,8 @@ contract ResilientPriceOracleAdapter {
     error InvalidFixedPrice();
     error InvalidDecimals();
     error InvalidUnderlyingDecimals();
+    error NotANativeAsset();
+    error UnderlyingUnreadable();
     error InvalidFeedRole();
     error FeedTypeNotAllowedForRole();
     error DuplicateFeedAddress();
@@ -415,6 +423,17 @@ contract ResilientPriceOracleAdapter {
             /* uint80 answeredInRound */
         ) = AggregatorV3Interface(feedAddress).latestRoundData();
 
+        // roundId / answeredInRound are DELIBERATELY not validated. answeredInRound
+        // is deprecated since Chainlink OCR2, and the Chainlink-compatible wrappers
+        // used on Rootstock fill these fields with heterogeneous placeholder
+        // semantics (RedStone: constant 1; MoC wrappers: publication block number;
+        // others may use 0). Enforcing the legacy completeness check
+        // (answeredInRound >= roundId, roundId != 0) against such feeds risks
+        // permanently invalidating an honest feed while adding no freshness
+        // guarantee: freshness rests on updatedAt + per-feed maxStaleness, and
+        // correctness on the 2-of-3 cross-validation. Round semantics of a candidate
+        // feed are reviewed off-chain at feed-selection time instead.
+
         // Validation: decimals must still match what was verified at configuration time.
         if (AggregatorV3Interface(feedAddress).decimals() != feedDecimals) return (0, false);
 
@@ -482,8 +501,12 @@ contract ResilientPriceOracleAdapter {
     ///      The cToken's underlying must have 18 decimals (see
     ///      _validateUnderlyingDecimals): this adapter always answers in 1e18 and the
     ///      downstream Comptroller math is only correct for 18-decimal underlyings.
+    /// @param isNativeAsset MUST be true for the native-asset market (cRBTC, no
+    ///        underlying()) and false for every ERC-20 market. The declaration is
+    ///        verified on-chain in BOTH directions — see _validateUnderlyingDecimals.
     function configureAsset(
         address cToken,
+        bool isNativeAsset,
         FeedConfig calldata main,
         FeedConfig calldata pivot,
         FeedConfig calldata fallback_,
@@ -492,7 +515,7 @@ contract ResilientPriceOracleAdapter {
     ) external onlyAdmin {
         if (cToken == address(0)) revert InvalidAddress();
         if (assetConfigs[cToken].configured) revert AssetAlreadyConfigured(cToken);
-        _validateUnderlyingDecimals(cToken);
+        _validateUnderlyingDecimals(cToken, isNativeAsset);
 
         _validateBoundParams(upperBoundRatio, lowerBoundRatio);
         if (main.feedType != FeedType.AGGREGATOR_V3) revert FeedTypeNotAllowedForRole();
@@ -781,26 +804,37 @@ contract ResilientPriceOracleAdapter {
     ///      magnitude. Rather than trusting governance to remember that constraint,
     ///      it is checked here on-chain.
     ///
-    ///      cToken kinds:
-    ///        - CErc20-style: underlying() returns the token; its decimals() must be 18.
+    ///      The caller must DECLARE whether the market is the native-asset cToken
+    ///      (cRBTC, which has no underlying()) — the declaration is then verified in
+    ///      both directions, never inferred from call failure:
+    ///        - declared native, but underlying() answers -> revert NotANativeAsset
+    ///          (misdeclared ERC-20 market).
+    ///        - declared ERC-20, but underlying() reverts or returns malformed data
+    ///          -> revert UnderlyingUnreadable. A revert is NOT taken as evidence of
+    ///          a native market: a CErc20Delegator with a broken/unset implementation
+    ///          or a paused proxy must fail configuration, not slip through as
+    ///          "native with 18-decimal semantics" (fail-closed).
+    ///        - declared ERC-20 and readable: underlying.decimals() must be 18.
     ///          decimals() reverting bubbles up — a token without decimals() cannot
     ///          prove the invariant and must not be listed through this adapter.
-    ///        - Native-asset cToken (cRBTC): does not implement underlying(), so the
-    ///          probe call reverts. Native RBTC has 18 decimals; accepted.
-    function _validateUnderlyingDecimals(address cToken) internal view {
+    ///      Native RBTC has 18 decimals, so a verified native declaration is accepted.
+    function _validateUnderlyingDecimals(address cToken, bool isNativeAsset) internal view {
         // A cToken must be a contract. Without this check, a typoed EOA address would
-        // make the underlying() probe "succeed" with empty returndata and be
-        // misclassified as a native-asset cToken.
+        // make the underlying() probe "succeed" with empty returndata.
         if (cToken.code.length == 0) revert InvalidAddress();
 
         (bool ok, bytes memory data) = cToken.staticcall(
             abi.encodeCall(CErc20Like.underlying, ())
         );
-        if (!ok) {
-            // No underlying() -> native-asset cToken (cRBTC). RBTC is 18 decimals.
+
+        if (isNativeAsset) {
+            // A real native cToken cannot answer underlying().
+            if (ok && data.length == 32) revert NotANativeAsset();
             return;
         }
-        if (data.length != 32) revert InvalidAddress();
+
+        // ERC-20 market: the probe must SUCCEED with a well-formed address.
+        if (!ok || data.length != 32) revert UnderlyingUnreadable();
 
         address underlying = abi.decode(data, (address));
         if (underlying == address(0) || underlying.code.length == 0) revert InvalidAddress();
