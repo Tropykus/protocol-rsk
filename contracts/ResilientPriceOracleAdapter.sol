@@ -10,8 +10,12 @@ pragma solidity 0.8.20;
 ///
 ///      Architecture (stateless 2-of-3 majority validation):
 ///        - Per-asset config: main feed, pivot feed, fallback feed
-///        - A price is served ONLY when two live, independent sources agree within
-///          the configured bounds. Validation pairs are tried in priority order:
+///        - A price is served ONLY when two live sources agree within the configured
+///          bounds. On-chain the sources are guaranteed to be DISTINCT CONTRACTS
+///          (_validateDistinctFeeds); their DATA independence (operator, methodology,
+///          upstream market) cannot be proven on-chain and is an explicit operational
+///          requirement of feed selection — see _validateDistinctFeeds.
+///          Validation pairs are tried in priority order:
 ///            1. main  vs pivot     -> serve main
 ///            2. fallback vs pivot  -> serve fallback
 ///            3. main  vs fallback  -> serve main (covers pivot outage AND pivot-as-outlier)
@@ -32,8 +36,14 @@ pragma solidity 0.8.20;
 ///      MoC prices are NEVER served alone: they must agree with at least one
 ///      timestamped aggregator feed (pivot or fallback). If the market moves while
 ///      MoC is frozen, the live aggregator diverges, no pair agrees, and the oracle
-///      fails closed. Consequently, if ALL aggregator feeds are down, MoC alone is
-///      not served — this is an intentional conservative trade-off.
+///      fails closed. This is BOUNDED staleness detection, not per-read freshness:
+///      while the market stays within the configured band of the frozen value, the
+///      stale MoC price keeps being served (and, by pair priority, wins over a fresh
+///      pivot/fallback agreement). The maximum error a frozen MoC feed can introduce
+///      is therefore the band width — configure narrow per-asset bounds to keep that
+///      window small, and monitor MoC liveness off-chain. Consequently, if ALL
+///      aggregator feeds are down, MoC alone is not served — this is an intentional
+///      conservative trade-off.
 ///
 ///      Roles:
 ///        - admin: Timelock controller (24h). Configures assets, feeds, bounds,
@@ -65,6 +75,17 @@ interface AggregatorV3Interface {
 /// @notice Money on Chain price provider interface
 interface PriceProviderMoC {
     function peek() external view returns (bytes32, bool);
+}
+
+/// @notice Minimal CErc20 interface to discover a cToken's underlying token.
+///         Native-asset cTokens (cRBTC) do not implement it.
+interface CErc20Like {
+    function underlying() external view returns (address);
+}
+
+/// @notice Minimal EIP-20 interface to read the underlying token's decimals.
+interface EIP20Like {
+    function decimals() external view returns (uint8);
 }
 
 // =============================================================================
@@ -228,6 +249,7 @@ contract ResilientPriceOracleAdapter {
     error FeedNotEnabled();
     error InvalidFixedPrice();
     error InvalidDecimals();
+    error InvalidUnderlyingDecimals();
     error InvalidFeedRole();
     error FeedTypeNotAllowedForRole();
     error DuplicateFeedAddress();
@@ -429,7 +451,10 @@ contract ResilientPriceOracleAdapter {
     ///      MoC does not expose timestamps. Staleness is enforced structurally:
     ///      MoC prices are never served alone — they must agree with a timestamped
     ///      aggregator feed (pivot or fallback) to be accepted. A frozen MoC feed
-    ///      diverges from live aggregators as the market moves and is rejected.
+    ///      is rejected once the market moves outside the validation band of the
+    ///      live aggregators; within the band a stale value can still be served,
+    ///      so the band width bounds the maximum staleness error (see the MoC
+    ///      design note in the contract header).
     function _readMoC(FeedConfig storage feed) internal view returns (uint256, bool) {
         try PriceProviderMoC(feed.feedAddress).peek() returns (bytes32 price, bool has) {
             if (!has) return (0, false);
@@ -490,6 +515,9 @@ contract ResilientPriceOracleAdapter {
     ///          against another frozen source.
     ///      Enabled feeds must also have distinct addresses across roles, so the
     ///      2-of-3 majority is never two reads of the same source.
+    ///      The cToken's underlying must have 18 decimals (see
+    ///      _validateUnderlyingDecimals): this adapter always answers in 1e18 and the
+    ///      downstream Comptroller math is only correct for 18-decimal underlyings.
     function configureAsset(
         address cToken,
         FeedConfig calldata main,
@@ -500,6 +528,7 @@ contract ResilientPriceOracleAdapter {
     ) external onlyAdmin {
         if (cToken == address(0)) revert InvalidAddress();
         if (assetConfigs[cToken].configured) revert AssetAlreadyConfigured(cToken);
+        _validateUnderlyingDecimals(cToken);
 
         _validateBoundParams(upperBoundRatio, lowerBoundRatio);
         if (main.feedType == FeedType.FIXED_PRICE) revert FeedTypeNotAllowedForRole();
@@ -742,8 +771,16 @@ contract ResilientPriceOracleAdapter {
     }
 
     /// @dev Enabled feeds must point to distinct contracts across roles, so an
-    ///      "agreeing pair" is always two reads of two different sources. FIXED_PRICE
+    ///      "agreeing pair" is always two reads of two different contracts. FIXED_PRICE
     ///      main (feedAddress == 0) is exempt: it never participates in pairs.
+    ///
+    ///      SCOPE: address inequality is the strongest property enforceable on-chain.
+    ///      It does NOT guarantee independent data — two distinct feed contracts fed
+    ///      by the same upstream oracle, operator set, or market fail together and
+    ///      outvote the honest source, defeating the 2-of-3 majority. Verifying true
+    ///      source independence (different operator, methodology and data origin for
+    ///      main/pivot/fallback) is a deliberate OFF-CHAIN requirement of the security
+    ///      model, owned by governance at feed-selection time.
     function _validateDistinctFeeds(AssetConfig storage config) internal view {
         address a = config.main.enabled ? config.main.feedAddress : address(0);
         address b = config.pivot.enabled ? config.pivot.feedAddress : address(0);
@@ -772,6 +809,43 @@ contract ResilientPriceOracleAdapter {
             (config.pivot.enabled ? 1 : 0) +
             (config.fallback_.enabled ? 1 : 0);
         if (enabledFeeds < 2) revert FeedNotEnabled();
+    }
+
+    /// @dev Enforce the 18-decimal-underlying invariant at configuration time.
+    ///
+    ///      This adapter always returns prices scaled to 1e18 and PriceOracleProxy
+    ///      forwards them to the Comptroller unchanged, while Compound's liquidity /
+    ///      liquidation math assumes getUnderlyingPrice is scaled by
+    ///      1e(36 - underlyingDecimals). Both conventions agree ONLY when the
+    ///      underlying has exactly 18 decimals; listing any other market through this
+    ///      adapter would mis-scale borrowing power and collateral value by orders of
+    ///      magnitude. Rather than trusting governance to remember that constraint,
+    ///      it is checked here on-chain.
+    ///
+    ///      cToken kinds:
+    ///        - CErc20-style: underlying() returns the token; its decimals() must be 18.
+    ///          decimals() reverting bubbles up — a token without decimals() cannot
+    ///          prove the invariant and must not be listed through this adapter.
+    ///        - Native-asset cToken (cRBTC): does not implement underlying(), so the
+    ///          probe call reverts. Native RBTC has 18 decimals; accepted.
+    function _validateUnderlyingDecimals(address cToken) internal view {
+        // A cToken must be a contract. Without this check, a typoed EOA address would
+        // make the underlying() probe "succeed" with empty returndata and be
+        // misclassified as a native-asset cToken.
+        if (cToken.code.length == 0) revert InvalidAddress();
+
+        (bool ok, bytes memory data) = cToken.staticcall(
+            abi.encodeCall(CErc20Like.underlying, ())
+        );
+        if (!ok) {
+            // No underlying() -> native-asset cToken (cRBTC). RBTC is 18 decimals.
+            return;
+        }
+        if (data.length != 32) revert InvalidAddress();
+
+        address underlying = abi.decode(data, (address));
+        if (underlying == address(0) || underlying.code.length == 0) revert InvalidAddress();
+        if (EIP20Like(underlying).decimals() != 18) revert InvalidUnderlyingDecimals();
     }
 
     /// @dev Validates a feed config. For AGGREGATOR_V3 feeds, verifies the provided
