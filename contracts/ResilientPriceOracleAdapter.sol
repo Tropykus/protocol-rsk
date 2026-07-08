@@ -21,8 +21,8 @@ pragma solidity 0.8.20;
 ///            3. main  vs fallback  -> serve main (covers pivot outage AND pivot-as-outlier)
 ///        - No price cache, no lastGoodPrice, no keeper, no external maintenance.
 ///          The oracle holds zero price state; every read is validated fresh.
-///        - Staleness per feed (AggregatorV3 via updatedAt; MoC via cross-validation,
-///          see MoC design note below)
+///        - Every feed is a timestamped AggregatorV3 source: staleness is enforced
+///          uniformly per feed via updatedAt on every read (see MoC note below).
 ///        - Circuit breaker: per-asset and global pause. While paused, price queries
 ///          REVERT (no cached price exists to serve). Pause = full market freeze.
 ///        - Fixed price escape hatch: admin can set a FIXED_PRICE main feed which is
@@ -31,19 +31,18 @@ pragma solidity 0.8.20;
 ///          main role; pivot and fallback must always be live market sources.
 ///        - Fail-closed: if no validation pair agrees, assetPrices reverts.
 ///
-///      MoC design note: Money on Chain's peek() does not expose timestamps. A frozen
-///      MoC feed (still answering has==true with its last value) is detected because
-///      MoC prices are NEVER served alone: they must agree with at least one
-///      timestamped aggregator feed (pivot or fallback). If the market moves while
-///      MoC is frozen, the live aggregator diverges, no pair agrees, and the oracle
-///      fails closed. This is BOUNDED staleness detection, not per-read freshness:
-///      while the market stays within the configured band of the frozen value, the
-///      stale MoC price keeps being served (and, by pair priority, wins over a fresh
-///      pivot/fallback agreement). The maximum error a frozen MoC feed can introduce
-///      is therefore the band width — configure narrow per-asset bounds to keep that
-///      window small, and monitor MoC liveness off-chain. Consequently, if ALL
-///      aggregator feeds are down, MoC alone is not served — this is an intentional
-///      conservative trade-off.
+///      MoC note: Money on Chain prices are consumed through MoC's OFFICIAL
+///      Chainlink-compatible wrappers (e.g. DocUsdPriceChainlinkCompat), NOT through
+///      the legacy peek() interface, so MoC feeds carry timestamps and pass the same
+///      per-read staleness validation as any other aggregator. Caveat for
+///      configuration: those wrappers ESTIMATE updatedAt from block deltas
+///      (block.timestamp - blocksSincePublication * assumedBlockTime, with
+///      assumedBlockTime fixed at wrapper deployment). If Rootstock's real block time
+///      exceeds the wrapper's assumption, a feed's age is UNDERestimated (it looks
+///      fresher than it is), so calibrate that feed's maxStaleness tighter by the
+///      factor assumedBlockTime / realBlockTime to compensate. Drift in the safe
+///      direction (real block time below the assumption) only makes the check trip
+///      earlier — fail-closed.
 ///
 ///      Roles:
 ///        - admin: Timelock controller (24h). Configures assets, feeds, bounds,
@@ -70,11 +69,6 @@ interface AggregatorV3Interface {
         );
 
     function decimals() external view returns (uint8);
-}
-
-/// @notice Money on Chain price provider interface
-interface PriceProviderMoC {
-    function peek() external view returns (bytes32, bool);
 }
 
 /// @notice Minimal CErc20 interface to discover a cToken's underlying token.
@@ -117,12 +111,12 @@ contract ResilientPriceOracleAdapter {
     uint256 public constant MAX_SANE_PRICE = 1e30;
 
     /// @notice Upper guardrail for per-feed maxStaleness (7 days).
-    /// @dev The whole freshness model (including "MoC never served alone") rests on
-    ///      maxStaleness. Without a ceiling, an admin could configure an effectively
-    ///      infinite staleness, letting a frozen aggregator validate against a frozen
-    ///      MoC feed. This caps the parameter the security model depends on. Immutable,
-    ///      same rationale as the bound guardrails. Operating values are far lower
-    ///      (minutes); 7 days is a generous outer limit, not a recommended setting.
+    /// @dev The whole freshness model rests on maxStaleness. Without a ceiling, an
+    ///      admin could configure an effectively infinite staleness, letting two
+    ///      frozen feeds validate each other indefinitely. This caps the parameter
+    ///      the security model depends on. Immutable, same rationale as the bound
+    ///      guardrails. Operating values are far lower (minutes); 7 days is a
+    ///      generous outer limit, not a recommended setting.
     uint256 public constant MAX_STALENESS = 7 days;
 
     // =========================================================================
@@ -130,10 +124,11 @@ contract ResilientPriceOracleAdapter {
     // =========================================================================
 
     /// @notice Type of oracle feed
+    /// @dev Money on Chain has no dedicated type: it is consumed as AGGREGATOR_V3
+    ///      through MoC's official Chainlink-compatible wrappers (see header note).
     enum FeedType {
-        AGGREGATOR_V3,  // RedStone, APRO, Chainlink-compatible
-        MOC,            // Money on Chain
-        FIXED_PRICE     // Emergency fixed price (main role only)
+        AGGREGATOR_V3,  // RedStone, APRO, MoC chainlink-compat, Chainlink-compatible
+        FIXED_PRICE     // Emergency fixed price (main role only, via setFixedPrice)
     }
 
     /// @notice Which validation path produced the price (diagnostics)
@@ -152,8 +147,6 @@ contract ResilientPriceOracleAdapter {
     /// @notice Configuration for a single oracle feed source
     /// @dev For AGGREGATOR_V3: feedDecimals is verified on-chain against the feed's
     ///      decimals() at configuration time, then stored (not queried live on reads).
-    ///      For MOC: feedDecimals ignored (MoC returns 18 decimals natively).
-    ///      For MOC: maxStaleness ignored (MoC has no timestamp; validated via cross-check).
     ///      For FIXED_PRICE: feedAddress, feedDecimals and maxStaleness ignored.
     struct FeedConfig {
         address feedAddress;     // Address of the oracle contract (or unused for FIXED)
@@ -374,14 +367,10 @@ contract ResilientPriceOracleAdapter {
     /// @dev Read a price from a feed based on its type.
     ///      Note: FIXED_PRICE is handled in Step 0 of _getValidatedPrice for the main
     ///      role and is rejected at configuration time for pivot/fallback roles, so
-    ///      it is never read through this path.
+    ///      it is never read through this path (the defensive return covers it anyway).
     function _readFeed(FeedConfig storage feed) internal view returns (uint256 price, bool valid) {
         if (!feed.enabled) {
             return (0, false);
-        }
-
-        if (feed.feedType == FeedType.MOC) {
-            return _readMoC(feed);
         }
 
         if (feed.feedType == FeedType.AGGREGATOR_V3) {
@@ -447,28 +436,6 @@ contract ResilientPriceOracleAdapter {
         return (price, true);
     }
 
-    /// @dev Read price from Money on Chain PriceProvider.
-    ///      MoC does not expose timestamps. Staleness is enforced structurally:
-    ///      MoC prices are never served alone — they must agree with a timestamped
-    ///      aggregator feed (pivot or fallback) to be accepted. A frozen MoC feed
-    ///      is rejected once the market moves outside the validation band of the
-    ///      live aggregators; within the band a stale value can still be served,
-    ///      so the band width bounds the maximum staleness error (see the MoC
-    ///      design note in the contract header).
-    function _readMoC(FeedConfig storage feed) internal view returns (uint256, bool) {
-        try PriceProviderMoC(feed.feedAddress).peek() returns (bytes32 price, bool has) {
-            if (!has) return (0, false);
-
-            uint256 priceUint = uint256(price);
-            if (priceUint == 0 || priceUint > MAX_SANE_PRICE) return (0, false);
-
-            // MoC returns price already in 18 decimals
-            return (priceUint, true);
-        } catch {
-            return (0, false);
-        }
-    }
-
     /// @dev Scale price from native decimals to 18 decimals. Pure, no external call.
     ///      Can revert on overflow for extreme values — caller must handle via try/catch.
     function _scaleToE18(uint256 price, uint8 feedDecimals) internal pure returns (uint256) {
@@ -505,14 +472,11 @@ contract ResilientPriceOracleAdapter {
     // =========================================================================
 
     /// @notice Configure a new asset with all three feed sources
-    /// @dev Role-type rules (enforce invariant "MoC never served alone"):
-    ///        - main: MOC or AGGREGATOR_V3. FIXED_PRICE cannot be configured here;
-    ///          the only way to set a fixed-price override is setFixedPrice (single,
-    ///          monitored path).
-    ///        - pivot, fallback: AGGREGATOR_V3 only (must carry timestamps). This
-    ///          guarantees every servable pair contains at least one feed with
-    ///          staleness validation, so a frozen MoC feed can never validate
-    ///          against another frozen source.
+    /// @dev Role-type rules: all three roles must be AGGREGATOR_V3 — every feed
+    ///      carries a timestamp and passes per-read staleness validation, so an
+    ///      agreeing pair is always two fresh sources. FIXED_PRICE cannot be
+    ///      configured here; the only way to set a fixed-price override is
+    ///      setFixedPrice (single, monitored path).
     ///      Enabled feeds must also have distinct addresses across roles, so the
     ///      2-of-3 majority is never two reads of the same source.
     ///      The cToken's underlying must have 18 decimals (see
@@ -531,7 +495,7 @@ contract ResilientPriceOracleAdapter {
         _validateUnderlyingDecimals(cToken);
 
         _validateBoundParams(upperBoundRatio, lowerBoundRatio);
-        if (main.feedType == FeedType.FIXED_PRICE) revert FeedTypeNotAllowedForRole();
+        if (main.feedType != FeedType.AGGREGATOR_V3) revert FeedTypeNotAllowedForRole();
         if (pivot.feedType != FeedType.AGGREGATOR_V3) revert FeedTypeNotAllowedForRole();
         if (fallback_.feedType != FeedType.AGGREGATOR_V3) revert FeedTypeNotAllowedForRole();
         _validateFeedConfig(main);
@@ -559,9 +523,10 @@ contract ResilientPriceOracleAdapter {
     }
 
     /// @notice Update a specific feed for an asset
-    /// @dev Same role-type rules as configureAsset. FIXED_PRICE is rejected for ALL
-    ///      roles here: the only path to a fixed-price override is setFixedPrice,
-    ///      so monitoring a single event (FixedPriceOverrideSet) has no blind spots.
+    /// @dev Same role-type rules as configureAsset: only AGGREGATOR_V3 can be
+    ///      installed here, for any role. In particular FIXED_PRICE is rejected:
+    ///      the only path to a fixed-price override is setFixedPrice, so monitoring
+    ///      a single event (FixedPriceOverrideSet) has no blind spots.
     ///      Restoring live pricing after an override is done with this function.
     function updateFeed(
         address cToken,
@@ -570,17 +535,15 @@ contract ResilientPriceOracleAdapter {
     ) external onlyAdmin {
         AssetConfig storage config = assetConfigs[cToken];
         if (!config.configured) revert AssetNotConfigured(cToken);
-        if (newFeed.feedType == FeedType.FIXED_PRICE) revert FeedTypeNotAllowedForRole();
+        if (newFeed.feedType != FeedType.AGGREGATOR_V3) revert FeedTypeNotAllowedForRole();
         _validateFeedConfig(newFeed);
 
         bytes32 role = keccak256(bytes(feedRole));
         if (role == keccak256("main")) {
             config.main = newFeed;
         } else if (role == keccak256("pivot")) {
-            if (newFeed.feedType != FeedType.AGGREGATOR_V3) revert FeedTypeNotAllowedForRole();
             config.pivot = newFeed;
         } else if (role == keccak256("fallback")) {
-            if (newFeed.feedType != FeedType.AGGREGATOR_V3) revert FeedTypeNotAllowedForRole();
             config.fallback_ = newFeed;
         } else {
             revert InvalidFeedRole();
@@ -799,10 +762,6 @@ contract ResilientPriceOracleAdapter {
     ///      compromised feed (degrading 2-of-3 -> 2-of-2) without bricking the asset.
     ///      At 2-of-2 byzantine fault tolerance is lost (a single feed dispute -> no
     ///      agreeing pair -> fail-closed), which is an accepted, documented trade-off.
-    ///
-    ///      "MoC never served alone" still holds at 2-of-2: pivot and fallback are
-    ///      always AGGREGATOR_V3, so any surviving pair that includes MoC-main
-    ///      cross-checks it against a timestamped aggregator.
     function _requireTwoEnabled(AssetConfig storage config) internal view {
         uint256 enabledFeeds =
             (config.main.enabled ? 1 : 0) +
@@ -848,29 +807,24 @@ contract ResilientPriceOracleAdapter {
         if (EIP20Like(underlying).decimals() != 18) revert InvalidUnderlyingDecimals();
     }
 
-    /// @dev Validates a feed config. For AGGREGATOR_V3 feeds, verifies the provided
-    ///      feedDecimals against the feed's on-chain decimals() to catch typos that
-    ///      would mis-scale prices by orders of magnitude.
+    /// @dev Validates an AGGREGATOR_V3 feed config (callers reject every other type
+    ///      before calling). Verifies the provided feedDecimals against the feed's
+    ///      on-chain decimals() to catch typos that would mis-scale prices by orders
+    ///      of magnitude.
     ///      FIXED_PRICE never reaches this function: configureAsset and updateFeed
     ///      reject the type before validation, and setFixedPrice builds its feed
     ///      inline after validating the price range.
     function _validateFeedConfig(FeedConfig calldata feed) internal view {
-        if (feed.feedType == FeedType.AGGREGATOR_V3) {
-            if (feed.enabled) {
-                if (feed.feedAddress == address(0)) revert InvalidAddress();
-                if (feed.maxStaleness == 0 || feed.maxStaleness > MAX_STALENESS) revert InvalidStaleness();
-                if (feed.feedDecimals == 0 || feed.feedDecimals > 24) revert InvalidDecimals();
+        if (!feed.enabled) return;
 
-                // On-chain verification: stored decimals must match the feed's actual
-                // decimals(). Reverts (bubbles up) if the feed doesn't implement it —
-                // a feed without decimals() should not be configured as AGGREGATOR_V3.
-                uint8 actualDecimals = AggregatorV3Interface(feed.feedAddress).decimals();
-                if (actualDecimals != feed.feedDecimals) revert InvalidDecimals();
-            }
-        } else if (feed.feedType == FeedType.MOC) {
-            if (feed.enabled) {
-                if (feed.feedAddress == address(0)) revert InvalidAddress();
-            }
-        }
+        if (feed.feedAddress == address(0)) revert InvalidAddress();
+        if (feed.maxStaleness == 0 || feed.maxStaleness > MAX_STALENESS) revert InvalidStaleness();
+        if (feed.feedDecimals == 0 || feed.feedDecimals > 24) revert InvalidDecimals();
+
+        // On-chain verification: stored decimals must match the feed's actual
+        // decimals(). Reverts (bubbles up) if the feed doesn't implement it —
+        // a feed without decimals() should not be configured as AGGREGATOR_V3.
+        uint8 actualDecimals = AggregatorV3Interface(feed.feedAddress).decimals();
+        if (actualDecimals != feed.feedDecimals) revert InvalidDecimals();
     }
 }
