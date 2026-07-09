@@ -503,7 +503,8 @@ contract ResilientPriceOracleAdapter {
     ///      downstream Comptroller math is only correct for 18-decimal underlyings.
     /// @param isNativeAsset MUST be true for the native-asset market (cRBTC, no
     ///        underlying()) and false for every ERC-20 market. The declaration is
-    ///        verified on-chain in BOTH directions — see _validateUnderlyingDecimals.
+    ///        checked against an on-chain underlying() probe; see
+    ///        _validateUnderlyingDecimals for the exact guarantee and its residual.
     function configureAsset(
         address cToken,
         bool isNativeAsset,
@@ -805,10 +806,8 @@ contract ResilientPriceOracleAdapter {
     ///      it is checked here on-chain.
     ///
     ///      The caller must DECLARE whether the market is the native-asset cToken
-    ///      (cRBTC, which has no underlying()) — the declaration is then verified in
-    ///      both directions, never inferred from call failure:
-    ///        - declared native, but underlying() answers -> revert NotANativeAsset
-    ///          (misdeclared ERC-20 market).
+    ///      (cRBTC, which has no underlying()); native status is never INFERRED from
+    ///      a failing probe. The declaration is then checked against the probe:
     ///        - declared ERC-20, but underlying() reverts or returns malformed data
     ///          -> revert UnderlyingUnreadable. A revert is NOT taken as evidence of
     ///          a native market: a CErc20Delegator with a broken/unset implementation
@@ -817,7 +816,15 @@ contract ResilientPriceOracleAdapter {
     ///        - declared ERC-20 and readable: underlying.decimals() must be 18.
     ///          decimals() reverting bubbles up — a token without decimals() cannot
     ///          prove the invariant and must not be listed through this adapter.
-    ///      Native RBTC has 18 decimals, so a verified native declaration is accepted.
+    ///        - declared native, but underlying() answers AT ALL (any successful
+    ///          call, even with malformed returndata) -> revert NotANativeAsset.
+    ///      KNOWN RESIDUAL: the converse cannot be proven on-chain — the absence of
+    ///      underlying() is indistinguishable from underlying() reverting, so a
+    ///      declared-native contract whose probe reverts is accepted (Tropykus CRBTC
+    ///      has no fallback, so its probe reverts as expected). Misusing this
+    ///      requires the trusted 24h-timelock admin to BOTH misdeclare a market as
+    ///      native AND that market's underlying() to revert at configuration time;
+    ///      accepted as admin-trust residual. Native RBTC has 18 decimals.
     function _validateUnderlyingDecimals(address cToken, bool isNativeAsset) internal view {
         // A cToken must be a contract. Without this check, a typoed EOA address would
         // make the underlying() probe "succeed" with empty returndata.
@@ -828,8 +835,9 @@ contract ResilientPriceOracleAdapter {
         );
 
         if (isNativeAsset) {
-            // A real native cToken cannot answer underlying().
-            if (ok && data.length == 32) revert NotANativeAsset();
+            // A real native cToken cannot answer underlying(): ANY successful call
+            // (regardless of returndata shape) disproves the native declaration.
+            if (ok) revert NotANativeAsset();
             return;
         }
 
